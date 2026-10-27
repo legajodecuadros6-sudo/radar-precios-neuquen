@@ -1,0 +1,754 @@
+{
+  "zona": "Neuquén capital - CP 8300",
+  "fecha_consolidacion": "2026-10-24T22:28:47.484150",
+  "fuentes": [
+    {
+      "supermercado": "Makro",
+      "tipo": "Mayorista / Canasta Básica",
+      "items": [
+        {
+          "codigo": "1748383",
+          "nombre": "MARGARINA VEG DANICA EQUIL POTE X220G",
+          "precio_regular": 2351.07,
+          "precio_sin_impuestos": 1943.03,
+          "categoria": "Lácteos y Frescos",
+          "unidad": "220g"
+        },
+        {
+          "codigo": "1698541",
+          "nombre": "ACEITE GIRASOL LEGITIMO BTX900ML",
+          "precio_regular": 3925.53,
+          "precio_sin_impuestos": 3244.24,
+          "categoria": "Almacén",
+          "unidad": "900ml"
+        },
+        {
+          "codigo": "1148381",
+          "nombre": "ACEITE GIRASOL M&K BTX900ML",
+          "precio_regular": 2799.0,
+          "precio_sin_impuestos": 2313.22,
+          "categoria": "Almacén",
+          "unidad": "900ml"
+        },
+        {
+          "codigo": "1807494",
+          "nombre": "ARROZ LARGO FINO M&K PQX500GR",
+          "precio_regular": 891.31,
+          "precio_sin_impuestos": 736.62,
+          "categoria": "Almacén",
+          "unidad": "500g"
+        },
+        {
+          "codigo": "1028261",
+          "nombre": "ARVEJA INALPA LTX300G",
+          "precio_regular": 679.34,
+          "precio_sin_impuestos": 561.44,
+          "categoria": "Almacén",
+          "unidad": "300g"
+        },
+        {
+          "codigo": "1028300",
+          "nombre": "ARVEJA M&K LTX300G",
+          "precio_regular": 652.18,
+          "precio_sin_impuestos": 538.99,
+          "categoria": "Almacén",
+          "unidad": "300g"
+        },
+        {
+          "codigo": "1695889",
+          "nombre": "ASADO PLANCHA X KG",
+          "precio_regular": 12499.0,
+          "precio_sin_impuestos": 11311.31,
+          "categoria": "Carnicería",
+          "unidad": "1kg"
+        },
+        {
+          "codigo": "1189279",
+          "nombre": "AZUCAR CLASICA DOMINO PQX1KG",
+          "precio_regular": 1149.0,
+          "precio_sin_impuestos": 949.59,
+          "categoria": "Almacén",
+          "unidad": "1kg"
+        },
+        {
+          "codigo": "1121198",
+          "nombre": "AZUCAR M&K PQX1KG",
+          "precio_regular": 1456.53,
+          "precio_sin_impuestos": 1203.74,
+          "categoria": "Almacén",
+          "unidad": "1kg"
+        },
+        {
+          "codigo": "1653041",
+          "nombre": "CAFE CAPPUCCINO LA VIRGINIA DPX125G",
+          "precio_regular": 4451.08,
+          "precio_sin_impuestos": 3678.58,
+          "categoria": "Almacén",
+          "unidad": "125g"
+        },
+        {
+          "codigo": "1807936",
+          "nombre": "CAFE MIX DOLCA CAPPUCCINO DPX100G",
+          "precio_regular": 4103.26,
+          "precio_sin_impuestos": 3391.12,
+          "categoria": "Almacén",
+          "unidad": "100g"
+        },
+        {
+          "codigo": "1727024",
+          "nombre": "CALDO VERDURA KNORR CJX6U",
+          "precio_regular": 1728.26,
+          "precio_sin_impuestos": 1428.31,
+          "categoria": "Almacén",
+          "unidad": "6u"
+        },
+        {
+          "codigo": "1717196",
+          "nombre": "CALDO VERDURAS MAGGI CJX6U",
+          "precio_regular": 1135.88,
+          "precio_sin_impuestos": 938.74,
+          "categoria": "Almacén",
+          "unidad": "6u"
+        },
+        {
+          "codigo": "1000695",
+          "nombre": "CERVEZA BRAHMA LTX473ML",
+          "precio_regular": 2369.0,
+          "precio_sin_impuestos": 1738.13,
+          "categoria": "Bebidas",
+          "unidad": "473ml"
+        },
+        {
+          "codigo": "1221779",
+          "nombre": "CERVEZA SAINT-OMER RUBIA LATX500ML",
+          "precio_regular": 2246.83,
+          "precio_sin_impuestos": 1734.39,
+          "categoria": "Bebidas",
+          "unidad": "500ml"
+        },
+        {
+          "codigo": "1753141",
+          "nombre": "DULCE DE LECHE CLASICO ILOLAY X400G",
+          "precio_regular": 3489.0,
+          "precio_sin_impuestos": 2883.47,
+          "categoria": "Lácteos y Frescos",
+          "unidad": "400g"
+        },
+        {
+          "codigo": "85423",
+          "nombre": "DULCE BATATA DULCOR X 500 G",
+          "precio_regular": 3313.83,
+          "precio_sin_impuestos": 2738.7,
+          "categoria": "Almacén",
+          "unidad": "500g"
+        },
+        {
+          "codigo": "1000550",
+          "nombre": "DULCE DE BATATA EL GURI 500GR",
+          "precio_regular": 2654.26,
+          "precio_sin_impuestos": 2193.6,
+          "categoria": "Almacén",
+          "unidad": "500g"
+        },
+        {
+          "codigo": "1589354",
+          "nombre": "DULCE DE LECHE LA SERENISIMA CLASICO X400GR",
+          "precio_regular": 3869.57,
+          "precio_sin_impuestos": 3197.99,
+          "categoria": "Lácteos y Frescos",
+          "unidad": "400g"
+        },
+        {
+          "codigo": "392951",
+          "nombre": "FIAMBRE PARA EMPAREDADO M&K X KG",
+          "precio_regular": 4999.01,
+          "precio_sin_impuestos": 4131.41,
+          "categoria": "Fiambrería",
+          "unidad": "1kg"
+        },
+        {
+          "codigo": "1808092",
+          "nombre": "FIDEOS M&K SPAGHETTI PQX500GR",
+          "precio_regular": 1016.3,
+          "precio_sin_impuestos": 839.92,
+          "categoria": "Almacén",
+          "unidad": "500g"
+        },
+        {
+          "codigo": "883",
+          "nombre": "FILET MERLUZA CONGELADO DOÑA FRANCIA X KG",
+          "precio_regular": 14300.0,
+          "precio_sin_impuestos": 11818.18,
+          "categoria": "Congelados",
+          "unidad": "1kg"
+        },
+        {
+          "codigo": "1813669",
+          "nombre": "GALLETITAS SURTIDO LIA 400G",
+          "precio_regular": 2250.0,
+          "precio_sin_impuestos": 1859.5,
+          "categoria": "Almacén",
+          "unidad": "400g"
+        },
+        {
+          "codigo": "1787773",
+          "nombre": "GALLETITAS M&K SURTIDAS 400G",
+          "precio_regular": 2250.0,
+          "precio_sin_impuestos": 1859.5,
+          "categoria": "Almacén",
+          "unidad": "400g"
+        },
+        {
+          "codigo": "1752140",
+          "nombre": "GASEOSA PEPSI COLA BTX2L",
+          "precio_regular": 4500.73,
+          "precio_sin_impuestos": 3522.46,
+          "categoria": "Bebidas",
+          "unidad": "2L"
+        },
+        {
+          "codigo": "1176682",
+          "nombre": "GASEOSA SECCO COLA BTX2,25L",
+          "precio_regular": 2039.0,
+          "precio_sin_impuestos": 1607.7,
+          "categoria": "Bebidas",
+          "unidad": "2.25L"
+        },
+        {
+          "codigo": "1135147",
+          "nombre": "HARINA 000 CASERITA PQX1KG",
+          "precio_regular": 872.34,
+          "precio_sin_impuestos": 789.45,
+          "categoria": "Almacén",
+          "unidad": "1kg"
+        },
+        {
+          "codigo": "1563172",
+          "nombre": "HARINA 000 MORIXE X1KG",
+          "precio_regular": 920.21,
+          "precio_sin_impuestos": 832.77,
+          "categoria": "Almacén",
+          "unidad": "1kg"
+        },
+        {
+          "codigo": "1817608",
+          "nombre": "HARINA DE MAIZ INSTANTANEA M&K PQX500G",
+          "precio_regular": 749.99,
+          "precio_sin_impuestos": 619.83,
+          "categoria": "Almacén",
+          "unidad": "500g"
+        },
+        {
+          "codigo": "1153204",
+          "nombre": "JUGO CONCENTRADO MOCORETA NARANJA BTX1,5L",
+          "precio_regular": 2435.82,
+          "precio_sin_impuestos": 1971.22,
+          "categoria": "Bebidas",
+          "unidad": "1.5L"
+        },
+        {
+          "codigo": "1153035",
+          "nombre": "JUGO DEL VALLE NARANJA BTX1L",
+          "precio_regular": 1815.22,
+          "precio_sin_impuestos": 1500.18,
+          "categoria": "Bebidas",
+          "unidad": "1L"
+        },
+        {
+          "codigo": "1560871",
+          "nombre": "LECHE CLASICA ENTERA UHT ANGELITA X1L",
+          "precio_regular": 1963.54,
+          "precio_sin_impuestos": 1622.76,
+          "categoria": "Lácteos y Frescos",
+          "unidad": "1L"
+        },
+        {
+          "codigo": "1645059",
+          "nombre": "LECHE ENTERA UHT ARO X1L",
+          "precio_regular": 1916.66,
+          "precio_sin_impuestos": 1584.02,
+          "categoria": "Lácteos y Frescos",
+          "unidad": "1L"
+        },
+        {
+          "codigo": "1028573",
+          "nombre": "LENTEJAS INALPA LTX300G",
+          "precio_regular": 1163.04,
+          "precio_sin_impuestos": 961.19,
+          "categoria": "Almacén",
+          "unidad": "300g"
+        },
+        {
+          "codigo": "1053286",
+          "nombre": "LENTEJAS M&K PQX400G",
+          "precio_regular": 1326.09,
+          "precio_sin_impuestos": 1200.08,
+          "categoria": "Almacén",
+          "unidad": "400g"
+        },
+        {
+          "codigo": "109538",
+          "nombre": "MANTECA LA PAULINA X 500 GRS",
+          "precio_regular": 10000.0,
+          "precio_sin_impuestos": 8264.46,
+          "categoria": "Lácteos y Frescos",
+          "unidad": "500g"
+        },
+        {
+          "codigo": "1219491",
+          "nombre": "MANTECA M&K X 200 GRS",
+          "precio_regular": 2769.0,
+          "precio_sin_impuestos": 2288.43,
+          "categoria": "Lácteos y Frescos",
+          "unidad": "200g"
+        },
+        {
+          "codigo": "202371",
+          "nombre": "MANTECA PRIMER PREMIO X 200 GRS",
+          "precio_regular": 3335.11,
+          "precio_sin_impuestos": 2756.29,
+          "categoria": "Lácteos y Frescos",
+          "unidad": "200g"
+        },
+        {
+          "codigo": "1581346",
+          "nombre": "MAYONESA HELLMANNS DPX118G",
+          "precio_regular": 918.47,
+          "precio_sin_impuestos": 759.07,
+          "categoria": "Almacén",
+          "unidad": "118g"
+        },
+        {
+          "codigo": "1585402",
+          "nombre": "MAYONESA NATURA DPX125CC",
+          "precio_regular": 826.09,
+          "precio_sin_impuestos": 682.72,
+          "categoria": "Almacén",
+          "unidad": "125cc"
+        },
+        {
+          "codigo": "1735396",
+          "nombre": "MERMELADA DURAZNO DULCOR POX500G",
+          "precio_regular": 1983.7,
+          "precio_sin_impuestos": 1639.42,
+          "categoria": "Almacén",
+          "unidad": "500g"
+        },
+        {
+          "codigo": "1506960",
+          "nombre": "MERMELADA EMETH DURAZNO PTX420G",
+          "precio_regular": 1565.22,
+          "precio_sin_impuestos": 1293.57,
+          "categoria": "Almacén",
+          "unidad": "420g"
+        },
+        {
+          "codigo": "1802996",
+          "nombre": "MORTADELA FAMILIAR LARIO 300G",
+          "precio_regular": 5342.39,
+          "precio_sin_impuestos": 4415.2,
+          "categoria": "Fiambrería",
+          "unidad": "300g"
+        },
+        {
+          "codigo": "396123",
+          "nombre": "MORTADELA FAMILIAR PALADINI 500G",
+          "precio_regular": 7173.91,
+          "precio_sin_impuestos": 5928.85,
+          "categoria": "Fiambrería",
+          "unidad": "500g"
+        },
+        {
+          "codigo": "1673503",
+          "nombre": "NALGA SIN TAPA X KG",
+          "precio_regular": 16900.0,
+          "precio_sin_impuestos": 15294.12,
+          "categoria": "Carnicería",
+          "unidad": "1kg"
+        },
+        {
+          "codigo": "1750437",
+          "nombre": "PALETA DE CERDO COCIDA SADIA X KG",
+          "precio_regular": 12607.99,
+          "precio_sin_impuestos": 10419.83,
+          "categoria": "Carnicería",
+          "unidad": "1kg"
+        },
+        {
+          "codigo": "1672229",
+          "nombre": "PALETA ENFRIADA X KG",
+          "precio_regular": 14499.0,
+          "precio_sin_impuestos": 13121.27,
+          "categoria": "Carnicería",
+          "unidad": "1kg"
+        },
+        {
+          "codigo": "1817049",
+          "nombre": "PECHITO DE CERDO CONGELADO IMPORTADO X KG",
+          "precio_regular": 7499.01,
+          "precio_sin_impuestos": 6786.43,
+          "categoria": "Carnicería",
+          "unidad": "1kg"
+        },
+        {
+          "codigo": "1527864",
+          "nombre": "POLLO CONGELADO SOYCHU X KG",
+          "precio_regular": 3699.0,
+          "precio_sin_impuestos": 3347.51,
+          "categoria": "Carnicería",
+          "unidad": "1kg"
+        },
+        {
+          "codigo": "1762449",
+          "nombre": "POLLO CONGELADO X KG",
+          "precio_regular": 3999.0,
+          "precio_sin_impuestos": 3619.0,
+          "categoria": "Carnicería",
+          "unidad": "1kg"
+        },
+        {
+          "codigo": "1138813",
+          "nombre": "PURE TOMATE ARO SELECCION X520G",
+          "precio_regular": 699.0,
+          "precio_sin_impuestos": 577.69,
+          "categoria": "Almacén",
+          "unidad": "520g"
+        },
+        {
+          "codigo": "1676766",
+          "nombre": "PURE TOMATE INCA TETRABRIK X520G",
+          "precio_regular": 1206.53,
+          "precio_sin_impuestos": 997.13,
+          "categoria": "Almacén",
+          "unidad": "520g"
+        },
+        {
+          "codigo": "1748825",
+          "nombre": "QUESO CREMA CASANCREM 290G",
+          "precio_regular": 5086.96,
+          "precio_sin_impuestos": 4204.1,
+          "categoria": "Lácteos y Frescos",
+          "unidad": "290g"
+        },
+        {
+          "codigo": "279747",
+          "nombre": "QUESO CREMA TRADICIONAL LA PAULINA X290 GRS",
+          "precio_regular": 2729.0,
+          "precio_sin_impuestos": 2255.37,
+          "categoria": "Lácteos y Frescos",
+          "unidad": "290g"
+        },
+        {
+          "codigo": "421863",
+          "nombre": "QUESO CREMOSO ARO X KG",
+          "precio_regular": 8299.0,
+          "precio_sin_impuestos": 6858.68,
+          "categoria": "Lácteos y Frescos",
+          "unidad": "1kg"
+        },
+        {
+          "codigo": "81757",
+          "nombre": "QUESO CREMOSO SAINT PAULIN X KG",
+          "precio_regular": 8799.0,
+          "precio_sin_impuestos": 7271.9,
+          "categoria": "Lácteos y Frescos",
+          "unidad": "1kg"
+        },
+        {
+          "codigo": "1000225",
+          "nombre": "QUESO RALLADO ARO X 150 GR",
+          "precio_regular": 5760.87,
+          "precio_sin_impuestos": 4761.05,
+          "categoria": "Lácteos y Frescos",
+          "unidad": "150g"
+        },
+        {
+          "codigo": "33605",
+          "nombre": "QUESO RALLADO LA PAULINA X 150G",
+          "precio_regular": 6086.95,
+          "precio_sin_impuestos": 5030.54,
+          "categoria": "Lácteos y Frescos",
+          "unidad": "150g"
+        },
+        {
+          "codigo": "1097161",
+          "nombre": "SAL DOS ESTRELLAS FINA PQX500G",
+          "precio_regular": 579.0,
+          "precio_sin_impuestos": 478.51,
+          "categoria": "Almacén",
+          "unidad": "500g"
+        },
+        {
+          "codigo": "1649505",
+          "nombre": "SODA SIETE PADRES SIFON X1.75L",
+          "precio_regular": 1858.69,
+          "precio_sin_impuestos": 1536.11,
+          "categoria": "Bebidas",
+          "unidad": "1.75L"
+        },
+        {
+          "codigo": "1693848",
+          "nombre": "SODA SIFON SECCO X2L",
+          "precio_regular": 1695.66,
+          "precio_sin_impuestos": 1401.37,
+          "categoria": "Bebidas",
+          "unidad": "2L"
+        },
+        {
+          "codigo": "1622894",
+          "nombre": "TE COMUN LA VIRGINIA 25S X2GR",
+          "precio_regular": 1073.68,
+          "precio_sin_impuestos": 887.34,
+          "categoria": "Almacén",
+          "unidad": "25u"
+        },
+        {
+          "codigo": "1620736",
+          "nombre": "VINAGRE ALCOHOL SILVA SAPORI BT500CC",
+          "precio_regular": 1086.96,
+          "precio_sin_impuestos": 898.31,
+          "categoria": "Almacén",
+          "unidad": "500cc"
+        },
+        {
+          "codigo": "1787253",
+          "nombre": "VINAGRE DE ALCOHOL M&K BTX500ML",
+          "precio_regular": 951.08,
+          "precio_sin_impuestos": 786.02,
+          "categoria": "Almacén",
+          "unidad": "500ml"
+        },
+        {
+          "codigo": "1567371",
+          "nombre": "VINO TERMIDOR ECO TINTO TBX1L",
+          "precio_regular": 1549.01,
+          "precio_sin_impuestos": 1280.17,
+          "categoria": "Bebidas",
+          "unidad": "1L"
+        },
+        {
+          "codigo": "1523977",
+          "nombre": "VINO TORO AFA BLANCO TBX1L",
+          "precio_regular": 2372.34,
+          "precio_sin_impuestos": 1960.61,
+          "categoria": "Bebidas",
+          "unidad": "1L"
+        },
+        {
+          "codigo": "1788098",
+          "nombre": "YERBA LA TRANQUERA LIVIANA X500G",
+          "precio_regular": 1663.05,
+          "precio_sin_impuestos": 1374.42,
+          "categoria": "Almacén",
+          "unidad": "500g"
+        },
+        {
+          "codigo": "1015781",
+          "nombre": "YERBA M&K X500G",
+          "precio_regular": 1701.09,
+          "precio_sin_impuestos": 1405.86,
+          "categoria": "Almacén",
+          "unidad": "500g"
+        },
+        {
+          "codigo": "1748240",
+          "nombre": "YOGUR BEBIBLE GRAN COMPRA VAINILLA X900GR",
+          "precio_regular": 1899.0,
+          "precio_sin_impuestos": 1569.42,
+          "categoria": "Lácteos y Frescos",
+          "unidad": "900g"
+        },
+        {
+          "codigo": "1002265",
+          "nombre": "YOGUR ENTERO SACHET LA SERENISIMA VAINILLA X 900GR",
+          "precio_regular": 4940.21,
+          "precio_sin_impuestos": 4082.82,
+          "categoria": "Lácteos y Frescos",
+          "unidad": "900g"
+        }
+      ]
+    },
+    {
+      "supermercado": "Yaguar",
+      "tipo": "Mayorista / Catálogo Neuquén",
+      "items": [
+        {
+          "codigo": "89636",
+          "nombre": "QUESO CREMOSO HERBAL HORMA X KG",
+          "precio_regular": 7349.0,
+          "categoria": "Lácteos y Frescos",
+          "unidad": "1kg"
+        },
+        {
+          "codigo": "28888",
+          "nombre": "ARROZ PRIMOR LARGO FINO 00000 X 1 KG",
+          "precio_regular": 1049.0,
+          "categoria": "Almacén",
+          "unidad": "1kg"
+        },
+        {
+          "codigo": "79944",
+          "nombre": "MAYONESA HELLMANNS D/P X 237 GRS",
+          "precio_regular": 1149.0,
+          "categoria": "Almacén",
+          "unidad": "237g"
+        },
+        {
+          "codigo": "12053",
+          "nombre": "GASEOSA COCA COLA X 3 LT",
+          "precio_regular": 5999.0,
+          "categoria": "Bebidas",
+          "unidad": "3L"
+        },
+        {
+          "codigo": "87884",
+          "nombre": "FIAMBRE CERDO EMPAREDADOS 1946 CERDO/POLLO PIEZA X KG",
+          "precio_regular": 4799.0,
+          "categoria": "Fiambrería",
+          "unidad": "1kg"
+        },
+        {
+          "codigo": "70312",
+          "nombre": "CHOCLO SAN REMO AMARILLO GRANO X 300 GRS",
+          "precio_regular": 949.0,
+          "categoria": "Almacén",
+          "unidad": "300g"
+        },
+        {
+          "codigo": "25031",
+          "nombre": "PICADILLO SAFRA X 90 GRS",
+          "precio_regular": 599.0,
+          "categoria": "Almacén",
+          "unidad": "90g"
+        },
+        {
+          "codigo": "78771",
+          "nombre": "DESINFECTANTE LYSOFORM X 360 CC",
+          "precio_regular": 3249.0,
+          "categoria": "Limpieza",
+          "unidad": "360cc"
+        },
+        {
+          "codigo": "26927",
+          "nombre": "HARINA PUREZA CON LEVADURA PIZZA X 1 KG",
+          "precio_regular": 1449.0,
+          "categoria": "Almacén",
+          "unidad": "1kg"
+        },
+        {
+          "codigo": "7202",
+          "nombre": "ACEITE NATURA GIRASOL X 900 CC",
+          "precio_regular": 3579.0,
+          "categoria": "Almacén",
+          "unidad": "900cc"
+        },
+        {
+          "codigo": "3821",
+          "nombre": "ADEREZO RALLADO LA QUESERA X 40 GRS",
+          "precio_regular": 699.0,
+          "categoria": "Lácteos y Frescos",
+          "unidad": "40g"
+        },
+        {
+          "codigo": "86005",
+          "nombre": "RAVIOLES ARTESANALES",
+          "precio_regular": 2500.0,
+          "promo": "15% Descuento",
+          "categoria": "Pastas",
+          "unidad": "500g"
+        },
+        {
+          "codigo": "77799",
+          "nombre": "YERBA CBSE X 500 GRS",
+          "precio_regular": 1579.0,
+          "categoria": "Almacén",
+          "unidad": "500g"
+        },
+        {
+          "codigo": "80215",
+          "nombre": "DENTIFRICO COLGATE TRIPLE ACCION X 70 GRS",
+          "precio_regular": 1699.0,
+          "categoria": "Cuidado Personal",
+          "unidad": "70g"
+        },
+        {
+          "codigo": "78762",
+          "nombre": "SUAVIZANTE VIVERE D/P X 900 ML",
+          "precio_regular": 2299.0,
+          "categoria": "Limpieza",
+          "unidad": "900ml"
+        },
+        {
+          "codigo": "83681",
+          "nombre": "JABON EN POLVO GRANBY X 3 KG",
+          "precio_regular": 5339.0,
+          "categoria": "Limpieza",
+          "unidad": "3kg"
+        },
+        {
+          "codigo": "77133",
+          "nombre": "LAVANDINA AYUDIN CLASICA X 1 LT",
+          "precio_regular": 839.0,
+          "categoria": "Limpieza",
+          "unidad": "1L"
+        },
+        {
+          "codigo": "83010",
+          "nombre": "ROLLO DE COCINA SUSSEX CLASICO 3 ROLLOS X 50 PAÑOS",
+          "precio_regular": 1489.0,
+          "categoria": "Limpieza",
+          "unidad": "3 rollos"
+        },
+        {
+          "codigo": "75811",
+          "nombre": "BUDIN VALENCIANO / DCE MAMA X 170 GRS",
+          "precio_regular": 999.0,
+          "categoria": "Almacén",
+          "unidad": "170g"
+        },
+        {
+          "codigo": "85388",
+          "nombre": "PAN DULCE GAONA C/FRUTAS 400GR",
+          "precio_regular": 2799.0,
+          "categoria": "Almacén",
+          "unidad": "400g"
+        },
+        {
+          "codigo": "6950",
+          "nombre": "GARRAPIÑADA NAMUR MANI X 60 GRS",
+          "precio_regular": 689.0,
+          "categoria": "Almacén",
+          "unidad": "60g"
+        },
+        {
+          "codigo": "35932",
+          "nombre": "CERVEZA HEINEKEN LATA X 473 CC",
+          "precio_regular": 2649.0,
+          "categoria": "Bebidas",
+          "unidad": "473ml"
+        },
+        {
+          "codigo": "35933",
+          "nombre": "CERVEZA SCHNEIDER LATA X 473 CC",
+          "precio_regular": 1749.0,
+          "categoria": "Bebidas",
+          "unidad": "473ml"
+        },
+        {
+          "codigo": "212",
+          "nombre": "APERITIVO CAMPARI X 750 CC",
+          "precio_regular": 8699.0,
+          "categoria": "Bebidas",
+          "unidad": "750ml"
+        },
+        {
+          "codigo": "26901",
+          "nombre": "ESPUMANTE FEDERICO DE ALVEAR X 750 CC",
+          "precio_regular": 3899.0,
+          "categoria": "Bebidas",
+          "unidad": "750ml"
+        }
+      ]
+    }
+  ]
+}
