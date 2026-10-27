@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Header } from './components/Header';
+import { QuickActionCards } from './components/QuickActionCards';
 import { BentoDealsGrid } from './components/BentoDealsGrid';
 import { DealsRankingSection } from './components/DealsRankingSection';
 import { CategoryFilters } from './components/CategoryFilters';
@@ -13,7 +14,7 @@ import { INITIAL_PRODUCTS, INITIAL_PRICE_OBSERVATIONS, MOCK_PRICE_HISTORIES } fr
 import { fetchLiveRadarData } from './services/productService';
 import { useBasket } from './context/BasketContext';
 import { analyzeProductPrices } from './utils/priceAnalyzer';
-import { Shield, Database, Cloud, CheckCircle2 } from 'lucide-react';
+import { Shield, Database, Cloud, CheckCircle2, ShoppingCart } from 'lucide-react';
 import { Product, PriceObservation } from './types';
 
 export const AppContent: React.FC = () => {
@@ -25,7 +26,9 @@ export const AppContent: React.FC = () => {
     isScannerOpen,
     setIsScannerOpen,
     isMapOpen,
-    setIsMapOpen
+    setIsMapOpen,
+    toggleBasket,
+    itemCount
   } = useBasket();
 
   const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
@@ -115,17 +118,17 @@ export const AppContent: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col selection:bg-cyan-500 selection:text-slate-950 font-['Plus_Jakarta_Sans',sans-serif]">
       
-      {/* Header with Search, Deals, Map and Scanner triggers */}
+      {/* Header with Search, Deals, Map and Embedded Scanner */}
       <Header
         onSearchFocus={() => setIsSearchFocused(true)}
         onScrollToDeals={scrollToDeals}
       />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 relative">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 relative">
         
         {/* Supabase Cloud Connection Status Badge */}
-        <div className="mb-4 flex items-center justify-between flex-wrap gap-2 text-xs">
+        <div className="mb-3 flex items-center justify-between flex-wrap gap-2 text-xs">
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border bg-white shadow-2xs">
             {connectionStatus.isLiveCloud ? (
               <>
@@ -142,16 +145,19 @@ export const AppContent: React.FC = () => {
               <>
                 <span className="h-2 w-2 rounded-full bg-cyan-500"></span>
                 <CheckCircle2 className="w-3.5 h-3.5 text-cyan-600" />
-                <span className="font-semibold text-slate-800">Base de Datos Local Resiliente</span>
+                <span className="font-semibold text-slate-800">Base Local Resiliente</span>
                 <span className="text-slate-400">|</span>
                 <span className="text-slate-500 font-mono text-[11px]">{connectionStatus.message}</span>
               </>
             )}
           </div>
-          <div className="text-[11px] text-slate-400 font-mono">
-            Zona: Neuquén Capital (CP 8300)
+          <div className="text-[11px] text-slate-500 font-medium">
+            📍 Neuquén Capital (CP 8300)
           </div>
         </div>
+
+        {/* 4 Quick Action Cards (Ofertas, Mapa, Scanner, Changuito) - Superprecio Style */}
+        <QuickActionCards onScrollToDeals={scrollToDeals} />
 
         {/* Floating Autocomplete Popover */}
         <div className="relative">
@@ -190,7 +196,7 @@ export const AppContent: React.FC = () => {
         <div className="mb-4">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">
+              <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight">
                 {searchQuery ? `Resultados para "${searchQuery}"` : 'Catálogo Completo de Precios Comparados'}
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
@@ -209,7 +215,7 @@ export const AppContent: React.FC = () => {
 
         {/* Products Grid */}
         {filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
             {filteredProducts.map(product => (
               <ProductCard
                 key={product.id}
@@ -236,7 +242,7 @@ export const AppContent: React.FC = () => {
       </main>
 
       {/* Footer & Transparency Statement */}
-      <footer className="bg-slate-900 border-t border-slate-800 py-10 mt-16 text-xs text-slate-400">
+      <footer className="bg-slate-900 border-t border-slate-800 py-10 mt-16 text-xs text-slate-400 mb-14 md:mb-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 border-b border-slate-800 pb-6">
             <div className="flex items-center gap-2.5">
@@ -264,6 +270,20 @@ export const AppContent: React.FC = () => {
           </p>
         </div>
       </footer>
+
+      {/* Floating Action Button (FAB) - Mobile Cart (Superprecio Style) */}
+      <button
+        onClick={toggleBasket}
+        className="md:hidden fixed bottom-5 right-5 z-40 w-14 h-14 rounded-full bg-gradient-to-tr from-cyan-600 via-indigo-600 to-emerald-600 text-white shadow-2xl shadow-cyan-600/50 flex items-center justify-center active:scale-90 transition-transform border-2 border-white/40 cursor-pointer"
+        title="Abrir Canasta Inteligente"
+      >
+        <ShoppingCart className="w-6 h-6" />
+        {itemCount > 0 && (
+          <span className="absolute -top-1 -right-1 bg-amber-400 text-slate-950 font-black text-xs w-5 h-5 rounded-full flex items-center justify-center border-2 border-slate-900 shadow-md">
+            {itemCount}
+          </span>
+        )}
+      </button>
 
       {/* Modals & Slide-over Drawers */}
       <ProductDetailModal
