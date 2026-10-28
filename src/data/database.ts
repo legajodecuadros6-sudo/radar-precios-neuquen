@@ -16,6 +16,20 @@ export const INITIAL_PRODUCTS: Product[] = [
     is_cesta_basica: true
   },
   {
+    id: 'prod_aceite_natura_1500',
+    ean: '7790272001029',
+    ean_aliases: ['7790272001029', '7790272001005'],
+    name: 'Aceite de Girasol 1.5 L',
+    brand: 'Natura',
+    category: 'Almacén',
+    image_url: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?w=500&auto=format&fit=crop&q=60',
+    unit_measure: 'litro',
+    net_content_number: 1.5,
+    net_content_str: '1.5 L',
+    description: 'Aceite de girasol puro enriquecido con Vitamina E en envase familiar de 1.5 L.',
+    is_cesta_basica: true
+  },
+  {
     id: 'prod_leche_serenisima_1l',
     ean: '7790742357007',
     ean_aliases: ['7790742357007', '7790742335500', '7790310000001', '7793940428003'],
@@ -246,6 +260,96 @@ export const INITIAL_PRODUCTS: Product[] = [
 ];
 
 export const INITIAL_PRICE_OBSERVATIONS: PriceObservation[] = [
+  // Aceite Natura 1.5 L (EAN: 7790272001029)
+  {
+    id: 'obs_natura_1500_makro',
+    product_id: 'prod_aceite_natura_1500',
+    supermarket_id: 'makro',
+    branch_name: 'Makro Mayorista Neuquén',
+    regular_price: 5299,
+    current_price: 4999,
+    discount_percentage: 6,
+    promo_label: 'Precio Mayorista',
+    price_per_unit: 3332,
+    unit_label: '$ / L',
+    query_date: '2026-10-27',
+    is_verified: true,
+    is_demo: false,
+    source_url: 'https://makro.com.ar/neuquen'
+  },
+  {
+    id: 'obs_natura_1500_yaguar',
+    product_id: 'prod_aceite_natura_1500',
+    supermarket_id: 'yaguar',
+    branch_name: 'Yaguar Mayorista Neuquén',
+    regular_price: 5049,
+    current_price: 5049,
+    price_per_unit: 3366,
+    unit_label: '$ / L',
+    query_date: '2026-10-27',
+    is_verified: true,
+    is_demo: false,
+    source_url: 'https://yaguar.com.ar/neuquen/'
+  },
+  {
+    id: 'obs_natura_1500_changomas',
+    product_id: 'prod_aceite_natura_1500',
+    supermarket_id: 'changomas',
+    branch_name: 'Hiper ChangoMás Neuquén (Perticone)',
+    regular_price: 5899,
+    current_price: 5899,
+    price_per_unit: 3932,
+    unit_label: '$ / L',
+    query_date: '2026-10-27',
+    is_verified: true,
+    is_demo: false,
+    source_url: 'https://www.masonline.com.ar/'
+  },
+  {
+    id: 'obs_natura_1500_coto',
+    product_id: 'prod_aceite_natura_1500',
+    supermarket_id: 'coto',
+    branch_name: 'Coto Hipermercado Alto Comahue',
+    regular_price: 7464,
+    current_price: 5970,
+    discount_percentage: 20,
+    promo_label: '20% Descuento Digital',
+    price_per_unit: 3980,
+    unit_label: '$ / L',
+    query_date: '2026-10-27',
+    is_verified: true,
+    is_demo: false,
+    source_url: 'https://www.cotodigital3.com.ar'
+  },
+  {
+    id: 'obs_natura_1500_coop',
+    product_id: 'prod_aceite_natura_1500',
+    supermarket_id: 'cooperativa_obrera',
+    branch_name: 'Cooperativa Obrera Sucursal 80 (Rivadavia)',
+    regular_price: 6150,
+    current_price: 6150,
+    price_per_unit: 4100,
+    unit_label: '$ / L',
+    query_date: '2026-10-27',
+    is_verified: true,
+    is_demo: false,
+    source_url: 'https://www.lacoopeencasa.coop/'
+  },
+  {
+    id: 'obs_natura_1500_anonima',
+    product_id: 'prod_aceite_natura_1500',
+    supermarket_id: 'la_anonima',
+    branch_name: 'La Anónima Paseo Patagonia',
+    regular_price: 6490,
+    current_price: 6490,
+    price_per_unit: 4326,
+    unit_label: '$ / L',
+    query_date: '2026-10-27',
+    is_verified: true,
+    is_demo: false,
+    source_url: 'https://supermercado.laanonimaonline.com'
+  },
+
   // Aceite Natura 900ml
   {
     id: 'obs_1',
@@ -755,6 +859,15 @@ export const INITIAL_PRICE_OBSERVATIONS: PriceObservation[] = [
 ];
 
 export const MOCK_PRICE_HISTORIES: Record<string, PriceHistoryPoint[]> = {
+  prod_aceite_natura_1500: [
+    { date: '2026-08-01', coto: 5200, la_anonima: 5400, changomas: 5100, makro: 4600, yaguar: 4550, min_price: 4550, avg_price: 4970 },
+    { date: '2026-08-15', coto: 5500, la_anonima: 5650, changomas: 5350, makro: 4750, yaguar: 4700, min_price: 4700, avg_price: 5190 },
+    { date: '2026-09-01', coto: 5850, la_anonima: 5950, changomas: 5600, makro: 4900, yaguar: 4850, min_price: 4850, avg_price: 5430 },
+    { date: '2026-09-15', coto: 6200, la_anonima: 6300, changomas: 5750, makro: 4950, yaguar: 4900, min_price: 4900, avg_price: 5620 },
+    { date: '2026-10-01', coto: 6600, la_anonima: 6490, changomas: 5899, makro: 4999, yaguar: 5049, min_price: 4999, avg_price: 5807 },
+    { date: '2026-10-15', coto: 7100, la_anonima: 6490, changomas: 5899, makro: 4999, yaguar: 5049, min_price: 4999, avg_price: 5907 },
+    { date: '2026-10-27', coto: 5970, la_anonima: 6490, changomas: 5899, makro: 4999, yaguar: 5049, min_price: 4999, avg_price: 5681 }
+  ],
   prod_aceite_natura_900: [
     { date: '2026-08-01', coto: 3100, la_anonima: 3200, changomas: 3150, makro: 2900, yaguar: 2850, min_price: 2850, avg_price: 3040 },
     { date: '2026-08-15', coto: 3250, la_anonima: 3350, changomas: 3300, makro: 3000, yaguar: 2950, min_price: 2950, avg_price: 3170 },

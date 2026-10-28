@@ -304,59 +304,78 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
     }
   };
 
-  // Iniciar la cámara automáticamente al montar el modal
+  // Iniciar la cámara automáticamente al montar el modal y escuchar tecla Escape
   useEffect(() => {
     const timer = setTimeout(() => {
       startCamera();
     }, 250);
 
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        stopCamera();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
     return () => {
       clearTimeout(timer);
+      window.removeEventListener('keydown', handleKeyDown);
       stopCamera();
     };
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
-      <div className="bg-slate-900 text-white w-full max-w-lg rounded-3xl shadow-2xl border border-slate-800 overflow-hidden flex flex-col">
+    <div 
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          stopCamera();
+          onClose();
+        }
+      }}
+      className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-md flex flex-col items-center justify-start sm:justify-center p-2 sm:p-6 animate-in fade-in duration-200"
+    >
+      <div className="bg-slate-900 text-white w-full max-w-lg rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-800 flex flex-col my-auto max-h-[92dvh] sm:max-h-[90vh] overflow-hidden">
         
-        {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-800/80 flex items-center justify-between bg-slate-950/50">
+        {/* Header Sticky - Siempre visible y accesible en cualquier celular */}
+        <div className="p-3.5 sm:p-4 border-b border-slate-800/80 flex items-center justify-between bg-slate-950/95 sticky top-0 z-30 shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center">
-              <ScanBarcode className="w-5 h-5" />
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center shrink-0">
+              <ScanBarcode className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-extrabold text-sm sm:text-base text-white">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <h3 className="font-extrabold text-xs sm:text-base text-white">
                   Lector de Código de Barras
                 </h3>
                 {engineType === 'native' && (
-                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                    Motor Lens HD
+                  <span className="text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                    Lens HD
                   </span>
                 )}
               </div>
-              <p className="text-[11px] text-slate-400">
-                Apunta al código EAN de cualquier producto de góndola
+              <p className="text-[10px] sm:text-[11px] text-slate-400">
+                Apunta al código EAN de cualquier producto
               </p>
             </div>
           </div>
           <button
+            type="button"
             onClick={() => {
               stopCamera();
               onClose();
             }}
-            className="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+            className="w-10 h-10 sm:w-9 sm:h-9 rounded-full bg-slate-800 hover:bg-slate-700 active:scale-90 text-slate-200 hover:text-white flex items-center justify-center transition-all cursor-pointer border border-slate-700 shadow-md touch-manipulation"
+            title="Cerrar (Esc)"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Viewport de Escaneo con Láser Animado y Enfoque */}
-        <div className="p-4 sm:p-6 space-y-4">
+        <div className="overflow-y-auto flex-1 p-3.5 sm:p-5 space-y-3.5">
           
-          <div className="relative rounded-2xl overflow-hidden bg-black border border-slate-800 aspect-4/3 flex flex-col items-center justify-center text-white shadow-inner">
+          <div className="relative rounded-2xl overflow-hidden bg-black border border-slate-800 h-48 sm:h-64 flex flex-col items-center justify-center text-white shadow-inner">
             
             {/* 1. Video Element para Motor Nativo (Prioridad 1) */}
             <video
@@ -540,7 +559,8 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
             </span>
             <div className="flex flex-wrap gap-1.5">
               {[
-                { label: '🌻 Aceite Natura', ean: '7790272001005' },
+                { label: '🌻 Natura 1.5 L', ean: '7790272001029' },
+                { label: '🌻 Natura 900 ml', ean: '7790272001005' },
                 { label: '🌿 Yerba Playadito', ean: '7793704000928' },
                 { label: '🥛 Leche Serenísima', ean: '7790742357007' },
                 { label: '🍝 Fideos Matarazzo', ean: '7790070336293' },
@@ -555,6 +575,21 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Botón de Cierre Inferior (Ultra accesible en móviles) */}
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={() => {
+                stopCamera();
+                onClose();
+              }}
+              className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 active:scale-98 text-slate-200 font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer border border-slate-700 shadow-xs"
+            >
+              <X className="w-4 h-4" />
+              Cerrar Escáner
+            </button>
           </div>
 
         </div>
