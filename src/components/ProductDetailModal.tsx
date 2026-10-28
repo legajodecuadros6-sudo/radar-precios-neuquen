@@ -66,7 +66,11 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             <img
               src={product.image_url}
               alt={product.name}
-              className="w-24 h-24 sm:w-28 sm:h-28 object-cover rounded-2xl bg-slate-100 border border-slate-200 shrink-0"
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src =
+                  'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=400&q=80';
+              }}
+              className="w-24 h-24 sm:w-28 sm:h-28 object-contain p-2 rounded-2xl bg-white border border-slate-200 shrink-0 shadow-sm"
             />
             <div className="flex-1 min-w-0">
               <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">

@@ -31,12 +31,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       
       {/* Product Image & Badges */}
       <div className="p-4 pb-0 relative">
-        <div className="relative aspect-4/3 rounded-2xl overflow-hidden bg-slate-50 border border-slate-100 flex items-center justify-center">
+        <div className="relative aspect-4/3 rounded-2xl overflow-hidden bg-white border border-slate-100 flex items-center justify-center p-2">
           <img
             src={product.image_url}
             alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
             loading="lazy"
+            onError={(e) => {
+              // Fallback si la imagen no carga
+              (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=500&auto=format&fit=crop&q=80';
+            }}
           />
 
           {/* Deal Flag Badge */}
