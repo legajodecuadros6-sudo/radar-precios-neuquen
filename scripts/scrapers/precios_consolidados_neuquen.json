@@ -1,62 +1,29 @@
 {
   "zona": "Neuquén Capital (CP 8300)",
-  "actualizado_at": "2026-10-27T23:21:24.608102",
-  "total_observaciones": 89,
+  "actualizado_at": "2026-10-28T12:37:03.516727",
+  "total_observaciones": 67,
   "items": [
     {
       "product_id": "prod_aceite_natura_1500",
-      "supermarket_id": "la_anonima_rioja",
-      "branch_name": "La Anonima (NEUQUEN CENTRO)",
-      "chain_name": "La Anonima",
-      "regular_price": 6200.0,
-      "offer_price": 6200.0,
-      "discount_percentage": 0,
-      "promo_condition": null,
-      "source": "SEPA CloudFront"
-    },
-    {
-      "product_id": "prod_aceite_natura_1500",
-      "supermarket_id": "vea_lainez",
-      "branch_name": "Vea (Lainez)",
-      "chain_name": "Vea",
-      "regular_price": 5990.0,
-      "offer_price": 5990.0,
-      "discount_percentage": 0,
-      "promo_condition": null,
-      "source": "SEPA CloudFront"
-    },
-    {
-      "product_id": "prod_aceite_natura_1500",
-      "supermarket_id": "coto_alto_comahue",
-      "branch_name": "COTO CICSA (NEUQUEN)",
-      "chain_name": "COTO CICSA",
-      "regular_price": 7464.0,
-      "offer_price": 7464.0,
-      "discount_percentage": 0,
-      "promo_condition": null,
-      "source": "SEPA CloudFront"
-    },
-    {
-      "product_id": "prod_aceite_natura_1500",
       "supermarket_id": "changomas_perticone",
-      "branch_name": "HiperChangomas (Neuquén)",
-      "chain_name": "HiperChangomas",
+      "branch_name": "Hiper ChangoMás Perticone",
+      "chain_name": "ChangoMás",
       "regular_price": 7469.0,
-      "offer_price": 7469.0,
-      "discount_percentage": 0,
-      "promo_condition": null,
-      "source": "SEPA CloudFront"
+      "offer_price": 5899.0,
+      "discount_percentage": 21,
+      "promo_condition": "21% OFF Online",
+      "source": "VTEX ChangoMás"
     },
     {
       "product_id": "prod_aceite_natura_1500",
       "supermarket_id": "cooperativa_chocon",
-      "branch_name": "Cooperativa Obrera Limitada de Consumo y Vivienda (Neuquen II)",
-      "chain_name": "Cooperativa Obrera Limitada de Consumo y Vivienda",
-      "regular_price": 6900.0,
-      "offer_price": 6900.0,
+      "branch_name": "Cooperativa Obrera Suc. Chocón / Centro",
+      "chain_name": "Cooperativa Obrera",
+      "regular_price": 7490.0,
+      "offer_price": 7490.0,
       "discount_percentage": 0,
       "promo_condition": null,
-      "source": "SEPA CloudFront"
+      "source": "API Cooperativa Obrera"
     },
     {
       "product_id": "prod_aceite_natura_1500",
@@ -82,47 +49,25 @@
     },
     {
       "product_id": "prod_aceite_natura_900",
-      "supermarket_id": "la_anonima_rioja",
-      "branch_name": "La Anonima (NEUQUEN CENTRO)",
-      "chain_name": "La Anonima",
-      "regular_price": 4750.0,
-      "offer_price": 4750.0,
-      "discount_percentage": 0,
-      "promo_condition": null,
-      "source": "SEPA CloudFront"
-    },
-    {
-      "product_id": "prod_aceite_natura_900",
-      "supermarket_id": "coto_alto_comahue",
-      "branch_name": "COTO CICSA (NEUQUEN)",
-      "chain_name": "COTO CICSA",
-      "regular_price": 4997.9,
-      "offer_price": 4997.9,
-      "discount_percentage": 0,
-      "promo_condition": null,
-      "source": "SEPA CloudFront"
-    },
-    {
-      "product_id": "prod_aceite_natura_900",
       "supermarket_id": "changomas_perticone",
-      "branch_name": "HiperChangomas (Neuquén)",
-      "chain_name": "HiperChangomas",
-      "regular_price": 4719.0,
-      "offer_price": 4719.0,
+      "branch_name": "Hiper ChangoMás Perticone",
+      "chain_name": "ChangoMás",
+      "regular_price": 6599.0,
+      "offer_price": 6599.0,
       "discount_percentage": 0,
       "promo_condition": null,
-      "source": "SEPA CloudFront"
+      "source": "VTEX ChangoMás"
     },
     {
       "product_id": "prod_aceite_natura_900",
       "supermarket_id": "cooperativa_chocon",
-      "branch_name": "Cooperativa Obrera Limitada de Consumo y Vivienda (Neuquen II)",
-      "chain_name": "Cooperativa Obrera Limitada de Consumo y Vivienda",
-      "regular_price": 4649.0,
-      "offer_price": 4649.0,
+      "branch_name": "Cooperativa Obrera Suc. Chocón / Centro",
+      "chain_name": "Cooperativa Obrera",
+      "regular_price": 7490.0,
+      "offer_price": 7490.0,
       "discount_percentage": 0,
       "promo_condition": null,
-      "source": "SEPA CloudFront"
+      "source": "API Cooperativa Obrera"
     },
     {
       "product_id": "prod_aceite_natura_900",
@@ -192,47 +137,25 @@
     },
     {
       "product_id": "prod_yerba_playadito_1k",
-      "supermarket_id": "la_anonima_rioja",
-      "branch_name": "La Anonima (NEUQUEN CENTRO)",
-      "chain_name": "La Anonima",
-      "regular_price": 4700.0,
-      "offer_price": 4700.0,
-      "discount_percentage": 0,
-      "promo_condition": null,
-      "source": "SEPA CloudFront"
-    },
-    {
-      "product_id": "prod_yerba_playadito_1k",
-      "supermarket_id": "coto_alto_comahue",
-      "branch_name": "COTO CICSA (NEUQUEN)",
-      "chain_name": "COTO CICSA",
-      "regular_price": 5565.0,
-      "offer_price": 5565.0,
-      "discount_percentage": 0,
-      "promo_condition": null,
-      "source": "SEPA CloudFront"
-    },
-    {
-      "product_id": "prod_yerba_playadito_1k",
       "supermarket_id": "changomas_perticone",
-      "branch_name": "HiperChangomas (Neuquén)",
-      "chain_name": "HiperChangomas",
-      "regular_price": 4809.0,
-      "offer_price": 4809.0,
+      "branch_name": "Hiper ChangoMás Perticone",
+      "chain_name": "ChangoMás",
+      "regular_price": 5289.0,
+      "offer_price": 5289.0,
       "discount_percentage": 0,
       "promo_condition": null,
-      "source": "SEPA CloudFront"
+      "source": "VTEX ChangoMás"
     },
     {
       "product_id": "prod_yerba_playadito_1k",
       "supermarket_id": "cooperativa_chocon",
-      "branch_name": "Cooperativa Obrera Limitada de Consumo y Vivienda (Neuquen II)",
-      "chain_name": "Cooperativa Obrera Limitada de Consumo y Vivienda",
-      "regular_price": 5199.0,
-      "offer_price": 5199.0,
+      "branch_name": "Cooperativa Obrera Suc. Chocón / Centro",
+      "chain_name": "Cooperativa Obrera",
+      "regular_price": 5190.0,
+      "offer_price": 5190.0,
       "discount_percentage": 0,
       "promo_condition": null,
-      "source": "SEPA CloudFront"
+      "source": "API Cooperativa Obrera"
     },
     {
       "product_id": "prod_yerba_playadito_1k",
@@ -258,22 +181,11 @@
     },
     {
       "product_id": "prod_arroz_primor_1k",
-      "supermarket_id": "coto_alto_comahue",
-      "branch_name": "California Supermercados (Local 3)",
-      "chain_name": "California Supermercados",
-      "regular_price": 420.0,
-      "offer_price": 420.0,
-      "discount_percentage": 0,
-      "promo_condition": null,
-      "source": "SEPA CloudFront"
-    },
-    {
-      "product_id": "prod_arroz_primor_1k",
       "supermarket_id": "changomas_perticone",
       "branch_name": "Hiper ChangoMás Perticone",
       "chain_name": "ChangoMás",
-      "regular_price": 3729.0,
-      "offer_price": 3729.0,
+      "regular_price": 1569.0,
+      "offer_price": 1569.0,
       "discount_percentage": 0,
       "promo_condition": null,
       "source": "VTEX ChangoMás"
@@ -313,58 +225,25 @@
     },
     {
       "product_id": "prod_fideos_matarazzo_500g",
-      "supermarket_id": "la_anonima_rioja",
-      "branch_name": "La Anonima (NEUQUEN CENTRO)",
-      "chain_name": "La Anonima",
-      "regular_price": 2450.0,
-      "offer_price": 2450.0,
-      "discount_percentage": 0,
-      "promo_condition": null,
-      "source": "SEPA CloudFront"
-    },
-    {
-      "product_id": "prod_fideos_matarazzo_500g",
-      "supermarket_id": "vea_lainez",
-      "branch_name": "Vea (Lainez)",
-      "chain_name": "Vea",
-      "regular_price": 2190.0,
-      "offer_price": 2190.0,
-      "discount_percentage": 0,
-      "promo_condition": null,
-      "source": "SEPA CloudFront"
-    },
-    {
-      "product_id": "prod_fideos_matarazzo_500g",
-      "supermarket_id": "coto_alto_comahue",
-      "branch_name": "COTO CICSA (NEUQUEN)",
-      "chain_name": "COTO CICSA",
-      "regular_price": 2332.0,
-      "offer_price": 2332.0,
-      "discount_percentage": 0,
-      "promo_condition": null,
-      "source": "SEPA CloudFront"
-    },
-    {
-      "product_id": "prod_fideos_matarazzo_500g",
       "supermarket_id": "changomas_perticone",
-      "branch_name": "HiperChangomas (Neuquén)",
-      "chain_name": "HiperChangomas",
-      "regular_price": 2419.0,
-      "offer_price": 2419.0,
+      "branch_name": "Hiper ChangoMás Perticone",
+      "chain_name": "ChangoMás",
+      "regular_price": 4999.0,
+      "offer_price": 4999.0,
       "discount_percentage": 0,
       "promo_condition": null,
-      "source": "SEPA CloudFront"
+      "source": "VTEX ChangoMás"
     },
     {
       "product_id": "prod_fideos_matarazzo_500g",
       "supermarket_id": "cooperativa_chocon",
-      "branch_name": "Cooperativa Obrera Limitada de Consumo y Vivienda (Neuquen II)",
-      "chain_name": "Cooperativa Obrera Limitada de Consumo y Vivienda",
-      "regular_price": 2205.0,
-      "offer_price": 2205.0,
+      "branch_name": "Cooperativa Obrera Suc. Chocón / Centro",
+      "chain_name": "Cooperativa Obrera",
+      "regular_price": 1990.0,
+      "offer_price": 1990.0,
       "discount_percentage": 0,
       "promo_condition": null,
-      "source": "SEPA CloudFront"
+      "source": "API Cooperativa Obrera"
     },
     {
       "product_id": "prod_fideos_matarazzo_500g",
@@ -394,9 +273,9 @@
       "branch_name": "Hiper ChangoMás Perticone",
       "chain_name": "ChangoMás",
       "regular_price": 17199.0,
-      "offer_price": 17199.0,
-      "discount_percentage": 0,
-      "promo_condition": null,
+      "offer_price": 14619.15,
+      "discount_percentage": 15,
+      "promo_condition": "15% OFF Online",
       "source": "VTEX ChangoMás"
     },
     {
@@ -438,9 +317,9 @@
       "branch_name": "Hiper ChangoMás Perticone",
       "chain_name": "ChangoMás",
       "regular_price": 3989.0,
-      "offer_price": 3989.0,
-      "discount_percentage": 0,
-      "promo_condition": null,
+      "offer_price": 3390.65,
+      "discount_percentage": 15,
+      "promo_condition": "15% OFF Online",
       "source": "VTEX ChangoMás"
     },
     {
@@ -478,58 +357,25 @@
     },
     {
       "product_id": "prod_dulce_leche_ilolay_400g",
-      "supermarket_id": "la_anonima_rioja",
-      "branch_name": "La Anonima (NEUQUEN CENTRO)",
-      "chain_name": "La Anonima",
-      "regular_price": 4200.0,
-      "offer_price": 3360.0,
-      "discount_percentage": 20,
-      "promo_condition": "20% de descuento con cualquier medio de pago - Vigencia: Desde el 01/10/2026 Hasta el 31/10/2026 - Stock: Hasta agotar stock.",
-      "source": "SEPA CloudFront"
-    },
-    {
-      "product_id": "prod_dulce_leche_ilolay_400g",
-      "supermarket_id": "vea_lainez",
-      "branch_name": "Vea (Lainez)",
-      "chain_name": "Vea",
-      "regular_price": 4190.0,
-      "offer_price": 4190.0,
-      "discount_percentage": 0,
-      "promo_condition": null,
-      "source": "SEPA CloudFront"
-    },
-    {
-      "product_id": "prod_dulce_leche_ilolay_400g",
-      "supermarket_id": "coto_alto_comahue",
-      "branch_name": "COTO CICSA (NEUQUEN)",
-      "chain_name": "COTO CICSA",
-      "regular_price": 4175.0,
-      "offer_price": 4175.0,
-      "discount_percentage": 0,
-      "promo_condition": null,
-      "source": "SEPA CloudFront"
-    },
-    {
-      "product_id": "prod_dulce_leche_ilolay_400g",
       "supermarket_id": "changomas_perticone",
-      "branch_name": "HiperChangomas (Neuquén)",
-      "chain_name": "HiperChangomas",
-      "regular_price": 4359.0,
-      "offer_price": 4359.0,
+      "branch_name": "Hiper ChangoMás Perticone",
+      "chain_name": "ChangoMás",
+      "regular_price": 4999.0,
+      "offer_price": 4999.0,
       "discount_percentage": 0,
       "promo_condition": null,
-      "source": "SEPA CloudFront"
+      "source": "VTEX ChangoMás"
     },
     {
       "product_id": "prod_dulce_leche_ilolay_400g",
       "supermarket_id": "cooperativa_chocon",
-      "branch_name": "Cooperativa Obrera Limitada de Consumo y Vivienda (Neuquen II)",
-      "chain_name": "Cooperativa Obrera Limitada de Consumo y Vivienda",
-      "regular_price": 4200.0,
-      "offer_price": 4200.0,
+      "branch_name": "Cooperativa Obrera Suc. Chocón / Centro",
+      "chain_name": "Cooperativa Obrera",
+      "regular_price": 3595.0,
+      "offer_price": 3595.0,
       "discount_percentage": 0,
       "promo_condition": null,
-      "source": "SEPA CloudFront"
+      "source": "API Cooperativa Obrera"
     },
     {
       "product_id": "prod_dulce_leche_ilolay_400g",
@@ -555,58 +401,25 @@
     },
     {
       "product_id": "prod_harina_morixe_1k",
-      "supermarket_id": "la_anonima_rioja",
-      "branch_name": "La Anonima (NEUQUEN CENTRO)",
-      "chain_name": "La Anonima",
-      "regular_price": 890.0,
-      "offer_price": 890.0,
-      "discount_percentage": 0,
-      "promo_condition": null,
-      "source": "SEPA CloudFront"
-    },
-    {
-      "product_id": "prod_harina_morixe_1k",
-      "supermarket_id": "vea_lainez",
-      "branch_name": "Vea (Lainez)",
-      "chain_name": "Vea",
-      "regular_price": 990.0,
-      "offer_price": 990.0,
-      "discount_percentage": 0,
-      "promo_condition": null,
-      "source": "SEPA CloudFront"
-    },
-    {
-      "product_id": "prod_harina_morixe_1k",
-      "supermarket_id": "coto_alto_comahue",
-      "branch_name": "COTO CICSA (NEUQUEN)",
-      "chain_name": "COTO CICSA",
-      "regular_price": 1176.6,
-      "offer_price": 1176.6,
-      "discount_percentage": 0,
-      "promo_condition": null,
-      "source": "SEPA CloudFront"
-    },
-    {
-      "product_id": "prod_harina_morixe_1k",
       "supermarket_id": "changomas_perticone",
-      "branch_name": "HiperChangomas (Neuquén)",
-      "chain_name": "HiperChangomas",
-      "regular_price": 1249.0,
-      "offer_price": 1249.0,
+      "branch_name": "Hiper ChangoMás Perticone",
+      "chain_name": "ChangoMás",
+      "regular_price": 1109.0,
+      "offer_price": 1109.0,
       "discount_percentage": 0,
       "promo_condition": null,
-      "source": "SEPA CloudFront"
+      "source": "VTEX ChangoMás"
     },
     {
       "product_id": "prod_harina_morixe_1k",
       "supermarket_id": "cooperativa_chocon",
-      "branch_name": "Cooperativa Obrera Limitada de Consumo y Vivienda (Neuquen II)",
-      "chain_name": "Cooperativa Obrera Limitada de Consumo y Vivienda",
-      "regular_price": 1200.0,
-      "offer_price": 1200.0,
+      "branch_name": "Cooperativa Obrera Suc. Chocón / Centro",
+      "chain_name": "Cooperativa Obrera",
+      "regular_price": 2090.0,
+      "offer_price": 2090.0,
       "discount_percentage": 0,
       "promo_condition": null,
-      "source": "SEPA CloudFront"
+      "source": "API Cooperativa Obrera"
     },
     {
       "product_id": "prod_harina_morixe_1k",
@@ -635,8 +448,8 @@
       "supermarket_id": "changomas_perticone",
       "branch_name": "Hiper ChangoMás Perticone",
       "chain_name": "ChangoMás",
-      "regular_price": 4989.0,
-      "offer_price": 4989.0,
+      "regular_price": 4809.0,
+      "offer_price": 4809.0,
       "discount_percentage": 0,
       "promo_condition": null,
       "source": "VTEX ChangoMás"
@@ -676,58 +489,25 @@
     },
     {
       "product_id": "prod_coca_cola_3l",
-      "supermarket_id": "la_anonima_rioja",
-      "branch_name": "La Anonima (NEUQUEN CENTRO)",
-      "chain_name": "La Anonima",
-      "regular_price": 6350.0,
-      "offer_price": 6350.0,
-      "discount_percentage": 0,
-      "promo_condition": null,
-      "source": "SEPA CloudFront"
-    },
-    {
-      "product_id": "prod_coca_cola_3l",
-      "supermarket_id": "vea_lainez",
-      "branch_name": "Vea (Lainez)",
-      "chain_name": "Vea",
-      "regular_price": 6290.0,
-      "offer_price": 6290.0,
-      "discount_percentage": 0,
-      "promo_condition": null,
-      "source": "SEPA CloudFront"
-    },
-    {
-      "product_id": "prod_coca_cola_3l",
-      "supermarket_id": "coto_alto_comahue",
-      "branch_name": "COTO CICSA (NEUQUEN)",
-      "chain_name": "COTO CICSA",
-      "regular_price": 6290.0,
-      "offer_price": 6290.0,
-      "discount_percentage": 0,
-      "promo_condition": null,
-      "source": "SEPA CloudFront"
-    },
-    {
-      "product_id": "prod_coca_cola_3l",
       "supermarket_id": "changomas_perticone",
-      "branch_name": "HiperChangomas (Neuquén)",
-      "chain_name": "HiperChangomas",
-      "regular_price": 6289.0,
-      "offer_price": 6289.0,
+      "branch_name": "Hiper ChangoMás Perticone",
+      "chain_name": "ChangoMás",
+      "regular_price": 6099.0,
+      "offer_price": 6099.0,
       "discount_percentage": 0,
       "promo_condition": null,
-      "source": "SEPA CloudFront"
+      "source": "VTEX ChangoMás"
     },
     {
       "product_id": "prod_coca_cola_3l",
       "supermarket_id": "cooperativa_chocon",
-      "branch_name": "Cooperativa Obrera Limitada de Consumo y Vivienda (Neuquen II)",
-      "chain_name": "Cooperativa Obrera Limitada de Consumo y Vivienda",
-      "regular_price": 6290.0,
-      "offer_price": 6290.0,
+      "branch_name": "Cooperativa Obrera Suc. Chocón / Centro",
+      "chain_name": "Cooperativa Obrera",
+      "regular_price": 5630.0,
+      "offer_price": 5630.0,
       "discount_percentage": 0,
       "promo_condition": null,
-      "source": "SEPA CloudFront"
+      "source": "API Cooperativa Obrera"
     },
     {
       "product_id": "prod_coca_cola_3l",
@@ -750,28 +530,6 @@
       "discount_percentage": 0,
       "promo_condition": "Llevando bulto cerrado",
       "source": "Relevamiento Yaguar"
-    },
-    {
-      "product_id": "prod_cerveza_heineken_473ml",
-      "supermarket_id": "vea_lainez",
-      "branch_name": "Vea (Vea 50 Gral Alvear)",
-      "chain_name": "Vea",
-      "regular_price": 2790.0,
-      "offer_price": 2790.0,
-      "discount_percentage": 0,
-      "promo_condition": null,
-      "source": "SEPA CloudFront"
-    },
-    {
-      "product_id": "prod_cerveza_heineken_473ml",
-      "supermarket_id": "coto_alto_comahue",
-      "branch_name": "Supermercados DIA (5602 - TRENQUE LAUQUEN)",
-      "chain_name": "Supermercados DIA",
-      "regular_price": 2690.0,
-      "offer_price": 2690.0,
-      "discount_percentage": 0,
-      "promo_condition": null,
-      "source": "SEPA CloudFront"
     },
     {
       "product_id": "prod_cerveza_heineken_473ml",
