@@ -36,6 +36,7 @@ export type UnitType = 'kg' | 'g' | 'litro' | 'ml' | 'unidad' | 'rollo' | 'paño
 export interface Product {
   id: string;
   ean?: string;
+  ean_aliases?: string[];
   name: string;
   brand: string;
   category: 'Almacén' | 'Lácteos y Frescos' | 'Bebidas' | 'Carnicería' | 'Limpieza' | 'Cuidado Personal' | 'Congelados' | 'Panadería';

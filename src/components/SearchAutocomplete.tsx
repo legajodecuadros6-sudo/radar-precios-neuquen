@@ -29,7 +29,8 @@ export const SearchAutocomplete: React.FC<SearchAutocompleteProps> = ({
     p.name.toLowerCase().includes(query) ||
     p.brand.toLowerCase().includes(query) ||
     p.category.toLowerCase().includes(query) ||
-    (p.ean && p.ean.includes(query))
+    (p.ean && p.ean.includes(query)) ||
+    (p.ean_aliases && p.ean_aliases.some(alias => alias.includes(query)))
   ).slice(0, 6);
 
   if (filtered.length === 0) {

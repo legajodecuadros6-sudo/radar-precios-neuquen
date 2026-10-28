@@ -3,7 +3,8 @@ import { Product, PriceObservation, PriceHistoryPoint } from '../types';
 export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'prod_aceite_natura_900',
-    ean: '7790895000997',
+    ean: '7790272001005',
+    ean_aliases: ['7790272001005', '7790895000997', '7790272001012'],
     name: 'Aceite de Girasol 900 ml',
     brand: 'Natura',
     category: 'Almacén',
@@ -16,7 +17,8 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'prod_leche_serenisima_1l',
-    ean: '7790310000001',
+    ean: '7790742357007',
+    ean_aliases: ['7790742357007', '7790742335500', '7790310000001', '7793940428003'],
     name: 'Leche Entera Clásica UHT 1 L',
     brand: 'La Serenísima',
     category: 'Lácteos y Frescos',
@@ -29,7 +31,8 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'prod_yerba_playadito_1k',
-    ean: '7790070507303',
+    ean: '7793704000928',
+    ean_aliases: ['7793704000928', '7790070507303'],
     name: 'Yerba Mate Tradicional con Palo 1 kg',
     brand: 'Playadito',
     category: 'Almacén',
@@ -43,6 +46,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'prod_arroz_primor_1k',
     ean: '7790072001021',
+    ean_aliases: ['7790072001021'],
     name: 'Arroz Largo Fino 00000 1 kg',
     brand: 'Primor',
     category: 'Almacén',
@@ -55,7 +59,8 @@ export const INITIAL_PRODUCTS: Product[] = [
   },
   {
     id: 'prod_fideos_matarazzo_500g',
-    ean: '7790070318534',
+    ean: '7790070336293',
+    ean_aliases: ['7790070336293', '7790070336309', '7790070318048', '7790070318534'],
     name: 'Fideos Spaghetti 500 g',
     brand: 'Matarazzo',
     category: 'Almacén',
@@ -134,6 +139,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'prod_mayonesa_hellmanns_237g',
     ean: '7791290008432',
+    ean_aliases: ['7791290008432', '7794000599182'],
     name: 'Mayonesa Clásica Doypack 237 g',
     brand: 'Hellmanns',
     category: 'Almacén',
@@ -147,6 +153,7 @@ export const INITIAL_PRODUCTS: Product[] = [
   {
     id: 'prod_coca_cola_3l',
     ean: '7790895007019',
+    ean_aliases: ['7790895007019', '7790895000997', '7790895064666'],
     name: 'Gaseosa Coca-Cola Original 3 L',
     brand: 'Coca-Cola',
     category: 'Bebidas',

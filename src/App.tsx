@@ -90,7 +90,8 @@ export const AppContent: React.FC = () => {
         product.name.toLowerCase().includes(query) ||
         product.brand.toLowerCase().includes(query) ||
         product.category.toLowerCase().includes(query) ||
-        (product.ean && product.ean.includes(query));
+        (product.ean && product.ean.includes(query)) ||
+        (product.ean_aliases && product.ean_aliases.some(alias => alias.includes(query)));
 
       return matchesCategory && matchesSearch;
     });

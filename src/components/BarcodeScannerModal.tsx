@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Camera, Upload, ScanBarcode, AlertCircle, RefreshCw, Zap } from 'lucide-react';
+import { X, Camera, Upload, ScanBarcode, AlertCircle, RefreshCw, Zap, CheckCircle2 } from 'lucide-react';
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import { Product } from '../types';
 
@@ -16,14 +16,22 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
 }) => {
   const [manualCode, setManualCode] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [hasTorch, setHasTorch] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
+  const [hasZoom, setHasZoom] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [engineType, setEngineType] = useState<'native' | 'html5'>('html5');
 
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const animFrameRef = useRef<number | null>(null);
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
+  const activeRef = useRef<boolean>(true);
 
-  // Reproduce un beep auditivo idéntico al de un escáner de supermercado
+  // Reproduce un beep auditivo de confirmación instantáneo
   const playBeep = () => {
     try {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
@@ -32,15 +40,15 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(980, ctx.currentTime);
-      gain.gain.setValueAtTime(0.2, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+      osc.frequency.setValueAtTime(1050, ctx.currentTime);
+      gain.gain.setValueAtTime(0.25, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.14);
       osc.connect(gain);
       gain.connect(ctx.destination);
       osc.start();
-      osc.stop(ctx.currentTime + 0.12);
+      osc.stop(ctx.currentTime + 0.14);
     } catch {
-      // Audio no permitido por el navegador sin interacción previa, continuar
+      // Audio no permitido sin interacción previa
     }
   };
 
@@ -48,33 +56,112 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
     const cleanCode = code.trim();
     if (!cleanCode) return;
 
-    playBeep();
+    // Buscar coincidencia exacta por EAN principal o por alias
+    const found = products.find(p => 
+      p.ean === cleanCode || 
+      (p.ean_aliases && p.ean_aliases.includes(cleanCode))
+    );
 
-    const found = products.find(p => p.ean === cleanCode);
     if (found) {
-      stopCamera();
-      onProductFound(found);
-      onClose();
+      playBeep();
+      setSuccessMsg(`¡${found.name} detectado!`);
+      setTimeout(() => {
+        stopCamera();
+        onProductFound(found);
+        onClose();
+      }, 350);
     } else {
-      setErrorMsg(`Código detectado: ${cleanCode}. Producto no registrado aún en el catálogo de Neuquén.`);
+      setErrorMsg(`Código leído: ${cleanCode} (EAN-13 válido). Este producto aún no figura en la canasta testigo de Neuquén. Prueba con los productos sugeridos abajo.`);
     }
   };
 
   const startCamera = async () => {
     setErrorMsg('');
+    setSuccessMsg('');
     setIsInitializing(true);
+    activeRef.current = true;
 
-    try {
-      if (html5QrCodeRef.current) {
-        try {
-          await html5QrCodeRef.current.stop();
-        } catch {
-          // ignore
+    // 1. INTENTAR MOTOR NATIVO (BarcodeDetector API - Idéntico a Google Lens)
+    const hasNativeDetector = typeof window !== 'undefined' && 'BarcodeDetector' in window;
+
+    if (hasNativeDetector) {
+      try {
+        const supported = await (window as any).BarcodeDetector.getSupportedFormats();
+        const targetFormats = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'qr_code'].filter(
+          (f: string) => supported.includes(f)
+        );
+
+        const detector = new (window as any).BarcodeDetector({
+          formats: targetFormats.length > 0 ? targetFormats : ['ean_13', 'ean_8', 'qr_code']
+        });
+
+        // Configuración de alta resolución y autofoco continuo de cámara
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1920, min: 1280 },
+            height: { ideal: 1080, min: 720 },
+            // @ts-ignore
+            advanced: [{ focusMode: 'continuous' }]
+          },
+          audio: false
+        });
+
+        streamRef.current = stream;
+        const track = stream.getVideoTracks()[0];
+        if (track && track.getCapabilities) {
+          const caps = track.getCapabilities() as any;
+          if (caps.torch) setHasTorch(true);
+          if (caps.zoom) setHasZoom(true);
         }
-      }
 
-      // Configurar escáner optimizado para códigos de barra de supermercado (EAN-13 / EAN-8 / UPC)
-      const html5QrCode = new Html5Qrcode('reader', {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play();
+        }
+
+        setEngineType('native');
+        setIsScanning(true);
+        setIsInitializing(false);
+
+        // Bucle de detección nativo de ultra-alta velocidad (60 FPS por GPU/NPU)
+        let isDetecting = false;
+        const scanLoop = async () => {
+          if (!activeRef.current) return;
+          if (videoRef.current && videoRef.current.readyState >= 2 && !isDetecting) {
+            isDetecting = true;
+            try {
+              const barcodes = await detector.detect(videoRef.current);
+              if (barcodes && barcodes.length > 0 && activeRef.current) {
+                const detected = barcodes[0].rawValue;
+                if (detected) {
+                  activeRef.current = false;
+                  handleLookup(detected);
+                  return;
+                }
+              }
+            } catch (e) {
+              // Frame individual sin código, continuar ciclo
+            } finally {
+              isDetecting = false;
+            }
+          }
+          if (activeRef.current) {
+            animFrameRef.current = requestAnimationFrame(scanLoop);
+          }
+        };
+
+        animFrameRef.current = requestAnimationFrame(scanLoop);
+        return;
+      } catch (nativeErr) {
+        console.warn('Motor nativo no disponible o falló inicio, recurriendo a Html5Qrcode:', nativeErr);
+        // Continúa al fallback Html5Qrcode
+      }
+    }
+
+    // 2. MOTOR DE RESPALDO (Html5Qrcode con escaneo de cuadro completo)
+    try {
+      const html5QrCode = new Html5Qrcode('reader-fallback', {
         formatsToSupport: [
           Html5QrcodeSupportedFormats.EAN_13,
           Html5QrcodeSupportedFormats.EAN_8,
@@ -83,77 +170,115 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
           Html5QrcodeSupportedFormats.UPC_E,
           Html5QrcodeSupportedFormats.QR_CODE
         ],
-        verbose: false
+        verbose: false,
+        experimentalFeatures: {
+          useBarCodeDetectorIfSupported: true
+        }
       });
       html5QrCodeRef.current = html5QrCode;
 
       await html5QrCode.start(
-        { facingMode: 'environment' },
+        { 
+          facingMode: 'environment',
+          // @ts-ignore
+          width: { ideal: 1920, min: 1280 },
+          height: { ideal: 1080, min: 720 }
+        },
         {
-          fps: 20, // 20 cuadros por segundo para captura veloz
-          qrbox: (viewfinderWidth, viewfinderHeight) => {
-            const minEdgePercentage = 0.75;
-            const minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
-            const qrboxSize = Math.floor(minEdgeSize * minEdgePercentage);
-            return {
-              width: Math.max(qrboxSize, 250),
-              height: Math.floor(Math.max(qrboxSize, 250) * 0.6) // Proporción rectangular ideal para códigos de barras horizontales
-            };
-          },
+          fps: 25,
+          // Sin qrbox restrictivo: escanea el encuadre completo de la cámara
           aspectRatio: 1.333334
         },
         (decodedText) => {
-          handleLookup(decodedText);
+          if (activeRef.current) {
+            activeRef.current = false;
+            handleLookup(decodedText);
+          }
         },
-        () => {
-          // Frame no reconocido, continuar escaneo
-        }
+        () => {}
       );
 
+      setEngineType('html5');
       setIsScanning(true);
       setIsInitializing(false);
 
-      // Comprobar si la cámara tiene linterna / flash
       try {
-        const capabilities = html5QrCode.getRunningTrackCapabilities();
-        if (capabilities && (capabilities as any).torch) {
-          setHasTorch(true);
-        }
-      } catch {
-        // Torch no soportado en esta cámara
-      }
+        const caps = html5QrCode.getRunningTrackCapabilities();
+        if (caps && (caps as any).torch) setHasTorch(true);
+      } catch {}
 
     } catch (err: any) {
       console.warn('Error al activar cámara:', err);
       setIsInitializing(false);
       setIsScanning(false);
-      setErrorMsg('No pudimos acceder a la cámara trasera. Asegúrate de dar permisos de cámara en tu navegador o ingresa los números manualmente.');
+      setErrorMsg('No pudimos iniciar la cámara trasera. Comprueba los permisos de tu navegador o ingresa los números manualmente.');
     }
   };
 
   const toggleTorch = async () => {
-    if (!html5QrCodeRef.current || !hasTorch) return;
     try {
       const nextTorch = !torchOn;
-      await html5QrCodeRef.current.applyVideoConstraints({
-        advanced: [{ torch: nextTorch } as any]
-      });
-      setTorchOn(nextTorch);
+      if (streamRef.current) {
+        const track = streamRef.current.getVideoTracks()[0];
+        if (track) {
+          await track.applyConstraints({
+            // @ts-ignore
+            advanced: [{ torch: nextTorch }]
+          });
+          setTorchOn(nextTorch);
+          return;
+        }
+      }
+      if (html5QrCodeRef.current) {
+        await html5QrCodeRef.current.applyVideoConstraints({
+          advanced: [{ torch: nextTorch } as any]
+        });
+        setTorchOn(nextTorch);
+      }
     } catch (e) {
       console.warn('Error alternando linterna:', e);
     }
   };
 
+  const toggleZoom = async () => {
+    try {
+      const nextZoom = zoomLevel === 1 ? 2 : 1;
+      setZoomLevel(nextZoom);
+      if (streamRef.current) {
+        const track = streamRef.current.getVideoTracks()[0];
+        if (track) {
+          await track.applyConstraints({
+            // @ts-ignore
+            advanced: [{ zoom: nextZoom }]
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('Error alternando zoom:', e);
+    }
+  };
+
   const stopCamera = () => {
+    activeRef.current = false;
+    if (animFrameRef.current) {
+      cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
+    }
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
     if (html5QrCodeRef.current) {
       try {
         html5QrCodeRef.current.stop().catch(() => {});
-      } catch {
-        // ignore
-      }
+      } catch {}
       html5QrCodeRef.current = null;
-      setIsScanning(false);
     }
+    setIsScanning(false);
+    setTorchOn(false);
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -175,15 +300,15 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
       const result = await html5QrCode.scanFile(file, true);
       handleLookup(result);
     } catch {
-      setErrorMsg('No se detectó un código de barra claro en la foto. Prueba con una imagen con buena luz y sin reflejos.');
+      setErrorMsg('No se detectó un código de barra claro en la foto. Prueba con una imagen con buena luz y sin sombras.');
     }
   };
 
-  // Iniciar la cámara automáticamente al abrir el modal (igual que en Superprecio)
+  // Iniciar la cámara automáticamente al montar el modal
   useEffect(() => {
     const timer = setTimeout(() => {
       startCamera();
-    }, 300);
+    }, 250);
 
     return () => {
       clearTimeout(timer);
@@ -202,9 +327,16 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
               <ScanBarcode className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-extrabold text-sm sm:text-base text-white">
-                Escanear Código de Barras
-              </h3>
+              <div className="flex items-center gap-2">
+                <h3 className="font-extrabold text-sm sm:text-base text-white">
+                  Lector de Código de Barras
+                </h3>
+                {engineType === 'native' && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                    Motor Lens HD
+                  </span>
+                )}
+              </div>
               <p className="text-[11px] text-slate-400">
                 Apunta al código EAN de cualquier producto de góndola
               </p>
@@ -221,13 +353,25 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
           </button>
         </div>
 
-        {/* Viewport de Escaneo con Láser Animado tipo Superprecio */}
+        {/* Viewport de Escaneo con Láser Animado y Enfoque */}
         <div className="p-4 sm:p-6 space-y-4">
           
           <div className="relative rounded-2xl overflow-hidden bg-black border border-slate-800 aspect-4/3 flex flex-col items-center justify-center text-white shadow-inner">
             
-            {/* Contenedor del video HTML5 */}
-            <div id="reader" className="w-full h-full object-cover" />
+            {/* 1. Video Element para Motor Nativo (Prioridad 1) */}
+            <video
+              ref={videoRef}
+              playsInline
+              autoPlay
+              muted
+              className={`w-full h-full object-cover ${streamRef.current ? 'block' : 'hidden'}`}
+            />
+
+            {/* 2. Contenedor Fallback para Html5Qrcode */}
+            <div 
+              id="reader-fallback" 
+              className={`w-full h-full object-cover ${!streamRef.current && isScanning ? 'block' : 'hidden'}`} 
+            />
             <div id="file-scanner-temp" className="hidden" />
 
             {/* MIRA DE ENFOQUE + LÁSER ANIMADO TIPO SUPERPRECIO */}
@@ -248,10 +392,19 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                   {/* Texto indicador de encuadre */}
                   <div className="absolute bottom-1.5 inset-x-0 text-center">
                     <span className="text-[10px] font-bold text-cyan-200 bg-slate-950/80 px-2.5 py-0.5 rounded-full border border-cyan-500/40 uppercase tracking-wider">
-                      Centra las barras aquí
+                      Apunta aquí al código de barras
                     </span>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Mensaje de Éxito al Detectar */}
+            {successMsg && (
+              <div className="absolute inset-0 bg-emerald-950/90 backdrop-blur-xs flex flex-col items-center justify-center p-4 text-center z-30 animate-in fade-in duration-150">
+                <CheckCircle2 className="w-12 h-12 text-emerald-400 mb-2 animate-bounce" />
+                <p className="text-sm font-bold text-white">{successMsg}</p>
+                <p className="text-xs text-emerald-300 mt-1">Cargando precios comparados...</p>
               </div>
             )}
 
@@ -259,8 +412,8 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
             {isInitializing && !isScanning && (
               <div className="absolute inset-0 bg-slate-950 flex flex-col items-center justify-center p-4 text-center z-10">
                 <RefreshCw className="w-8 h-8 text-cyan-400 animate-spin mb-2" />
-                <p className="text-xs text-slate-300 font-semibold">Iniciando cámara trasera...</p>
-                <p className="text-[11px] text-slate-500 mt-0.5">Permite el acceso a la cámara si el navegador lo solicita</p>
+                <p className="text-xs text-slate-300 font-semibold">Calibrando lente y autofoco...</p>
+                <p className="text-[11px] text-slate-500 mt-0.5">Asegúrate de permitir el uso de la cámara</p>
               </div>
             )}
 
@@ -280,29 +433,64 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
               </div>
             )}
 
-            {/* Controles flotantes sobre la cámara (Linterna) */}
-            {isScanning && hasTorch && (
-              <div className="absolute top-3 right-3 z-20">
-                <button
-                  onClick={toggleTorch}
-                  className={`p-2 rounded-xl border backdrop-blur-md transition-all ${
-                    torchOn 
-                      ? 'bg-amber-400 text-slate-950 border-amber-300 shadow-lg shadow-amber-400/40' 
-                      : 'bg-slate-900/80 text-white border-slate-700 hover:bg-slate-800'
-                  }`}
-                  title="Encender Linterna"
-                >
-                  <Zap className="w-4 h-4" />
-                </button>
+            {/* Controles flotantes sobre la cámara (Linterna y Zoom 2x) */}
+            {isScanning && (
+              <div className="absolute top-3 right-3 z-20 flex items-center gap-2">
+                {hasZoom && (
+                  <button
+                    onClick={toggleZoom}
+                    className={`px-2.5 py-1.5 rounded-xl border backdrop-blur-md text-xs font-bold transition-all ${
+                      zoomLevel === 2
+                        ? 'bg-cyan-500 text-slate-950 border-cyan-400 shadow-lg shadow-cyan-500/30'
+                        : 'bg-slate-900/80 text-white border-slate-700 hover:bg-slate-800'
+                    }`}
+                    title="Alternar Zoom 1x / 2x"
+                  >
+                    {zoomLevel === 1 ? '1x' : '2x'}
+                  </button>
+                )}
+
+                {hasTorch && (
+                  <button
+                    onClick={toggleTorch}
+                    className={`p-2 rounded-xl border backdrop-blur-md transition-all ${
+                      torchOn 
+                        ? 'bg-amber-400 text-slate-950 border-amber-300 shadow-lg shadow-amber-400/40' 
+                        : 'bg-slate-900/80 text-white border-slate-700 hover:bg-slate-800'
+                    }`}
+                    title="Encender Linterna"
+                  >
+                    <Zap className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             )}
           </div>
 
-          {/* Mensaje de Error */}
+          {/* Consejo ergonómico para botellas y envases curvos */}
+          <div className="text-[11px] text-slate-400 flex items-start gap-1.5 bg-slate-950/40 p-2.5 rounded-xl border border-slate-800">
+            <span className="text-cyan-400 font-bold shrink-0">💡 Tip:</span>
+            <span>
+              Si el envase es curvo o tiene brillo (como una botella de aceite), sostenlo a unos <strong>15-20 cm</strong> sin inclinar. Si tu celular lo permite, activa el botón <strong>2x</strong> para mayor nitidez.
+            </span>
+          </div>
+
+          {/* Mensaje de Error o No Encontrado */}
           {errorMsg && (
-            <div className="p-3 bg-rose-950/60 border border-rose-800/80 text-rose-200 rounded-xl text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
-              <span>{errorMsg}</span>
+            <div className="p-3 bg-rose-950/60 border border-rose-800/80 text-rose-200 rounded-xl text-xs flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-400 mt-0.5" />
+              <div className="flex-1">
+                <span>{errorMsg}</span>
+                <button
+                  onClick={() => {
+                    setErrorMsg('');
+                    startCamera();
+                  }}
+                  className="block mt-1 text-[11px] font-bold text-cyan-300 underline cursor-pointer"
+                >
+                  Volver a escanear
+                </button>
+              </div>
             </div>
           )}
 
@@ -333,7 +521,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                 type="text"
                 value={manualCode}
                 onChange={e => setManualCode(e.target.value)}
-                placeholder="Ej: 7790070507303"
+                placeholder="Ej: 7790272001005"
                 className="flex-1 px-3 py-2 text-xs bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 outline-none font-mono"
               />
               <button
@@ -345,18 +533,18 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
             </div>
           </div>
 
-          {/* Botones de Prueba Rápida con Productos de Neuquén */}
+          {/* Botones de Prueba Rápida con Productos Reales de Neuquén */}
           <div className="pt-2 border-t border-slate-800">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
               Probar escaneo inmediato con productos de Neuquén:
             </span>
             <div className="flex flex-wrap gap-1.5">
               {[
-                { label: '🌿 Yerba Playadito', ean: '7790387011036' },
                 { label: '🌻 Aceite Natura', ean: '7790272001005' },
-                { label: '🥛 Leche Serenísima', ean: '7793940428003' },
-                { label: '🍝 Fideos Matarazzo', ean: '7790070318048' },
-                { label: '🥤 Coca-Cola 3L', ean: '7790895000997' }
+                { label: '🌿 Yerba Playadito', ean: '7793704000928' },
+                { label: '🥛 Leche Serenísima', ean: '7790742357007' },
+                { label: '🍝 Fideos Matarazzo', ean: '7790070336293' },
+                { label: '🥤 Coca-Cola 3L', ean: '7790895007019' }
               ].map(test => (
                 <button
                   key={test.ean}
