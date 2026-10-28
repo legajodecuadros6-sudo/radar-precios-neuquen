@@ -33,3 +33,23 @@
   border-radius: 1rem;
   box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
 }
+
+/* Superprecio-Style Barcode Laser Animation */
+@keyframes laser-sweep {
+  0% {
+    top: 8%;
+    opacity: 0.85;
+  }
+  50% {
+    top: 90%;
+    opacity: 1;
+  }
+  100% {
+    top: 8%;
+    opacity: 0.85;
+  }
+}
+
+.animate-laser {
+  animation: laser-sweep 1.8s ease-in-out infinite;
+}

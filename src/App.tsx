@@ -127,32 +127,21 @@ export const AppContent: React.FC = () => {
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 relative">
         
-        {/* Supabase Cloud Connection Status Badge */}
+        {/* Relevamiento Oficial y Estado en Vivo */}
         <div className="mb-3 flex items-center justify-between flex-wrap gap-2 text-xs">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border bg-white shadow-2xs">
-            {connectionStatus.isLiveCloud ? (
-              <>
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                <Cloud className="w-3.5 h-3.5 text-emerald-600" />
-                <span className="font-semibold text-emerald-900">Nube Supabase Conectada</span>
-                <span className="text-slate-400">|</span>
-                <span className="text-slate-600 font-mono text-[11px]">{connectionStatus.message}</span>
-              </>
-            ) : (
-              <>
-                <span className="h-2 w-2 rounded-full bg-cyan-500"></span>
-                <CheckCircle2 className="w-3.5 h-3.5 text-cyan-600" />
-                <span className="font-semibold text-slate-800">Base Local Resiliente</span>
-                <span className="text-slate-400">|</span>
-                <span className="text-slate-500 font-mono text-[11px]">{connectionStatus.message}</span>
-              </>
-            )}
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200/90 bg-white shadow-2xs">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="font-bold text-slate-800">Precios y Ofertas al Día</span>
+            <span className="text-slate-300">|</span>
+            <span className="text-slate-600 font-medium">Relevamiento en Vivo</span>
           </div>
-          <div className="text-[11px] text-slate-500 font-medium">
-            📍 Neuquén Capital (CP 8300)
+          <div className="flex items-center gap-1.5 text-xs text-slate-700 font-semibold bg-white px-3 py-1.5 rounded-full border border-slate-200/80 shadow-2xs">
+            <span>📍 Neuquén Capital (CP 8300)</span>
+            <span className="text-slate-300">•</span>
+            <span className="text-slate-500 font-normal">8 Cadenas Comparadas</span>
           </div>
         </div>
 
