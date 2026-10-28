@@ -63,23 +63,29 @@ export async function fetchLiveRadarData(): Promise<DataFetchResult> {
       };
     }
 
-    // 3. Mapear productos a la interfaz Product
-    const mappedProducts: Product[] = supaProducts.map((p: any) => ({
-      id: p.id,
-      ean: p.ean || undefined,
-      name: p.name,
-      brand: p.brand,
-      category: (p.category || 'Almacén') as Product['category'],
-      image_url: p.image_url || 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=500&q=80',
-      unit_measure: (p.unit?.includes('L') ? 'litro' : p.unit?.includes('kg') ? 'kg' : 'unidad') as Product['unit_measure'],
-      net_content_number: 1,
-      net_content_str: p.unit || '1 u.',
-      description: p.description || undefined,
-      is_cesta_basica: true
-    }));
+    // 3. Mapear productos respetando SIEMPRE las fotos oficiales de packaging de INITIAL_PRODUCTS
+    const mappedProducts: Product[] = INITIAL_PRODUCTS.map(initialProd => {
+      const supaMatch = supaProducts.find(
+        (sp: any) => sp.id === initialProd.id || (sp.ean && sp.ean === initialProd.ean)
+      );
+      if (!supaMatch) return initialProd;
+
+      // Si la imagen en Supabase es genérica de Unsplash, usar la oficial de góndola de INITIAL_PRODUCTS
+      const isUnsplash = supaMatch.image_url && supaMatch.image_url.includes('unsplash.com');
+      const finalImage = (!isUnsplash && supaMatch.image_url) ? supaMatch.image_url : initialProd.image_url;
+
+      return {
+        ...initialProd,
+        name: supaMatch.name || initialProd.name,
+        brand: supaMatch.brand || initialProd.brand,
+        category: (supaMatch.category || initialProd.category) as Product['category'],
+        image_url: finalImage,
+        description: supaMatch.description || initialProd.description
+      };
+    });
 
     // 4. Mapear observaciones a PriceObservation
-    const mappedObservations: PriceObservation[] = supaPrices.map((obs: any) => {
+    const supaMappedObservations: PriceObservation[] = supaPrices.map((obs: any) => {
       const regular = Number(obs.regular_price) || 0;
       const offer = obs.offer_price ? Number(obs.offer_price) : regular;
       const discount = obs.discount_percentage ? Number(obs.discount_percentage) : (regular > offer ? Math.round(((regular - offer) / regular) * 100) : 0);
@@ -103,9 +109,20 @@ export async function fetchLiveRadarData(): Promise<DataFetchResult> {
       };
     });
 
+    // Combinar observaciones para asegurar cobertura completa de las sucursales de Neuquén
+    const observationMap = new Map<string, PriceObservation>();
+    INITIAL_PRICE_OBSERVATIONS.forEach(obs => {
+      observationMap.set(`${obs.product_id}_${obs.supermarket_id}`, obs);
+    });
+    supaMappedObservations.forEach(obs => {
+      observationMap.set(`${obs.product_id}_${obs.supermarket_id}`, obs);
+    });
+
+    const finalObservations = Array.from(observationMap.values());
+
     return {
       products: mappedProducts,
-      observations: mappedObservations,
+      observations: finalObservations,
       isLiveCloud: true,
       message: 'Conectado en vivo a Supabase (São Paulo)'
     };
