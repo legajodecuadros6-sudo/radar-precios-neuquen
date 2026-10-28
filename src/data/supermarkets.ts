@@ -424,6 +424,29 @@ export const SUPERMARKETS_NEUQUEN: SupermarketBranchExtended[] = [
     ecommerce_url: 'https://www.masonline.com.ar',
     corridor_zone: 'oeste_cercania',
     logo_svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><rect width="92" height="92" x="4" y="4" rx="20" fill="#0284c7"/><text x="50" y="46" font-size="12" font-weight="800" fill="#ffffff" text-anchor="middle" font-family="sans-serif">CHANGO</text><text x="50" y="70" font-size="20" font-weight="900" fill="#38bdf8" text-anchor="middle" font-family="sans-serif">MÁS</text></svg>`
+  },
+  {
+    id: 'vea_lainez',
+    supermarket_id: 'vea',
+    name: 'Supermercado Vea Láinez',
+    brand_name: 'Vea',
+    short_code: 'VEA',
+    type: 'minorista',
+    address: '12 de Septiembre y Félix Láinez (Centro / Oeste)',
+    city: 'Neuquén Capital',
+    postal_code: '8300',
+    lat: -38.95180,
+    lng: -68.06820,
+    osm_precision: 'Láinez y 12 de Septiembre',
+    phone: '0810-999-9832',
+    opening_hours: 'Lun a Sáb 8:30 a 21:30 hs, Dom 9:00 a 21:00 hs',
+    logo_color: '#ea580c',
+    badge_bg: 'bg-orange-50 border-orange-200 text-orange-700',
+    badge_text: 'Vea Láinez',
+    has_ecommerce: true,
+    ecommerce_url: 'https://www.vea.com.ar',
+    corridor_zone: 'centro_shopping',
+    logo_svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><circle cx="50" cy="50" r="46" fill="#ea580c"/><text x="50" y="58" font-size="22" font-weight="900" fill="#ffffff" text-anchor="middle" font-family="sans-serif" letter-spacing="1">VEA</text></svg>`
   }
 ];
 

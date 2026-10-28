@@ -23,7 +23,12 @@ dist-ssr
 *.sln
 *.sw?
 
+# Python
+__pycache__/
+*.py[cod]
+
 # Environment Variables & Security (NUNCA exponer a Git)
 .env
 .env.local
 .env.*.local
+

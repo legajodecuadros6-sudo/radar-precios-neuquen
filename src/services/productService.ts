@@ -19,6 +19,7 @@ function mapSupermarketId(supaId: string): SupermarketId {
   if (supaId.includes('coop')) return 'cooperativa_obrera';
   if (supaId.includes('diarco')) return 'diarco';
   if (supaId.includes('vital')) return 'vital';
+  if (supaId.includes('vea')) return 'vea';
   return 'coto';
 }
 

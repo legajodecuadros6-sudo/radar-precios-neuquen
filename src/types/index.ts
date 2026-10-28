@@ -6,7 +6,8 @@ export type SupermarketId =
   | 'yaguar' 
   | 'cooperativa_obrera' 
   | 'diarco' 
-  | 'vital';
+  | 'vital'
+  | 'vea';
 
 export type StoreType = 'minorista' | 'mayorista' | 'cooperativa';
 
