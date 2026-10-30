@@ -9,10 +9,19 @@ interface BarcodeScannerModalProps {
   onClose: () => void;
 }
 
+const formats = [
+  Html5QrcodeSupportedFormats.EAN_13,
+  Html5QrcodeSupportedFormats.EAN_8,
+  Html5QrcodeSupportedFormats.UPC_A,
+  Html5QrcodeSupportedFormats.UPC_E,
+];
+type CameraCapabilities = MediaTrackCapabilities & {
+  torch?: boolean;
+  zoom?: { min: number; max: number; step?: number };
+};
+
 export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
-  products,
-  onProductFound,
-  onClose
+  products, onProductFound, onClose
 }) => {
   const [manualCode, setManualCode] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
@@ -23,305 +32,218 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
   const [torchOn, setTorchOn] = useState(false);
   const [hasZoom, setHasZoom] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
-  const [engineType, setEngineType] = useState<'native' | 'html5'>('html5');
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const capabilitiesRef = useRef<CameraCapabilities>({});
+  const queueRef = useRef<Promise<void>>(Promise.resolve());
+  const generationRef = useRef(0);
+  const mountedRef = useRef(false);
+  const resultTimerRef = useRef<ReturnType<typeof setTimeout>>();
+  const propsRef = useRef({ products, onProductFound, onClose });
+  propsRef.current = { products, onProductFound, onClose };
 
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const animFrameRef = useRef<number | null>(null);
-  const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
-  const activeRef = useRef<boolean>(true);
+  // Serialize start/stop/file operations: a pending permission request can finish
+  // after closing the modal. Its session is invalidated and released on completion.
+  const enqueue = (operation: () => Promise<void>) => {
+    queueRef.current = queueRef.current.then(operation).catch(error => {
+      console.error('Error del lector:', error);
+    });
+    return queueRef.current;
+  };
+  const releaseCamera = async () => {
+    const scanner = scannerRef.current;
+    if (!scanner) return;
+    if (scanner.isScanning) await scanner.stop();
+    scanner.clear();
+    scannerRef.current = null;
+  };
+  const isCurrent = (generation: number) =>
+    mountedRef.current && generationRef.current === generation;
 
-  // Reproduce un beep auditivo de confirmación instantáneo
+  const stopCamera = () => {
+    generationRef.current += 1;
+    clearTimeout(resultTimerRef.current);
+    if (mountedRef.current) {
+      setIsScanning(false);
+      setIsInitializing(false);
+      setTorchOn(false);
+      setHasTorch(false);
+      setHasZoom(false);
+    }
+    return enqueue(releaseCamera);
+  };
+
   const playBeep = () => {
     try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
+      const ctx = new AudioContext();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(1050, ctx.currentTime);
-      gain.gain.setValueAtTime(0.25, ctx.currentTime);
+      osc.frequency.value = 1050;
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.14);
       osc.connect(gain);
       gain.connect(ctx.destination);
+      osc.onended = () => { void ctx.close(); };
       osc.start();
       osc.stop(ctx.currentTime + 0.14);
-    } catch {
-      // Audio no permitido sin interacción previa
-    }
+    } catch { /* Sound is optional. */ }
   };
 
-  const handleLookup = (code: string) => {
-    const cleanCode = code.trim();
-    if (!cleanCode) return;
-
-    // Buscar coincidencia exacta por EAN principal o por alias
-    const found = products.find(p => 
-      p.ean === cleanCode || 
-      (p.ean_aliases && p.ean_aliases.includes(cleanCode))
-    );
-
-    if (found) {
-      playBeep();
-      setSuccessMsg(`¡${found.name} detectado!`);
-      setTimeout(() => {
-        stopCamera();
-        onProductFound(found);
-        onClose();
-      }, 350);
-    } else {
-      setErrorMsg(`Código leído: ${cleanCode} (EAN-13 válido). Este producto aún no figura en la canasta testigo de Neuquén. Prueba con los productos sugeridos abajo.`);
+  const handleLookup = (code: string, source: 'camera' | 'manual' | 'photo' = 'manual') => {
+    const cleanCode = code.replace(/\s/g, '');
+    if (!cleanCode || !mountedRef.current) return;
+    if (!/^\d{8}$|^\d{12,13}$/.test(cleanCode)) {
+      setErrorMsg('Ingresa el código completo: 8, 12 o 13 números.');
+      return;
     }
+    void stopCamera();
+    setManualCode(cleanCode);
+    setErrorMsg('');
+    setSuccessMsg('');
+    // UPC-A may be reported by a decoder as EAN-13 with a leading zero.
+    const normalize = (value: string) => value.length === 12 ? `0${value}` : value;
+    const found = propsRef.current.products.find(product =>
+      [product.ean, ...(product.ean_aliases ?? [])].some(value =>
+        value && normalize(value.trim()) === normalize(cleanCode)));
+    if (source !== 'manual') playBeep();
+    if (!found) {
+      setErrorMsg(`${source === 'manual' ? 'Código ingresado' : 'Código leído correctamente'}: ${cleanCode}. Este producto todavía no está en el catálogo.`);
+      return;
+    }
+    setSuccessMsg(`¡${found.name} encontrado!`);
+    const generation = generationRef.current;
+    resultTimerRef.current = setTimeout(() => {
+      if (!isCurrent(generation)) return;
+      propsRef.current.onProductFound(found);
+      propsRef.current.onClose();
+    }, 350);
   };
 
-  const startCamera = async () => {
+  const scannerOptions = async () => {
+    // html5-qrcode alternates the native decoder with ZXing when both exist.
+    // Enable native decoding only when it supports all requested product formats.
+    let useNative = false;
+    try {
+      const detector = (window as any).BarcodeDetector;
+      const supported: string[] = detector ? await detector.getSupportedFormats() : [];
+      useNative = ['ean_13', 'ean_8', 'upc_a', 'upc_e'].every(f => supported.includes(f));
+    } catch { /* ZXing works without BarcodeDetector. */ }
+    return { formatsToSupport: formats, verbose: false, useBarCodeDetectorIfSupported: useNative };
+  };
+
+  const startCamera = () => {
+    const generation = ++generationRef.current;
+    clearTimeout(resultTimerRef.current);
     setErrorMsg('');
     setSuccessMsg('');
     setIsInitializing(true);
-    activeRef.current = true;
-
-    // 1. INTENTAR MOTOR NATIVO (BarcodeDetector API - Idéntico a Google Lens)
-    const hasNativeDetector = typeof window !== 'undefined' && 'BarcodeDetector' in window;
-
-    if (hasNativeDetector) {
+    setIsScanning(false);
+    setHasTorch(false);
+    setTorchOn(false);
+    setHasZoom(false);
+    return enqueue(async () => {
+      await releaseCamera();
+      if (!isCurrent(generation)) return;
       try {
-        const supported = await (window as any).BarcodeDetector.getSupportedFormats();
-        const targetFormats = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'qr_code'].filter(
-          (f: string) => supported.includes(f)
-        );
-
-        const detector = new (window as any).BarcodeDetector({
-          formats: targetFormats.length > 0 ? targetFormats : ['ean_13', 'ean_8', 'qr_code']
-        });
-
-        // Configuración de alta resolución y autofoco continuo de cámara
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: { ideal: 'environment' },
-            width: { ideal: 1920, min: 1280 },
-            height: { ideal: 1080, min: 720 },
-            // @ts-ignore
-            advanced: [{ focusMode: 'continuous' }]
-          },
-          audio: false
-        });
-
-        streamRef.current = stream;
-        const track = stream.getVideoTracks()[0];
-        if (track && track.getCapabilities) {
-          const caps = track.getCapabilities() as any;
-          if (caps.torch) setHasTorch(true);
-          if (caps.zoom) setHasZoom(true);
-        }
-
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-          await videoRef.current.play();
-        }
-
-        setEngineType('native');
-        setIsScanning(true);
-        setIsInitializing(false);
-
-        // Bucle de detección nativo de ultra-alta velocidad (60 FPS por GPU/NPU)
-        let isDetecting = false;
-        const scanLoop = async () => {
-          if (!activeRef.current) return;
-          if (videoRef.current && videoRef.current.readyState >= 2 && !isDetecting) {
-            isDetecting = true;
-            try {
-              const barcodes = await detector.detect(videoRef.current);
-              if (barcodes && barcodes.length > 0 && activeRef.current) {
-                const detected = barcodes[0].rawValue;
-                if (detected) {
-                  activeRef.current = false;
-                  handleLookup(detected);
-                  return;
-                }
-              }
-            } catch (e) {
-              // Frame individual sin código, continuar ciclo
-            } finally {
-              isDetecting = false;
+        const options = await scannerOptions();
+        if (!isCurrent(generation)) return;
+        const scanner = new Html5Qrcode('reader-fallback', options);
+        scannerRef.current = scanner;
+        await scanner.start(
+          { facingMode: 'environment' },
+          {
+            fps: 12,
+            disableFlip: true,
+            videoConstraints: {
+              facingMode: { ideal: 'environment' },
+              width: { ideal: 1920 }, height: { ideal: 1080 }
             }
-          }
-          if (activeRef.current) {
-            animFrameRef.current = requestAnimationFrame(scanLoop);
-          }
-        };
-
-        animFrameRef.current = requestAnimationFrame(scanLoop);
-        return;
-      } catch (nativeErr) {
-        console.warn('Motor nativo no disponible o falló inicio, recurriendo a Html5Qrcode:', nativeErr);
-        // Continúa al fallback Html5Qrcode
-      }
-    }
-
-    // 2. MOTOR DE RESPALDO (Html5Qrcode con escaneo de cuadro completo)
-    try {
-      const html5QrCode = new Html5Qrcode('reader-fallback', {
-        formatsToSupport: [
-          Html5QrcodeSupportedFormats.EAN_13,
-          Html5QrcodeSupportedFormats.EAN_8,
-          Html5QrcodeSupportedFormats.CODE_128,
-          Html5QrcodeSupportedFormats.UPC_A,
-          Html5QrcodeSupportedFormats.UPC_E,
-          Html5QrcodeSupportedFormats.QR_CODE
-        ],
-        verbose: false,
-        experimentalFeatures: {
-          useBarCodeDetectorIfSupported: true
+          },
+          code => { if (isCurrent(generation)) handleLookup(code, 'camera'); },
+          () => { /* A frame with no barcode is expected, not a camera failure. */ }
+        );
+        if (!isCurrent(generation)) { await releaseCamera(); return; }
+        try {
+          const caps = scanner.getRunningTrackCapabilities() as CameraCapabilities;
+          capabilitiesRef.current = caps;
+          setHasTorch(Boolean(caps.torch));
+          setHasZoom(Boolean(caps.zoom && caps.zoom.max > Math.max(1, caps.zoom.min)));
+          setZoomLevel((scanner.getRunningTrackSettings() as MediaTrackSettings & { zoom?: number }).zoom ?? caps.zoom?.min ?? 1);
+        } catch {
+          // Optional camera controls must never prevent barcode recognition.
+          capabilitiesRef.current = {};
         }
-      });
-      html5QrCodeRef.current = html5QrCode;
-
-      await html5QrCode.start(
-        { 
-          facingMode: 'environment',
-          // @ts-ignore
-          width: { ideal: 1920, min: 1280 },
-          height: { ideal: 1080, min: 720 }
-        },
-        {
-          fps: 25,
-          // Sin qrbox restrictivo: escanea el encuadre completo de la cámara
-          aspectRatio: 1.333334
-        },
-        (decodedText) => {
-          if (activeRef.current) {
-            activeRef.current = false;
-            handleLookup(decodedText);
-          }
-        },
-        () => {}
-      );
-
-      setEngineType('html5');
-      setIsScanning(true);
-      setIsInitializing(false);
-
-      try {
-        const caps = html5QrCode.getRunningTrackCapabilities();
-        if (caps && (caps as any).torch) setHasTorch(true);
-      } catch {}
-
-    } catch (err: any) {
-      console.warn('Error al activar cámara:', err);
-      setIsInitializing(false);
-      setIsScanning(false);
-      setErrorMsg('No pudimos iniciar la cámara trasera. Comprueba los permisos de tu navegador o ingresa los números manualmente.');
-    }
+        setIsScanning(true);
+      } catch (error) {
+        console.warn('No se pudo iniciar el lector:', error);
+        await releaseCamera();
+        if (isCurrent(generation)) {
+          setErrorMsg('No pudimos iniciar el lector. Revisa el permiso de cámara y cierra otras aplicaciones que la estén usando. También puedes subir una foto o escribir el código.');
+          setIsScanning(false);
+        }
+      } finally {
+        if (isCurrent(generation)) setIsInitializing(false);
+      }
+    });
   };
 
   const toggleTorch = async () => {
+    const generation = generationRef.current;
     try {
-      const nextTorch = !torchOn;
-      if (streamRef.current) {
-        const track = streamRef.current.getVideoTracks()[0];
-        if (track) {
-          await track.applyConstraints({
-            // @ts-ignore
-            advanced: [{ torch: nextTorch }]
-          });
-          setTorchOn(nextTorch);
-          return;
-        }
-      }
-      if (html5QrCodeRef.current) {
-        await html5QrCodeRef.current.applyVideoConstraints({
-          advanced: [{ torch: nextTorch } as any]
-        });
-        setTorchOn(nextTorch);
-      }
-    } catch (e) {
-      console.warn('Error alternando linterna:', e);
-    }
+      const next = !torchOn;
+      await scannerRef.current?.applyVideoConstraints({ advanced: [{ torch: next } as MediaTrackConstraintSet] });
+      if (isCurrent(generation)) setTorchOn(next);
+    } catch { if (isCurrent(generation)) setErrorMsg('Este dispositivo no pudo activar la linterna.'); }
   };
-
   const toggleZoom = async () => {
+    const range = capabilitiesRef.current.zoom;
+    if (!range) return;
+    const generation = generationRef.current;
+    const base = Math.max(range.min, Math.min(1, range.max));
+    const target = Math.min(range.max, Math.max(base, 2));
+    const next = zoomLevel > base ? base : target;
     try {
-      const nextZoom = zoomLevel === 1 ? 2 : 1;
-      setZoomLevel(nextZoom);
-      if (streamRef.current) {
-        const track = streamRef.current.getVideoTracks()[0];
-        if (track) {
-          await track.applyConstraints({
-            // @ts-ignore
-            advanced: [{ zoom: nextZoom }]
-          });
-        }
-      }
-    } catch (e) {
-      console.warn('Error alternando zoom:', e);
-    }
+      await scannerRef.current?.applyVideoConstraints({ advanced: [{ zoom: next } as MediaTrackConstraintSet] });
+      if (isCurrent(generation)) setZoomLevel(next);
+    } catch { if (isCurrent(generation)) setErrorMsg('Este dispositivo no pudo cambiar el zoom.'); }
   };
 
-  const stopCamera = () => {
-    activeRef.current = false;
-    if (animFrameRef.current) {
-      cancelAnimationFrame(animFrameRef.current);
-      animFrameRef.current = null;
-    }
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-    if (html5QrCodeRef.current) {
-      try {
-        html5QrCodeRef.current.stop().catch(() => {});
-      } catch {}
-      html5QrCodeRef.current = null;
-    }
-    setIsScanning(false);
-    setTorchOn(false);
-  };
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
     if (!file) return;
-
-    try {
-      const html5QrCode = new Html5Qrcode('file-scanner-temp', {
-        formatsToSupport: [
-          Html5QrcodeSupportedFormats.EAN_13,
-          Html5QrcodeSupportedFormats.EAN_8,
-          Html5QrcodeSupportedFormats.CODE_128,
-          Html5QrcodeSupportedFormats.UPC_A,
-          Html5QrcodeSupportedFormats.UPC_E,
-          Html5QrcodeSupportedFormats.QR_CODE
-        ],
-        verbose: false
-      });
-      const result = await html5QrCode.scanFile(file, true);
-      handleLookup(result);
-    } catch {
-      setErrorMsg('No se detectó un código de barra claro en la foto. Prueba con una imagen con buena luz y sin sombras.');
-    }
+    void stopCamera();
+    const generation = generationRef.current;
+    setErrorMsg('');
+    setSuccessMsg('');
+    setIsInitializing(true);
+    void enqueue(async () => {
+      if (!isCurrent(generation)) return;
+      const options = await scannerOptions();
+      if (!isCurrent(generation)) return;
+      const scanner = new Html5Qrcode('file-scanner-temp', options);
+      try {
+        const result = await scanner.scanFile(file, false);
+        if (isCurrent(generation)) handleLookup(result, 'photo');
+      } catch {
+        if (isCurrent(generation)) setErrorMsg('No se pudo reconocer un código en esta foto. Incluye todas las barras y los márgenes blancos.');
+      } finally {
+        scanner.clear();
+        if (isCurrent(generation)) setIsInitializing(false);
+      }
+    });
   };
 
-  // Iniciar la cámara automáticamente al montar el modal y escuchar tecla Escape
   useEffect(() => {
-    const timer = setTimeout(() => {
-      startCamera();
-    }, 250);
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        stopCamera();
-        onClose();
-      }
+    mountedRef.current = true;
+    void startCamera();
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { void stopCamera(); propsRef.current.onClose(); }
     };
     window.addEventListener('keydown', handleKeyDown);
-
     return () => {
-      clearTimeout(timer);
+      mountedRef.current = false;
+      void stopCamera();
       window.removeEventListener('keydown', handleKeyDown);
-      stopCamera();
     };
   }, []);
 
@@ -348,11 +270,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                 <h3 className="font-extrabold text-xs sm:text-base text-white">
                   Lector de Código de Barras
                 </h3>
-                {engineType === 'native' && (
-                  <span className="text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                    Lens HD
-                  </span>
-                )}
+
               </div>
               <p className="text-[10px] sm:text-[11px] text-slate-400">
                 Apunta al código EAN de cualquier producto
@@ -375,22 +293,10 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
         {/* Viewport de Escaneo con Láser Animado y Enfoque */}
         <div className="overflow-y-auto flex-1 p-3.5 sm:p-5 space-y-3.5">
           
-          <div className="relative rounded-2xl overflow-hidden bg-black border border-slate-800 h-48 sm:h-64 flex flex-col items-center justify-center text-white shadow-inner">
+          <div className="relative rounded-2xl overflow-hidden bg-black border border-slate-800 min-h-48 flex flex-col items-center justify-center text-white shadow-inner">
             
-            {/* 1. Video Element para Motor Nativo (Prioridad 1) */}
-            <video
-              ref={videoRef}
-              playsInline
-              autoPlay
-              muted
-              className={`w-full h-full object-cover ${streamRef.current ? 'block' : 'hidden'}`}
-            />
-
-            {/* 2. Contenedor Fallback para Html5Qrcode */}
-            <div 
-              id="reader-fallback" 
-              className={`w-full h-full object-cover ${!streamRef.current && isScanning ? 'block' : 'hidden'}`} 
-            />
+            {/* Always laid out: decoding uses the video's rendered dimensions. */}
+            <div id="reader-fallback" className="w-full [&_video]:!w-full [&_video]:!h-auto" />
             <div id="file-scanner-temp" className="hidden" />
 
             {/* MIRA DE ENFOQUE + LÁSER ANIMADO TIPO SUPERPRECIO */}
@@ -431,13 +337,13 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
             {isInitializing && !isScanning && (
               <div className="absolute inset-0 bg-slate-950 flex flex-col items-center justify-center p-4 text-center z-10">
                 <RefreshCw className="w-8 h-8 text-cyan-400 animate-spin mb-2" />
-                <p className="text-xs text-slate-300 font-semibold">Calibrando lente y autofoco...</p>
+                <p className="text-xs text-slate-300 font-semibold">Preparando lector...</p>
                 <p className="text-[11px] text-slate-500 mt-0.5">Asegúrate de permitir el uso de la cámara</p>
               </div>
             )}
 
             {/* Botón de reintento si falló el inicio */}
-            {!isInitializing && !isScanning && (
+            {!isInitializing && !isScanning && !successMsg && (
               <div className="p-6 text-center z-10 flex flex-col items-center">
                 <Camera className="w-12 h-12 text-slate-500 mb-2" />
                 <p className="text-xs text-slate-300 max-w-xs mb-3">
@@ -465,7 +371,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                     }`}
                     title="Alternar Zoom 1x / 2x"
                   >
-                    {zoomLevel === 1 ? '1x' : '2x'}
+                    {zoomLevel.toFixed(1)}x
                   </button>
                 )}
 
@@ -533,11 +439,15 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
           {/* Ingreso Manual de Dígitos */}
           <div>
             <label className="block text-xs font-bold text-slate-300 mb-1.5">
-              O escribe los 13 dígitos del código de barras:
+              O escribe el código de barras completo:
             </label>
             <div className="flex gap-2">
               <input
                 type="text"
+                inputMode="numeric"
+                autoComplete="off"
+                aria-label="Código de barras"
+                onKeyDown={event => { if (event.key === 'Enter') handleLookup(manualCode); }}
                 value={manualCode}
                 onChange={e => setManualCode(e.target.value)}
                 placeholder="Ej: 7790272001005"
@@ -555,7 +465,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
           {/* Botones de Prueba Rápida con Productos Reales de Neuquén */}
           <div className="pt-2 border-t border-slate-800">
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
-              Probar escaneo inmediato con productos de Neuquén:
+              Buscar productos de ejemplo (sin usar la cámara):
             </span>
             <div className="flex flex-wrap gap-1.5">
               {[
