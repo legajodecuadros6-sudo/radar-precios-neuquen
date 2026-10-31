@@ -6,6 +6,13 @@ import tempfile, csv
 spec=importlib.util.spec_from_file_location('sync',Path(__file__).resolve().parents[1]/'scripts/scrapers/sync_verified_prices.py')
 sync=importlib.util.module_from_spec(spec);spec.loader.exec_module(sync)
 class VerifiedImportTests(TestCase):
+    def test_categories_do_not_confuse_flavours_with_product_types(self):
+        self.assertEqual(sync.category('Ramen arcor sabor pollo 70grs'), 'Almacén')
+        self.assertEqual(sync.category('Aceite en aerosol sabor manteca'), 'Almacén')
+        self.assertEqual(sync.category('Galletitas de agua'), 'Almacén')
+        self.assertEqual(sync.category('Pollo entero fresco'), 'Carnicería')
+        self.assertEqual(sync.category('Aceite para bebé'), 'Cuidado Personal')
+
     def test_internal_code_is_not_barcode_and_no_discount_is_invented(self):
         product,obs=sync.coope_record({'cod_interno':'123','descripcion':'Aceite 900ml','estado':'1','precio':'100','precio_anterior':'200','gramaje':'900','unimed_desc':'cm3'}, {'descripcion':'Oeste','direccion':'Dirección'},'2026-10-30T00:00:00+00:00')
         self.assertNotIn('ean',product);self.assertEqual(product['net_content_number'],.9)

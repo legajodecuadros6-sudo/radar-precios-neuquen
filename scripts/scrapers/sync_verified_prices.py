@@ -5,6 +5,7 @@ import csv
 import json
 import math
 import os
+import re
 from pathlib import Path
 import tempfile
 import time
@@ -47,9 +48,18 @@ def valid_ean(code):
     return code.isdigit() and len(code) in (8,12,13,14) and (sum(int(n)*(3 if i%2==0 else 1) for i,n in enumerate(reversed(code[:-1])))+int(code[-1]))%10==0
 
 def category(name):
-    name = normalize(name)
-    groups = [('Limpieza',['lavandina','detergente','jabon','limpiador','papel hig','suavizante']),('Lácteos y Frescos',['leche','yogur','queso','manteca','crema']),('Bebidas',['gaseosa','agua','jugo','cerveza']),('Carnicería',['pollo','asado','carne']),('Panadería',['pan '])]
-    return next((cat for cat,words in groups if any(word in name for word in words)), 'Almacén')
+    name = normalize(name).strip()
+    # Classify the product itself, not an ingredient/flavour mentioned later.
+    groups = [
+        ('Cuidado Personal', r'^(?:aceite para bebe|jabon (?:de tocador|liquido para manos)|shampoo|champu|acondicionador|crema (?:corporal|facial)|papel higienico|desodorante corporal)\b'),
+        ('Limpieza', r'^(?:lavandina|detergente|jabon (?:en polvo|para ropa)|limpiador|suavizante|desinfectante|papel (?:cocina|de cocina)|rollo de cocina)\b'),
+        ('Lácteos y Frescos', r'^(?:leche|yogur|yogurt|queso|manteca|crema de leche|dulce de leche)\b'),
+        ('Bebidas', r'^(?:gaseosa|agua|jugo|cerveza)\b'),
+        ('Carnicería', r'^(?:pollo (?:entero|fresco)|asado|carne|pechuga|pata muslo|muslo|suprema)\b'),
+        ('Panadería', r'^(?:pan|panificado)\b'),
+    ]
+    return next((cat for cat, pattern in groups if re.search(pattern,name)), 'Almacén')
+
 
 def coope_record(article, branch, stamp):
     code, name = str(article.get('cod_interno') or '').strip(), str(article.get('descripcion') or '').strip()

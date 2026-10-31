@@ -164,7 +164,7 @@ export const SmartBasketDrawer: React.FC<SmartBasketDrawerProps> = ({ observatio
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold text-emerald-800 uppercase tracking-wide flex items-center gap-1.5">
                       <CheckCircle className="w-4 h-4 text-emerald-600" />
-                      Supermercado Más Barato
+                      Opción con canasta completa
                     </span>
                     <span className="text-xs font-bold text-emerald-700">
                       100% de la canasta
@@ -201,7 +201,7 @@ export const SmartBasketDrawer: React.FC<SmartBasketDrawerProps> = ({ observatio
               {/* Stores Ranking Table */}
               <div className="space-y-2">
                 <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">
-                  Comparativa de Cadenas en Neuquén
+                  Sucursales con precios
                 </h4>
 
                 {optimization.single_trip.map((res, index) => {

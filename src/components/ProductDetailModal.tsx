@@ -153,7 +153,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           </div>
 
           {/* Interactive Recharts Chart */}
-          {displayHistory.length > 0 ? (
+          {displayHistory.length > 1 ? (
             <div className="bg-white rounded-2xl border border-slate-200 p-4">
               <div className="flex items-center justify-between mb-3 text-xs text-slate-500 font-semibold">
                 <span>Evolución del Precio en Neuquén (ARS $)</span>
@@ -203,7 +203,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             </div>
           ) : (
             <div className="p-8 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-xs text-slate-400">
-              Historial de observaciones en construcción para este producto en Neuquén.
+              Se necesitan precios registrados en al menos dos fechas para mostrar la evolución de este producto.
             </div>
           )}
 
