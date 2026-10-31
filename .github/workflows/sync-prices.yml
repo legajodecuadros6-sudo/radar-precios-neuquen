@@ -1,52 +1,49 @@
-name: Sincronización Automática de Precios Neuquén (Cron 3 AM)
-
+name: Actualización trazable de precios Neuquén
 on:
   schedule:
-    # Ejecuta Lunes, Miércoles y Viernes a las 06:00 UTC (03:00 AM hora argentina ART)
-    - cron: '0 6 * * 1,3,5'
-  workflow_dispatch: # Permite ejecución manual en cualquier momento desde GitHub Actions
-
+    # Todos los días, 08:00 Argentina. Los registros conservan la fecha real de consulta.
+    - cron: '0 11 * * *'
+  workflow_dispatch:
 permissions:
   contents: write
-
+concurrency:
+  group: verified-price-sync
+  cancel-in-progress: false
 jobs:
   sync-prices:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - name: Checkout del Repositorio
-        uses: actions/checkout@v4
-
-      - name: Configurar Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
-
-      - name: Configurar Node.js
-        uses: actions/setup-node@v4
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
         with:
-          node-version: 18
-          cache: 'npm'
-
-      - name: Instalar Dependencias de Node
-        run: npm ci
-
-      - name: Ejecutar Pipeline Multicanal de Precios
-        env:
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Verificar importador y reglas de precios
         run: |
-          python3 scripts/scrapers/sync_neuquen_prices.py
-
-      - name: Validar Compilación y Tipos en React
+          python3 -m unittest discover -s tests -p 'test_*.py'
+          node tests/data-quality.test.cjs
+      - name: Consultar fuentes sin inventar precios ni reemplazar fechas anteriores
+        id: sync
+        continue-on-error: true
+        run: python3 scripts/scrapers/sync_verified_prices.py
+      - name: Comprobar compilación
         run: npm run build
-
-      - name: Confirmar y Publicar Actualizaciones de Precios
+      - name: Guardar datos e historial y estado de fuentes
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add scripts/scrapers/precios_consolidados_neuquen.json scripts/supabase/sync_migration.sql src/data/database.ts
-          if git diff --staged --quiet; then
-            echo "No hay cambios de precios para comitear."
-          else
-            git commit -m "chore(prices): actualizacion periodica de precios Neuquen (Cron 3:00 AM) [skip ci]"
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add src/data/live-prices.json src/data/price-history.json
+          if ! git diff --staged --quiet; then
+            git commit -m 'chore(prices): actualizar consultas verificadas e historial'
             git push
           fi
+      - name: Avisar si no hubo precios nuevos
+        if: steps.sync.outcome == 'failure'
+        run: |
+          echo 'La consulta falló. Se preservaron los datos anteriores con sus fechas originales.'
+          exit 1

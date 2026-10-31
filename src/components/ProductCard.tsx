@@ -2,7 +2,7 @@ import React from 'react';
 import { Plus, Minus, LineChart } from 'lucide-react';
 import { Product, PriceObservation } from '../types';
 import { analyzeProductPrices } from '../utils/priceAnalyzer';
-import { formatCurrency } from '../utils/formatters';
+import { formatCurrency, formatDateDisplay } from '../utils/formatters';
 import { SUPERMARKETS_NEUQUEN } from '../data/supermarkets';
 import { useBasket } from '../context/BasketContext';
 
@@ -33,13 +33,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       <div className="p-4 pb-0 relative">
         <div className="relative aspect-4/3 rounded-2xl overflow-hidden bg-white border border-slate-100 flex items-center justify-center p-2">
           <img
-            src={product.image_url}
+            src={product.image_url || '/product-placeholder.svg'}
             alt={product.name}
             className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
             loading="lazy"
             onError={(e) => {
               // Fallback si la imagen no carga
-              (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=500&auto=format&fit=crop&q=80';
+              e.currentTarget.onerror = null; e.currentTarget.src = '/product-placeholder.svg';
             }}
           />
 
@@ -86,9 +86,10 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             <span>Precio (Unidad)</span>
           </div>
 
-          {sortedObs.map((obs, index) => {
+          {sortedObs.length === 0 && <p className="p-2 text-xs text-slate-500">Sin precio vigente verificado. Podés consultar la ficha.</p>}
+          {sortedObs.slice(0, 4).map((obs, index) => {
             const isBest = index === 0;
-            const store = SUPERMARKETS_NEUQUEN.find(s => s.supermarket_id === obs.supermarket_id);
+            const store = SUPERMARKETS_NEUQUEN.find(s => s.id === obs.branch_id);
 
             return (
               <div
@@ -106,7 +107,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                     }`}
                   />
                   <span className={`font-bold truncate text-[11px] ${isBest ? 'text-cyan-950' : 'text-slate-800'}`}>
-                    {store?.brand_name || obs.supermarket_id}
+                    {store?.brand_name || obs.branch_name}
                   </span>
                   {obs.promo_label && (
                     <span className="text-[10px] bg-amber-100 text-amber-900 font-extrabold px-1.5 py-0.2 rounded truncate">
@@ -131,7 +132,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                     </span>
                   </div>
                   <div className="text-[9px] text-slate-400">
-                    {formatCurrency(obs.price_per_unit)} {obs.unit_label}
+                    {formatCurrency(obs.price_per_unit)} {obs.unit_label.replace('$ ', '')}
+                    <span className="block">{formatDateDisplay(obs.query_date)} · {obs.channel === 'online' ? 'Online' : 'Local'}</span>
                   </div>
                 </div>
               </div>
@@ -155,7 +157,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           title="Ver evolución histórica de precios en Neuquén"
         >
           <LineChart className="w-3.5 h-3.5 text-cyan-600" />
-          <span>Historial</span>
+          <span>Ver detalle</span>
         </button>
 
         {inBasketQuantity === 0 ? (

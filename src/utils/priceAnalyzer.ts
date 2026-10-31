@@ -1,4 +1,5 @@
 import { Product, PriceObservation, DealFlag, PriceHistoryPoint } from '../types';
+import { priceIsUsable } from './dataQuality';
 import { SUPERMARKETS_NEUQUEN } from '../data/supermarkets';
 
 export interface ProductPriceSummary {
@@ -23,7 +24,7 @@ export const analyzeProductPrices = (
   allObservations: PriceObservation[],
   historyPoints?: PriceHistoryPoint[]
 ): ProductPriceSummary => {
-  const observations = allObservations.filter(o => o.product_id === product.id);
+  const observations = allObservations.filter(o => o.product_id === product.id && priceIsUsable(o) && (o.min_quantity || 1) <= 1 && !o.promo_condition);
 
   if (observations.length === 0) {
     return {
@@ -50,34 +51,15 @@ export const analyzeProductPrices = (
   const avg_price = Math.round(prices.reduce((acc, p) => acc + p, 0) / prices.length);
 
   const bestObs = observations.find(o => o.current_price === min_price) || observations[0];
-  const bestStore = SUPERMARKETS_NEUQUEN.find(s => s.supermarket_id === bestObs.supermarket_id);
+  const bestStore = SUPERMARKETS_NEUQUEN.find(s => s.id === bestObs.branch_id);
 
   const max_savings_amount = max_price - min_price;
-  const max_savings_percentage = avg_price > 0 ? Math.round(((avg_price - min_price) / avg_price) * 100) : 0;
+  const max_savings_percentage = max_price > 0 ? Math.round(((max_price - min_price) / max_price) * 100) : 0;
 
-  // Anti-inflation and deal legitimacy logic
-  let deal_flag: DealFlag = 'precio_estable';
-  let deal_flag_label = 'Precio de Mercado';
-  let deal_flag_badge = 'bg-slate-100 text-slate-700 border-slate-200';
-
-  if (!historyPoints || historyPoints.length < 3) {
-    deal_flag = 'historial_insuficiente';
-    deal_flag_label = 'Historial en construcción';
-    deal_flag_badge = 'bg-blue-50 text-blue-700 border-blue-200';
-  } else {
-    const historicalAvg = historyPoints.reduce((acc, h) => acc + h.avg_price, 0) / historyPoints.length;
-    const diffPct = ((min_price - historicalAvg) / historicalAvg) * 100;
-
-    if (bestObs.promo_label && bestObs.regular_price > avg_price * 1.25) {
-      deal_flag = 'suba_previa';
-      deal_flag_label = '⚠️ Posible Suba Previa';
-      deal_flag_badge = 'bg-amber-50 text-amber-800 border-amber-300';
-    } else if (diffPct <= -8 || (bestObs.discount_percentage && bestObs.discount_percentage >= 15)) {
-      deal_flag = 'oferta_real';
-      deal_flag_label = '🔥 Oferta Real Verificada';
-      deal_flag_badge = 'bg-emerald-50 text-emerald-800 border-emerald-300 font-semibold';
-    }
-  }
+  // A series mixing stores does not prove inflation or an artificial prior increase.
+  const deal_flag: DealFlag = 'historial_insuficiente';
+  const deal_flag_label = historyPoints && historyPoints.length > 1 ? 'Precios registrados' : 'Historial en construcción';
+  const deal_flag_badge = 'bg-blue-50 text-blue-700 border-blue-200';
 
   return {
     product,

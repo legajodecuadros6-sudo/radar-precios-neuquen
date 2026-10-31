@@ -22,7 +22,7 @@ export const BentoDealsGrid: React.FC<BentoDealsGridProps> = ({
   const topDealProduct = topDealObs ? products.find(p => p.id === topDealObs.product_id) : null;
 
   // Find meat / canasta highlight
-  const meatProduct = products.find(p => p.category === 'Carnicería');
+  const meatProduct = products.find(p => p.category === 'Carnicería' && observations.some(o => o.product_id === p.id && !o.promo_condition && (o.min_quantity || 1) <= 1));
   const meatObs = meatProduct ? observations.filter(o => o.product_id === meatProduct.id) : [];
   const minMeatPrice = meatObs.length > 0 ? Math.min(...meatObs.map(o => o.current_price)) : 0;
 
@@ -35,7 +35,7 @@ export const BentoDealsGrid: React.FC<BentoDealsGridProps> = ({
             Oportunidades Detectadas por el Radar en Neuquén
           </h2>
           <p className="text-xs sm:text-sm text-slate-500">
-            Relevamiento en tiempo real sobre sucursales físicas (Dr. Ramón, Paseo Patagonia, Perticone, Planas y Félix San Martín).
+            Precios consultados en fuentes identificadas. Revisá la fecha, sucursal y canal antes de comprar.
           </p>
         </div>
       </div>
@@ -111,7 +111,7 @@ export const BentoDealsGrid: React.FC<BentoDealsGridProps> = ({
         )}
 
         {/* Card 2: Meat & Asado Neuquino */}
-        {meatProduct && (
+        {meatProduct && meatObs.length > 0 && (
           <div
             onClick={() => onSelectProduct(meatProduct)}
             className="bg-white rounded-3xl p-5 border border-slate-200/90 shadow-xs hover:shadow-md cursor-pointer hover:border-slate-300 transition-all flex flex-col justify-between group"
@@ -127,13 +127,13 @@ export const BentoDealsGrid: React.FC<BentoDealsGridProps> = ({
                 {meatProduct.name}
               </h4>
               <p className="text-xs text-slate-500 mt-0.5">
-                Precios relevados en Makro, Coto y La Anónima.
+                Precio publicado en la fuente indicada en la ficha.
               </p>
               <div className="mt-3 flex items-baseline gap-2">
                 <span className="text-xl font-black text-slate-900">
                   desde {formatCurrency(minMeatPrice)}
                 </span>
-                <span className="text-xs text-slate-400">/ kg</span>
+                <span className="text-xs text-slate-400">{meatProduct.net_content_str}</span>
               </div>
             </div>
 
@@ -152,18 +152,18 @@ export const BentoDealsGrid: React.FC<BentoDealsGridProps> = ({
                 <ShieldAlert className="w-4 h-4" />
               </div>
               <h4 className="font-extrabold text-amber-950 text-sm">
-                Radar Anti-Inflación
+                Historial con fuentes
               </h4>
             </div>
             <p className="text-xs text-amber-900/90 leading-relaxed font-medium">
-              Comparamos cada precio contra el promedio histórico de 30 y 90 días en Neuquén. Si un comercio infla el precio de lista previo a un "descuento", el radar te advierte.
+              Guardamos las consultas sin inventar precios anteriores. El historial empieza con los datos registrados y crece con cada actualización.
             </p>
           </div>
 
           <div className="mt-3 pt-3 border-t border-amber-200/80 flex items-center justify-between text-[11px] text-amber-950 font-bold">
-            <span>Auditado sin publicidad</span>
+            <span>Consultas fechadas</span>
             <span className="text-indigo-800 bg-indigo-100/90 px-2 py-0.5 rounded font-black">
-              100% Imparcial
+              Fuente visible
             </span>
           </div>
         </div>

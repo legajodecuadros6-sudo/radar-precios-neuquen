@@ -10,8 +10,9 @@ import { SmartBasketDrawer } from './components/SmartBasketDrawer';
 import { BarcodeScannerModal } from './components/BarcodeScannerModal';
 import { NeuquenMapModal } from './components/NeuquenMapModal';
 import { SearchAutocomplete } from './components/SearchAutocomplete';
-import { INITIAL_PRODUCTS, INITIAL_PRICE_OBSERVATIONS, MOCK_PRICE_HISTORIES } from './data/database';
-import { fetchLiveRadarData } from './services/productService';
+import { CoveragePanel } from './components/CoveragePanel';
+import { priceIsUsable, matchesProduct, CHAIN_NAMES } from './utils/dataQuality';
+import { fetchLiveRadarData, localData, recordedHistory } from './services/productService';
 import { useBasket } from './context/BasketContext';
 import { analyzeProductPrices } from './utils/priceAnalyzer';
 import { Shield, Database, Cloud, CheckCircle2, ShoppingCart } from 'lucide-react';
@@ -31,13 +32,16 @@ export const AppContent: React.FC = () => {
     itemCount
   } = useBasket();
 
-  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
-  const [observations, setObservations] = useState<PriceObservation[]>(INITIAL_PRICE_OBSERVATIONS);
+  const [products, setProducts] = useState<Product[]>(localData.products);
+  const [observations, setObservations] = useState<PriceObservation[]>(localData.observations.filter(o => priceIsUsable(o)));
   const [connectionStatus, setConnectionStatus] = useState<{ isLiveCloud: boolean; message: string }>({
     isLiveCloud: false,
     message: 'Inicializando conexión...'
   });
 
+  const [chainFilter, setChainFilter] = useState('all');
+  const [visibleCount, setVisibleCount] = useState(36);
+  useEffect(() => setVisibleCount(36), [searchQuery, selectedCategory, chainFilter]);
   const [sortBy, setSortBy] = useState('max_savings');
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const dealsRef = useRef<HTMLDivElement>(null);
@@ -49,9 +53,7 @@ export const AppContent: React.FC = () => {
         if (result.products && result.products.length > 0) {
           setProducts(result.products);
         }
-        if (result.observations && result.observations.length > 0) {
-          setObservations(result.observations);
-        }
+        setObservations(result.observations.filter(o => priceIsUsable(o)));
         setConnectionStatus({
           isLiveCloud: result.isLiveCloud,
           message: result.message || ''
@@ -84,16 +86,8 @@ export const AppContent: React.FC = () => {
   const filteredProducts = useMemo(() => {
     let result = products.filter(product => {
       const matchesCategory = selectedCategory === 'Todos' || product.category === selectedCategory;
-      const query = searchQuery.toLowerCase().trim();
-      const matchesSearch =
-        !query ||
-        product.name.toLowerCase().includes(query) ||
-        product.brand.toLowerCase().includes(query) ||
-        product.category.toLowerCase().includes(query) ||
-        (product.ean && product.ean.includes(query)) ||
-        (product.ean_aliases && product.ean_aliases.some(alias => alias.includes(query)));
-
-      return matchesCategory && matchesSearch;
+      return matchesCategory && matchesProduct(product, searchQuery) &&
+        (chainFilter === 'all' || observations.some(o => o.product_id === product.id && o.supermarket_id === chainFilter));
     });
 
     // Sorting
@@ -101,6 +95,7 @@ export const AppContent: React.FC = () => {
       const analysisA = analyzeProductPrices(a, observations);
       const analysisB = analyzeProductPrices(b, observations);
 
+      if (Boolean(analysisA.observations.length) !== Boolean(analysisB.observations.length)) return analysisA.observations.length ? -1 : 1;
       if (sortBy === 'max_savings') {
         return analysisB.max_savings_percentage - analysisA.max_savings_percentage;
       }
@@ -114,7 +109,7 @@ export const AppContent: React.FC = () => {
     });
 
     return result;
-  }, [products, observations, selectedCategory, searchQuery, sortBy]);
+  }, [products, observations, selectedCategory, searchQuery, sortBy, chainFilter]);
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col selection:bg-cyan-500 selection:text-slate-950 font-['Plus_Jakarta_Sans',sans-serif]">
@@ -128,23 +123,20 @@ export const AppContent: React.FC = () => {
       {/* Main Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 relative">
         
-        {/* Relevamiento Oficial y Estado en Vivo */}
-        <div className="mb-3 flex items-center justify-between flex-wrap gap-2 text-xs">
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200/90 bg-white shadow-2xs">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            <span className="font-bold text-slate-800">Precios y Ofertas al Día</span>
-            <span className="text-slate-300">|</span>
-            <span className="text-slate-600 font-medium">Relevamiento en Vivo</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-slate-700 font-semibold bg-white px-3 py-1.5 rounded-full border border-slate-200/80 shadow-2xs">
-            <span>📍 Neuquén Capital (CP 8300)</span>
-            <span className="text-slate-300">•</span>
-            <span className="text-slate-500 font-normal">8 Cadenas Comparadas</span>
-          </div>
-        </div>
+        <section className="mb-5 rounded-3xl bg-slate-900 px-5 py-6 text-white sm:p-8">
+          <p className="text-xs font-bold uppercase tracking-widest text-cyan-300">Neuquén Capital · Precios por sucursal</p>
+          <h2 className="mt-2 text-2xl sm:text-3xl font-black">Buscá el producto. Revisá el precio y su fecha.</h2>
+          <p className="mt-3 max-w-2xl text-sm text-slate-300">Escaneá un envase o buscá por nombre. Comparamos la misma presentación cuando tenemos datos suficientes; los precios online pueden diferir de la góndola.</p>
+          <p className="mt-3 text-xs text-slate-400">{connectionStatus.message}</p>
+        </section>
+        <CoveragePanel observations={observations} />
+        <label className="block my-4 text-sm font-bold text-slate-700">
+          Filtrar por comercio
+          <select aria-label="Filtrar por comercio" value={chainFilter} onChange={event => setChainFilter(event.target.value)} className="block w-full sm:w-80 mt-2 p-3 rounded-xl border border-slate-300 bg-white">
+            <option value="all">Todos los comercios</option>
+            {Object.entries(CHAIN_NAMES).map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+          </select>
+        </label>
 
         {/* 4 Quick Action Cards (Ofertas, Mapa, Scanner, Changuito) - Superprecio Style */}
         <QuickActionCards onScrollToDeals={scrollToDeals} />
@@ -187,10 +179,10 @@ export const AppContent: React.FC = () => {
           <div className="flex items-center justify-between mb-3">
             <div>
               <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight">
-                {searchQuery ? `Resultados para "${searchQuery}"` : 'Catálogo Completo de Precios Comparados'}
+                {searchQuery ? `Resultados para "${searchQuery}"` : 'Productos y precios disponibles'}
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                {filteredProducts.length} productos con matriz comparativa multi-supermercado en Neuquén
+                {filteredProducts.length} productos en el catálogo · Consultá disponibilidad y condiciones en la fuente
               </p>
             </div>
           </div>
@@ -206,7 +198,7 @@ export const AppContent: React.FC = () => {
         {/* Products Grid */}
         {filteredProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
-            {filteredProducts.map(product => (
+            {filteredProducts.slice(0, visibleCount).map(product => (
               <ProductCard
                 key={product.id}
                 product={product}
@@ -229,6 +221,7 @@ export const AppContent: React.FC = () => {
           </div>
         )}
 
+        {filteredProducts.length > visibleCount && <button onClick={() => setVisibleCount(n => n + 36)} className="block mx-auto mt-6 px-6 py-3 rounded-xl bg-slate-900 text-white font-bold">Mostrar más productos ({Math.min(visibleCount, filteredProducts.length)} de {filteredProducts.length})</button>}
       </main>
 
       {/* Footer & Transparency Statement */}
@@ -256,7 +249,7 @@ export const AppContent: React.FC = () => {
           </div>
 
           <p className="leading-relaxed text-[11px] text-slate-500">
-            * Información recopilada mediante relevamiento directo y scraping de fuentes públicas oficiales (Coto Digital, La Anónima Online, Makro Canasta Básica Neuquén, Catálogos Yaguar Neuquén, MasOnline y Cooperativa Obrera). Los precios exhibidos corresponden a la fecha de consulta informada en cada registro y están sujetos a variaciones y stock disponible en cada salón de ventas.
+            Se muestran precios con fuente y sucursal identificadas, consultados en las últimas 72 horas. Un comercio en el mapa no implica cobertura de precios. Las fuentes pendientes se indican arriba. El historial se construye con consultas reales; promociones, stock y condiciones se confirman en la tienda.
           </p>
         </div>
       </footer>
@@ -279,7 +272,7 @@ export const AppContent: React.FC = () => {
       <ProductDetailModal
         product={selectedProductForModal}
         observations={observations}
-        historyPoints={selectedProductForModal ? MOCK_PRICE_HISTORIES[selectedProductForModal.id] : []}
+        historyPoints={selectedProductForModal ? recordedHistory(selectedProductForModal.id) : []}
         onClose={() => setSelectedProductForModal(null)}
       />
 

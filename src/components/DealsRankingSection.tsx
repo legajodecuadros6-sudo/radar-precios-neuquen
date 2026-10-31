@@ -22,7 +22,7 @@ export const DealsRankingSection: React.FC<DealsRankingSectionProps> = ({
   // Filter observations that have active discounts or promos
   const dealsObservations = useMemo(() => {
     return observations.filter(o => 
-      (o.discount_percentage && o.discount_percentage > 0) || Boolean(o.promo_label)
+      Boolean(o.discount_percentage && o.discount_percentage > 0 && !o.promo_condition && (o.min_quantity || 1) <= 1)
     );
   }, [observations]);
 
@@ -35,7 +35,7 @@ export const DealsRankingSection: React.FC<DealsRankingSectionProps> = ({
       if (!storeMap[id]) {
         storeMap[id] = { totalDiscount: 0, count: 0, bestDeal: 0 };
       }
-      const disc = obs.discount_percentage || 10;
+      const disc = obs.discount_percentage || 0;
       storeMap[id].totalDiscount += disc;
       storeMap[id].count += 1;
       if (disc > storeMap[id].bestDeal) {
@@ -63,7 +63,7 @@ export const DealsRankingSection: React.FC<DealsRankingSectionProps> = ({
   // Filter deals based on selected supermarket
   const filteredDeals = useMemo(() => {
     if (selectedSupermarket === 'all') {
-      return dealsObservations.sort((a, b) => (b.discount_percentage || 0) - (a.discount_percentage || 0));
+      return [...dealsObservations].sort((a, b) => (b.discount_percentage || 0) - (a.discount_percentage || 0));
     }
     return dealsObservations.filter(o => o.supermarket_id === selectedSupermarket)
       .sort((a, b) => (b.discount_percentage || 0) - (a.discount_percentage || 0));
@@ -73,6 +73,7 @@ export const DealsRankingSection: React.FC<DealsRankingSectionProps> = ({
   const selectedStoreObj = SUPERMARKETS_NEUQUEN.find(s => s.supermarket_id === selectedSupermarket);
   const leadingStore = supermarketRankings[0];
 
+  if (!dealsObservations.length) return <section className="mb-6 rounded-2xl border border-slate-200 bg-white p-4"><h3 className="font-bold text-sm">Promociones</h3><p className="text-xs text-slate-500 mt-1">Todavía no hay descuentos con condiciones verificadas. Los precios base disponibles están en el catálogo.</p></section>;
   return (
     <section className="mb-12 bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 rounded-3xl p-6 sm:p-8 text-white border border-slate-800 shadow-2xl relative overflow-hidden">
       
@@ -93,7 +94,7 @@ export const DealsRankingSection: React.FC<DealsRankingSectionProps> = ({
             </span>
           </div>
           <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-            ¿Quién tiene los precios más baratos hoy?
+            Promociones publicadas con condiciones verificadas
           </h2>
           <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-xl">
             Compara promociones en general o selecciona una cadena para ver sus ofertas auditadas y cómo se ubica en el ranking de Neuquén.

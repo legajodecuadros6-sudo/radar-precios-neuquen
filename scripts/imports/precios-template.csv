@@ -1,0 +1,1 @@
+supermarket_id,branch_id,branch_name,branch_address,city,ean,name,brand,category,image_url,unit_measure,net_content_number,net_content_str,price,price_basis,tax_included,min_quantity,observed_at,source_url,channel,conditions

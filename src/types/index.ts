@@ -56,6 +56,11 @@ export interface PriceObservation {
   product_id: string;
   supermarket_id: SupermarketId;
   branch_name: string;
+  branch_id?: string;
+  branch_address?: string;
+  channel?: 'online' | 'store';
+  min_quantity?: number;
+  source_name?: string;
   regular_price: number;
   current_price: number;
   discount_percentage?: number;
@@ -117,4 +122,5 @@ export interface SplitBasketOptimization {
   single_trip_best_total: number;
   extra_savings: number;
   extra_savings_percentage: number;
+  missing_products?: Product[];
 }

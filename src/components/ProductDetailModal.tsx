@@ -31,8 +31,8 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
   // Filter history points based on timeframe
   const displayHistory = timeframe === '30d'
-    ? historyPoints.slice(-5)
-    : historyPoints;
+    ? historyPoints.filter(point => Date.parse(point.date) >= Date.now() - 30 * 86400000)
+    : historyPoints.filter(point => Date.parse(point.date) >= Date.now() - 90 * 86400000);
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
@@ -64,7 +64,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           {/* Main Info */}
           <div className="flex flex-col sm:flex-row items-start gap-5">
             <img
-              src={product.image_url}
+              src={product.image_url || '/product-placeholder.svg'}
               alt={product.name}
               onError={(e) => {
                 (e.currentTarget as HTMLImageElement).src =
@@ -88,7 +88,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               {/* Price Range & Best Store */}
               <div className="mt-3 flex flex-wrap items-baseline gap-3">
                 <span className="text-2xl font-black text-slate-900">
-                  {formatCurrency(analysis.min_price)}
+                  {analysis.observations.length ? formatCurrency(analysis.min_price) : 'Sin precio vigente'}
                 </span>
                 <span className="text-xs text-slate-400">
                   (Mejor precio en <span className="font-bold text-slate-800">{analysis.best_store_name}</span>)
@@ -117,18 +117,14 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               <div>
                 <div className="flex items-center gap-2">
                   <h4 className="font-bold text-sm text-slate-900">
-                    Diagnóstico Anti-Inflación
+                    Información del precio
                   </h4>
                   <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${analysis.deal_flag_badge}`}>
                     {analysis.deal_flag_label}
                   </span>
                 </div>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  {analysis.deal_flag === 'oferta_real'
-                    ? 'El precio actual se encuentra un 10% o más por debajo de la media histórica de Neuquén.'
-                    : analysis.deal_flag === 'suba_previa'
-                    ? 'Se detectó que el precio regular fue elevado antes de aplicar la promoción.'
-                    : 'Precio dentro de los márgenes normales de mercado.'}
+                  El historial muestra consultas registradas. No permite afirmar por sí solo que una promoción sea real o que haya existido una suba previa.
                 </p>
               </div>
             </div>
@@ -217,8 +213,9 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               Precios y Sucursales en Neuquén Capital
             </h3>
             <div className="border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-100">
+              {analysis.observations.length === 0 && <p className="p-4 text-sm text-slate-500">Todavía no hay precios vigentes verificados para este producto.</p>}
               {analysis.observations.map(obs => {
-                const store = SUPERMARKETS_NEUQUEN.find(s => s.supermarket_id === obs.supermarket_id);
+                const store = SUPERMARKETS_NEUQUEN.find(s => s.id === obs.branch_id);
 
                 return (
                   <div key={obs.id} className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white hover:bg-slate-50 transition-colors">
@@ -228,7 +225,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                           {store?.brand_name}
                         </span>
                         <span className="text-xs text-slate-400">
-                          {store?.address}
+                          {obs.branch_address || store?.address || obs.branch_name}
                         </span>
                         {obs.promo_label && (
                           <span className="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded">
@@ -237,7 +234,8 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                         )}
                       </div>
                       <div className="text-[11px] text-slate-500 mt-0.5 flex items-center gap-3">
-                        <span>Relevado: {obs.query_date}</span>
+                        <span>Consultado: {new Date(obs.query_date).toLocaleString('es-AR', { timeZone: 'America/Argentina/Salta' })} · {obs.channel === 'online' ? 'Tienda online' : 'Local'}</span>
+                        {obs.notes && <span>{obs.notes}</span>}
                         {obs.publication_date && (
                           <span>Publicado: {obs.publication_date}</span>
                         )}
@@ -259,7 +257,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                         {formatCurrency(obs.current_price)}
                       </div>
                       <div className="text-xs text-slate-400">
-                        {formatCurrency(obs.price_per_unit)} {obs.unit_label}
+                        {formatCurrency(obs.price_per_unit)} {obs.unit_label.replace('$ ', '')}
                       </div>
                     </div>
                   </div>

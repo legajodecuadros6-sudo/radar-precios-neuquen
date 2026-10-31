@@ -1,4 +1,5 @@
 import React from 'react';
+import { matchesProduct } from '../utils/dataQuality';
 import { ChevronRight } from 'lucide-react';
 import { Product, PriceObservation } from '../types';
 import { analyzeProductPrices } from '../utils/priceAnalyzer';
@@ -25,13 +26,7 @@ export const SearchAutocomplete: React.FC<SearchAutocompleteProps> = ({
 
   const query = searchQuery.toLowerCase().trim();
 
-  const filtered = products.filter(p =>
-    p.name.toLowerCase().includes(query) ||
-    p.brand.toLowerCase().includes(query) ||
-    p.category.toLowerCase().includes(query) ||
-    (p.ean && p.ean.includes(query)) ||
-    (p.ean_aliases && p.ean_aliases.some(alias => alias.includes(query)))
-  ).slice(0, 6);
+  const filtered = products.filter(p => matchesProduct(p, query)).slice(0, 6);
 
   if (filtered.length === 0) {
     return (
@@ -68,7 +63,7 @@ export const SearchAutocomplete: React.FC<SearchAutocompleteProps> = ({
             >
               <div className="flex items-center gap-3 min-w-0">
                 <img
-                  src={product.image_url}
+                  src={product.image_url || '/product-placeholder.svg'}
                   alt={product.name}
                   className="w-11 h-11 object-cover rounded-xl bg-slate-100 shrink-0 border border-slate-200/60"
                 />
@@ -94,7 +89,7 @@ export const SearchAutocomplete: React.FC<SearchAutocompleteProps> = ({
 
               <div className="text-right shrink-0">
                 <div className="text-xs text-slate-500">
-                  desde <span className="font-bold text-slate-900 text-sm">{formatCurrency(analysis.min_price)}</span>
+                  desde <span className="font-bold text-slate-900 text-sm">{analysis.observations.length ? formatCurrency(analysis.min_price) : 'Sin precio vigente'}</span>
                 </div>
                 <div className="text-[11px] text-emerald-600 font-medium">
                   en {analysis.best_store_name}

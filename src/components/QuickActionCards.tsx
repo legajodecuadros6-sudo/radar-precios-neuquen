@@ -1,5 +1,6 @@
 import React from 'react';
 import { Flame, Compass, ScanBarcode, ShoppingBag } from 'lucide-react';
+import { SUPERMARKETS_NEUQUEN } from '../data/supermarkets';
 import { useBasket } from '../context/BasketContext';
 
 interface QuickActionCardsProps {
@@ -13,7 +14,7 @@ export const QuickActionCards: React.FC<QuickActionCardsProps> = ({ onScrollToDe
     {
       id: 'deals',
       label: 'Ofertas & Descuentos',
-      subtitle: 'Ranking de ahorro hoy',
+      subtitle: 'Ofertas con fecha de consulta',
       icon: Flame,
       color: 'text-amber-500 bg-amber-500/10 border-amber-300/40 hover:bg-amber-500/15',
       badge: 'TOP',
@@ -23,7 +24,7 @@ export const QuickActionCards: React.FC<QuickActionCardsProps> = ({ onScrollToDe
     {
       id: 'map',
       label: 'Radar Mapa',
-      subtitle: '17 sucursales en NQN',
+      subtitle: `${SUPERMARKETS_NEUQUEN.length} sucursales en el mapa`,
       icon: Compass,
       color: 'text-cyan-600 bg-cyan-500/10 border-cyan-300/40 hover:bg-cyan-500/15',
       badge: 'GPS',

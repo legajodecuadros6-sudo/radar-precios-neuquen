@@ -1,4 +1,5 @@
 import { SupermarketBranch } from '../types';
+import snapshot from './live-prices.json';
 
 export interface SupermarketBranchExtended extends SupermarketBranch {
   logo_svg: string;
@@ -8,7 +9,7 @@ export interface SupermarketBranchExtended extends SupermarketBranch {
   osm_precision: string;
 }
 
-export const SUPERMARKETS_NEUQUEN: SupermarketBranchExtended[] = [
+const ORIGINAL_BRANCHES: SupermarketBranchExtended[] = [
   // ==========================================
   // 1. COTO (Alto Comahue Shopping)
   // Coordenada exacta del predio del hipermercado
@@ -448,6 +449,16 @@ export const SUPERMARKETS_NEUQUEN: SupermarketBranchExtended[] = [
     corridor_zone: 'centro_shopping',
     logo_svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><circle cx="50" cy="50" r="46" fill="#ea580c"/><text x="50" y="58" font-size="22" font-weight="900" fill="#ffffff" text-anchor="middle" font-family="sans-serif" letter-spacing="1">VEA</text></svg>`
   }
+];
+
+export const SUPERMARKETS_NEUQUEN: SupermarketBranchExtended[] = [
+  ...ORIGINAL_BRANCHES,
+  ...snapshot.branches.filter(branch => !ORIGINAL_BRANCHES.some(b => b.id === branch.id)).map(branch => ({
+    ...ORIGINAL_BRANCHES.find(b => b.supermarket_id === branch.supermarket_id)!,
+    ...branch,
+    corridor_zone: 'oeste_cercania' as const,
+    osm_precision: 'Coordenadas publicadas por la tienda',
+  } as SupermarketBranchExtended))
 ];
 
 export const getSupermarketById = (id: string): SupermarketBranchExtended | undefined => {

@@ -45,7 +45,7 @@ export const SmartBasketDrawer: React.FC<SmartBasketDrawerProps> = ({ observatio
       });
     } else {
       text += `🎯 *Opción Compra Dividida (Ahorro Máximo)*\n`;
-      text += `Total Mínimo: ${formatCurrency(optimization.split_trip.total_optimized)}\n`;
+      text += `Subtotal con precio: ${formatCurrency(optimization.split_trip.total_optimized)}\n`;
       if (optimization.split_trip.extra_savings > 0) {
         text += `Ahorro adicional: ${formatCurrency(optimization.split_trip.extra_savings)} (${formatPercentage(optimization.split_trip.extra_savings_percentage)} más barato que un solo súper)\n`;
       }
@@ -60,6 +60,7 @@ export const SmartBasketDrawer: React.FC<SmartBasketDrawerProps> = ({ observatio
       });
     }
 
+    if (optimization.split_trip.missing_products?.length) text += `\nSin cotización (no incluidos en el subtotal): ${optimization.split_trip.missing_products.map(p => p.name).join(', ')}\n`;
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
@@ -149,7 +150,7 @@ export const SmartBasketDrawer: React.FC<SmartBasketDrawerProps> = ({ observatio
                 Tu canasta está vacía
               </h3>
               <p className="text-xs text-slate-500 max-w-xs mt-1">
-                Agrega productos desde el catálogo para comparar en vivo qué supermercado de Neuquén te conviene más.
+                Agrega productos desde el catálogo para comparar los precios disponibles qué supermercado de Neuquén te conviene más.
               </p>
             </div>
           ) : activeTab === 'single' ? (
@@ -265,7 +266,7 @@ export const SmartBasketDrawer: React.FC<SmartBasketDrawerProps> = ({ observatio
 
                 <div className="flex items-baseline justify-between mt-2">
                   <div>
-                    <span className="text-xs text-slate-400">Costo Mínimo Total:</span>
+                    <span className="text-xs text-slate-400">Subtotal con precio:</span>
                     <div className="text-2xl font-black text-white">
                       {formatCurrency(optimization.split_trip.total_optimized)}
                     </div>
@@ -388,15 +389,16 @@ export const SmartBasketDrawer: React.FC<SmartBasketDrawerProps> = ({ observatio
 
         </div>
 
+        {items.length > 0 && optimization.split_trip.missing_products!.length > 0 && <div className="px-4 py-3 bg-amber-50 text-amber-900 text-xs">Falta cotizar: {optimization.split_trip.missing_products!.map(p => p.name).join(', ')}. El subtotal no incluye esos productos.</div>}
         {/* Drawer Footer with Export Button */}
         {items.length > 0 && (
           <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3">
             <div>
               <span className="text-[11px] text-slate-400 block">
-                Total Recomendado
+                Total de productos cotizados
               </span>
               <span className="text-xl font-black text-slate-900">
-                {formatCurrency(
+                {activeTab === 'single' && !optimization.cheapest_single_store ? 'Sin cotización completa' : formatCurrency(
                   activeTab === 'single'
                     ? (optimization.cheapest_single_store?.total || 0)
                     : optimization.split_trip.total_optimized
