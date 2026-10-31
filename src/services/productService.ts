@@ -14,7 +14,7 @@ export interface DataFetchResult {
 }
 // Retain historical source files, but never treat their hardcoded prices as fresh evidence.
 export const localData: DataFetchResult = {
-  products: [...INITIAL_PRODUCTS.map(p => ({ ...p, ean_aliases: [] })), ...snapshot.products as Product[]],
+  products: [...INITIAL_PRODUCTS.filter(p => !p.ean || !snapshot.products.some(real => 'ean' in real && real.ean === p.ean)).map(p => ({ ...p, ean_aliases: [] })), ...snapshot.products as Product[]],
   observations: mergePrices(INITIAL_PRICE_OBSERVATIONS.map(o => ({ ...o, is_verified: false, notes: 'Registro anterior sin trazabilidad suficiente' })), snapshot.observations as PriceObservation[]),
   isLiveCloud: false,
   message: 'Última importación guardada. Cada precio indica su fuente y fecha.'

@@ -58,3 +58,15 @@ Revisar el diff de datos, confirmar los archivos de `src/data/` y publicar. La i
 - Verificar las demás direcciones heredadas del mapa con fuentes oficiales.
 - Incorporar almacenamiento escalable en Supabase cuando se migre el esquema de trazabilidad y haya acceso de escritura de backend. No exponer una clave de servicio en el frontend.
 - Más de una cadena con precios comparables será necesaria para ofrecer ahorros entre comercios; con una fuente solo se muestra su precio.
+
+
+## Ampliación del 31 de octubre de 2026 — ChangoMás
+
+- Fuente nueva: catálogo público de MâsOnline para identidad/EAN y cotización individual `POST /api/checkout/pub/orderForms/simulation` para precio y stock. La simulación no crea pedidos ni usa datos de clientes.
+- Vendedor `masonlineprod0023`, CP 8300, sucursal 3608. Antes de cada importación se confirma el punto activo `masonlineprod0023_WM-3608` en la API pública de retiro: Neuquén, Eugenio Perticone 1255. Cada cotización debe indicar depósito `Inv-Full-3608` y muelle `Muelle-Full-3608`.
+- No se usan los precios del vendedor genérico `1`. Se descartan cotizaciones sin stock, con vendedor o depósito distinto, con cargos impositivos adicionales, descuentos de carrito, unidades pesables y kits.
+- Cada producto se cotiza individualmente, cantidad 1, sin cuenta, cupón o tarjeta. Se muestra el precio cotizado sin inferir descuentos a partir de precios de lista. El subtotal de canasta no incluye envío ni mínimos de compra de la tienda.
+- Los EAN se validan y los productos se identifican como `ean_<código>`. El catálogo oficial desplaza registros de ejemplo con el mismo EAN para que el lector no abra una ficha antigua sin precios. La Coope sigue separada hasta disponer de EAN oficial.
+- El proceso diario consulta ambas fuentes independientemente. Un fallo no impide guardar la otra fuente; se conserva la fecha anterior y el proceso señala el fallo. Para actualizar solo ChangoMás: `python3 scripts/scrapers/sync_verified_prices.py --source changomas`.
+- Consulta exploratoria: La Anónima respondió HTTP 403. Vea publica el vendedor de Neuquén Láinez, pero las primeras cotizaciones probadas no devolvieron artículos disponibles; no se importaron precios genéricos como si fueran locales.
+- Continúan pendientes Coto, La Anónima, Vea, Yaguar, Vital, Diarco y Makro. La existencia de sucursales en el mapa no indica cobertura de precios.

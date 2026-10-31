@@ -81,7 +81,7 @@ export const SmartBasketDrawer: React.FC<SmartBasketDrawerProps> = ({ observatio
                 Canasta Inteligente Neuquén
               </h2>
               <p className="text-xs text-slate-500">
-                {items.length} {items.length === 1 ? 'producto' : 'productos'} seleccionados
+                {items.length} {items.length === 1 ? 'producto' : 'productos'} seleccionados · Subtotal de productos; no incluye envío ni mínimos de compra de la tienda.
               </p>
             </div>
           </div>

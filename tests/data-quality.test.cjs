@@ -58,3 +58,14 @@ test('cloud adds new products, maps their prices to their own IDs and never inve
   assert.ok(rows.products.some(p=>p.id==='cloud-new'));
   const price=rows.observations.find(o=>o.id==='cloud-price');assert.equal(price.product_id,'cloud-new');assert.equal(price.supermarket_id,'diarco');assert.equal(price.is_verified,false);assert.equal(price.query_date,'2026-10-01');
 });
+
+
+test('official barcode products replace legacy examples in scanner catalogue',()=>{
+  const {localData}=load('src/services/productService.ts');
+  const snapshot=load('src/data/live-prices.json');
+  for(const real of snapshot.products.filter(p=>p.ean)) {
+    const matches=localData.products.filter(p=>p.ean===real.ean);
+    assert.equal(matches.length,1,real.ean);
+    assert.equal(matches[0].id,real.id);
+  }
+});

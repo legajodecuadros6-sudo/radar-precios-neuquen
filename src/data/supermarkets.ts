@@ -452,7 +452,7 @@ const ORIGINAL_BRANCHES: SupermarketBranchExtended[] = [
 ];
 
 export const SUPERMARKETS_NEUQUEN: SupermarketBranchExtended[] = [
-  ...ORIGINAL_BRANCHES,
+  ...ORIGINAL_BRANCHES.filter(branch => !(branch.id === 'changomas_perticone' && snapshot.branches.some(b => b.id === 'changomas_3608'))),
   ...snapshot.branches.filter(branch => !ORIGINAL_BRANCHES.some(b => b.id === branch.id)).map(branch => ({
     ...ORIGINAL_BRANCHES.find(b => b.supermarket_id === branch.supermarket_id)!,
     ...branch,
