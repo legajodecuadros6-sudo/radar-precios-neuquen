@@ -1,7 +1,6 @@
-import { Product, PriceObservation, PriceHistoryPoint } from '../types';
+import { Product, PriceObservation } from '../types';
 import { INITIAL_PRODUCTS, INITIAL_PRICE_OBSERVATIONS } from '../data/database';
 import snapshot from '../data/live-prices.json';
-import history from '../data/price-history.json';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { mapSupermarketId, mergePrices, productUnitPrice } from '../utils/dataQuality';
 
@@ -78,21 +77,4 @@ export async function fetchLiveRadarData(): Promise<DataFetchResult> {
   } catch {
     return { ...localData, message: 'No se pudo actualizar la conexión. Mostrando la última importación y sus fechas originales.' };
   }
-}
-
-export function recordedHistory(productId: string): PriceHistoryPoint[] {
-  const byDay = new Map<string, Map<string, PriceObservation>>();
-  for (const raw of history) {
-    const observation = raw as PriceObservation;
-    if (observation.product_id !== productId || !observation.is_verified) continue;
-    const day = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Argentina/Salta', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(observation.query_date));
-    if (!byDay.has(day)) byDay.set(day, new Map());
-    const branch = `${observation.branch_id}|${observation.channel}`;
-    const old = byDay.get(day)!.get(branch);
-    if (!old || Date.parse(observation.query_date) > Date.parse(old.query_date)) byDay.get(day)!.set(branch, observation);
-  }
-  return [...byDay].sort(([a], [b]) => a.localeCompare(b)).map(([date, entries]) => {
-    const prices = [...entries.values()].map(o => o.current_price);
-    return { date, min_price: Math.min(...prices), avg_price: prices.reduce((a,b) => a+b,0)/prices.length };
-  });
 }

@@ -5,24 +5,39 @@ import { Product, PriceObservation, PriceHistoryPoint } from '../types';
 import { analyzeProductPrices } from '../utils/priceAnalyzer';
 import { formatCurrency } from '../utils/formatters';
 import { SUPERMARKETS_NEUQUEN } from '../data/supermarkets';
+import { recordedHistory } from '../services/historyService';
 import { useBasket } from '../context/BasketContext';
 
 interface ProductDetailModalProps {
   product: Product | null;
   observations: PriceObservation[];
-  historyPoints?: PriceHistoryPoint[];
   onClose: () => void;
 }
 
 export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   product,
   observations,
-  historyPoints = [],
   onClose
 }) => {
   const { items, addItem, updateQuantity } = useBasket();
   const [timeframe, setTimeframe] = useState<'30d' | '90d'>('30d');
 
+  const [historyState, setHistoryState] = useState<{ id: string; points: PriceHistoryPoint[]; status: 'loading' | 'ready' | 'error' }>({ id: '', points: [], status: 'loading' });
+  const [historyAttempt, setHistoryAttempt] = useState(0);
+  const historyPoints = historyState.id === product?.id ? historyState.points : [];
+  const historyStatus = historyState.id === product?.id ? historyState.status : 'loading';
+  useEffect(() => {
+    if (!product) return;
+    let active = true;
+    const id = product.id;
+    setHistoryState({ id, points: [], status: 'loading' });
+    recordedHistory(id).then(points => {
+      if (active) setHistoryState({ id, points, status: 'ready' });
+    }).catch(() => {
+      if (active) setHistoryState({ id, points: [], status: 'error' });
+    });
+    return () => { active = false; };
+  }, [product?.id, historyAttempt]);
   const dialogRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!product) return;
@@ -174,11 +189,11 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           </div>
 
           {/* Interactive Recharts Chart */}
-          {displayHistory.length > 1 ? (
+          {historyStatus === 'loading' ? <p role="status" className="p-4 text-sm text-slate-500">Cargando histórico…</p> : historyStatus === 'error' ? <div role="alert" className="p-4 text-sm text-amber-800">No se pudo cargar el histórico. Los precios actuales siguen disponibles. <button className="underline font-bold" onClick={() => setHistoryAttempt(value => value + 1)}>Reintentar</button></div> : displayHistory.length > 1 ? (
             <div className="bg-white rounded-2xl border border-slate-200 p-4">
               <div className="flex items-center justify-between mb-3 text-xs text-slate-500 font-semibold">
-                <span>Evolución del Precio en Neuquén (ARS $)</span>
-                <span className="text-emerald-600">Línea Verde: Mejor Precio</span>
+                <span>Precios registrados para compra unitaria (ARS $)</span>
+                <span className="text-emerald-600">Línea verde: mínimo registrado</span>
               </div>
               <div className="h-56 w-full">
                 <ResponsiveContainer width="100%" height="100%">

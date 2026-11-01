@@ -17,4 +17,12 @@ El informe original se conserva sin cambios. Los hallazgos son evidencia a verif
 - H16/H19: explicación de producto identificado sin cotización y etiquetas acordes a los datos disponibles.
 
 ## Pendientes explícitos
-H3 (histórico fuera del bundle), H5 (decisión de persistencia), H6 (ampliar EAN verificados), y restantes hallazgos no mencionados como reparados. No se modificó Supabase ni se inventaron precios, promociones o historia. La validación física del escáner con más envases sigue siendo una prueba de campo.
+H5 (decisión de persistencia), H6 (ampliar EAN verificados), y restantes hallazgos no mencionados como reparados. No se modificó Supabase ni se inventaron precios, promociones o historia. La validación física del escáner con más envases sigue siendo una prueba de campo.
+
+## Segunda entrega: H3 — carga del histórico
+
+El archivo completo `src/data/price-history.json` se conserva y deja de importarse en JavaScript. `prebuild` y `predev` generan `public/history-summary.json` con una serie diaria por producto para la ventana de 90 días (91 días de margen para el corte horario). Se conserva la última consulta por sucursal y canal de cada día de Argentina, y luego se calcula mínimo y promedio. Se excluyen datos inválidos, demo, futuros y condiciones mayoristas del gráfico unitario. El resumen se solicita al abrir una ficha y se reutiliza durante la sesión. Un fallo muestra un aviso y permite reintentar; no se presenta como falta de historia. Cambiar de producto o cerrar la ficha descarta respuestas tardías.
+
+El archivo generado no se versiona: se regenera automáticamente en Vercel y en el flujo diario. Las pruebas del resumen y del servicio de carga pasan a formar parte de la verificación diaria junto con las pruebas del lector. No se modificaron precios ni registros históricos en esta entrega.
+
+Validación: 46 pruebas aprobadas y compilación correcta. JavaScript principal: 3.809,92 → 2.559,28 KB (gzip: 578,27 → 518,87 KB). Resumen histórico: 104.552 bytes. Sigue pendiente dividir otras dependencias grandes; no se afirma una medición de velocidad móvil.

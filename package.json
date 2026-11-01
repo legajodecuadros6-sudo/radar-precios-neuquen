@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "prebuild": "node scripts/build-history.mjs",
+    "predev": "node scripts/build-history.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",

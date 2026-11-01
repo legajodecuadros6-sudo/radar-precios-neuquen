@@ -26,7 +26,7 @@ jobs:
       - name: Verificar importador y reglas de precios
         run: |
           python3 -m unittest discover -s tests -p 'test_*.py'
-          node tests/data-quality.test.cjs
+          node --test tests/*.test.cjs
       - name: Consultar fuentes sin inventar precios ni reemplazar fechas anteriores
         id: sync
         continue-on-error: true

@@ -12,7 +12,7 @@ import { NeuquenMapModal } from './components/NeuquenMapModal';
 import { SearchAutocomplete } from './components/SearchAutocomplete';
 import { CoveragePanel } from './components/CoveragePanel';
 import { priceIsUsable, matchesProduct, CHAIN_NAMES } from './utils/dataQuality';
-import { fetchLiveRadarData, localData, recordedHistory } from './services/productService';
+import { fetchLiveRadarData, localData } from './services/productService';
 import { useBasket } from './context/BasketContext';
 import { analyzeProductPrices } from './utils/priceAnalyzer';
 import { Shield, Database, Cloud, CheckCircle2, ShoppingCart } from 'lucide-react';
@@ -272,7 +272,6 @@ export const AppContent: React.FC = () => {
       <ProductDetailModal
         product={selectedProductForModal}
         observations={observations}
-        historyPoints={selectedProductForModal ? recordedHistory(selectedProductForModal.id) : []}
         onClose={() => setSelectedProductForModal(null)}
       />
 
