@@ -122,10 +122,10 @@ export const Header: React.FC<HeaderProps> = ({ onSearchFocus, onScrollToDeals }
             <button
               onClick={onScrollToDeals}
               className="flex items-center gap-1.5 px-3 py-2 text-xs font-black text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-400/40 rounded-xl transition-all shadow-xs"
-              title="Ver Ranking de Ofertas y Descuentos"
+              title="Ver precios y condiciones de compra"
             >
               <Flame className="w-4 h-4 text-amber-400 fill-amber-400" />
-              <span>Ofertas & Ranking</span>
+              <span>Precios y condiciones</span>
             </button>
 
             {/* Map Trigger */}

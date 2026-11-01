@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, ExternalLink, ShieldCheck, AlertTriangle, TrendingDown, ShoppingCart, Minus } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { Product, PriceObservation, PriceHistoryPoint } from '../types';
@@ -23,6 +23,26 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   const { items, addItem, updateQuantity } = useBasket();
   const [timeframe, setTimeframe] = useState<'30d' | '90d'>('30d');
 
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!product) return;
+    const previous = document.activeElement as HTMLElement | null;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    dialogRef.current?.focus();
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { event.preventDefault(); onClose(); }
+      if (event.key !== 'Tab') return;
+      const elements = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]), a[href], input:not([disabled]), select, textarea, [tabindex="0"]') || []).filter(el => el.getClientRects().length > 0);
+      const first = elements[0], last = elements[elements.length - 1];
+      if (!first) { event.preventDefault(); return; }
+      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialogRef.current)) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && (document.activeElement === last || document.activeElement === dialogRef.current)) { event.preventDefault(); first.focus(); }
+    };
+    document.addEventListener('keydown', handleKey);
+    return () => { document.removeEventListener('keydown', handleKey); document.body.style.overflow = overflow; previous?.focus(); };
+  }, [product?.id, onClose]);
+
   if (!product) return null;
 
   const analysis = analyzeProductPrices(product, observations, historyPoints);
@@ -35,8 +55,8 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
     : historyPoints.filter(point => Date.parse(point.date) >= Date.now() - 90 * 86400000);
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+    <div onClick={event => { if (event.target === event.currentTarget) onClose(); }} className="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={product.name} tabIndex={-1} className="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
         
         {/* Modal Header */}
         <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
@@ -52,6 +72,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           </div>
           <button
             onClick={onClose}
+            aria-label="Cerrar ficha"
             className="w-9 h-9 rounded-full bg-slate-200/80 hover:bg-slate-300 text-slate-600 flex items-center justify-center transition-colors"
           >
             <X className="w-5 h-5" />
@@ -88,10 +109,10 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               {/* Price Range & Best Store */}
               <div className="mt-3 flex flex-wrap items-baseline gap-3">
                 <span className="text-2xl font-black text-slate-900">
-                  {analysis.observations.length ? formatCurrency(analysis.min_price) : 'Sin precio vigente'}
+                  {analysis.min_price > 0 ? formatCurrency(analysis.min_price) : analysis.observations.length ? 'Venta por bulto / con condiciones' : 'Sin precio vigente'}
                 </span>
                 <span className="text-xs text-slate-400">
-                  (Mejor precio en <span className="font-bold text-slate-800">{analysis.best_store_name}</span>)
+                  {analysis.min_price > 0 && <>(Precio por unidad en <span className="font-bold text-slate-800">{analysis.best_store_name}</span>)</>}
                 </span>
                 {analysis.max_savings_percentage > 0 && (
                   <span className="bg-emerald-50 text-emerald-700 text-xs font-bold px-2 py-0.5 rounded-md border border-emerald-200">
@@ -213,7 +234,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               Precios y Sucursales en Neuquén Capital
             </h3>
             <div className="border border-slate-200 rounded-2xl overflow-hidden divide-y divide-slate-100">
-              {analysis.observations.length === 0 && <p className="p-4 text-sm text-slate-500">Todavía no hay precios vigentes verificados para este producto.</p>}
+              {analysis.observations.length === 0 && <p className="p-4 text-sm text-slate-500">El producto está identificado en el catálogo, pero no tenemos una cotización vigente verificada. Esto no significa que el lector haya fallado ni que el comercio no tenga stock. Podés cerrar esta ficha y buscar por nombre otras presentaciones con precio.</p>}
               {analysis.observations.map(obs => {
                 const store = SUPERMARKETS_NEUQUEN.find(s => s.id === obs.branch_id);
 
@@ -254,8 +275,9 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
                     <div className="text-right shrink-0">
                       <div className="text-lg font-black text-slate-900">
-                        {formatCurrency(obs.current_price)}
+                        {formatCurrency(obs.current_price)} por unidad
                       </div>
+                      {((obs.min_quantity || 1) > 1 || (obs.quantity_multiple || 1) > 1) && <p className="text-xs text-amber-800">Mínimo {obs.min_quantity || 1} unidades · múltiplos de {obs.quantity_multiple || 1}</p>}
                       <div className="text-xs text-slate-400">
                         {formatCurrency(obs.price_per_unit)} {obs.unit_label.replace('$ ', '')}
                       </div>

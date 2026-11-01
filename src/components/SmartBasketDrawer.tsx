@@ -389,7 +389,7 @@ export const SmartBasketDrawer: React.FC<SmartBasketDrawerProps> = ({ observatio
 
         </div>
 
-        {items.length > 0 && optimization.split_trip.missing_products!.length > 0 && <div className="px-4 py-3 bg-amber-50 text-amber-900 text-xs">Falta cotizar: {optimization.split_trip.missing_products!.map(p => p.name).join(', ')}. El subtotal no incluye esos productos.</div>}
+        {items.length > 0 && optimization.split_trip.missing_products!.length > 0 && <div className="px-4 py-3 bg-amber-50 text-amber-900 text-xs">Sin cotización para la cantidad elegida: {optimization.split_trip.missing_products!.map(p => p.name).join(', ')}. Revisá los mínimos y múltiplos de compra en la ficha. El subtotal no incluye esos productos.</div>}
         {/* Drawer Footer with Export Button */}
         {items.length > 0 && (
           <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3">

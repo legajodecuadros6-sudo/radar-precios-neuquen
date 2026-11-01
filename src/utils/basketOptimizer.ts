@@ -23,7 +23,7 @@ export function calculateBasketOptimization(items: BasketItem[], observations: P
       has_ecommerce: o.channel === 'online', ecommerce_url: known?.ecommerce_url };
   };
   const bestFor = (item: BasketItem, storeKey?: string) => eligible
-    .filter(o => o.product_id === item.product.id && (o.min_quantity || 1) <= item.quantity && (!storeKey || key(o) === storeKey))
+    .filter(o => o.product_id === item.product.id && (o.min_quantity || 1) <= item.quantity && item.quantity % (o.quantity_multiple || 1) === 0 && (!storeKey || key(o) === storeKey))
     .sort((a,b) => a.current_price - b.current_price)[0];
   const stores = new Map(eligible.map(o => [key(o), storeFor(o)]));
   const single: BasketStoreTotal[] = [...stores].map(([storeKey, supermarket]) => {

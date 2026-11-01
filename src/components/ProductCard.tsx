@@ -87,8 +87,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           </div>
 
           {sortedObs.length === 0 && <p className="p-2 text-xs text-slate-500">Sin precio vigente verificado. Podés consultar la ficha.</p>}
-          {sortedObs.slice(0, 4).map((obs, index) => {
-            const isBest = index === 0;
+          {sortedObs.slice(0, 4).map((obs) => {
+            const isBest = analysis.min_price > 0 && obs.current_price === analysis.min_price && (obs.min_quantity || 1) <= 1 && (obs.quantity_multiple || 1) <= 1 && !obs.promo_condition;
             const store = SUPERMARKETS_NEUQUEN.find(s => s.id === obs.branch_id);
 
             return (
@@ -134,6 +134,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
                   <div className="text-[9px] text-slate-400">
                     {formatCurrency(obs.price_per_unit)} {obs.unit_label.replace('$ ', '')}
                     <span className="block">{formatDateDisplay(obs.query_date)} · {obs.channel === 'online' ? 'Online' : 'Local'}</span>
+                    {(obs.min_quantity || 1) > 1 && <span className="block font-bold text-amber-800">Mínimo {obs.min_quantity} unidades{(obs.quantity_multiple || 1) > 1 ? ` · múltiplos de ${obs.quantity_multiple}` : ''}</span>}
                   </div>
                 </div>
               </div>

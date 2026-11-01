@@ -89,10 +89,10 @@ export const SearchAutocomplete: React.FC<SearchAutocompleteProps> = ({
 
               <div className="text-right shrink-0">
                 <div className="text-xs text-slate-500">
-                  desde <span className="font-bold text-slate-900 text-sm">{analysis.observations.length ? formatCurrency(analysis.min_price) : 'Sin precio vigente'}</span>
+                  desde <span className="font-bold text-slate-900 text-sm">{analysis.min_price > 0 ? formatCurrency(analysis.min_price) : analysis.observations.length ? 'Venta por bulto / con condiciones' : 'Sin precio vigente'}</span>
                 </div>
                 <div className="text-[11px] text-emerald-600 font-medium">
-                  en {analysis.best_store_name}
+                  {analysis.min_price > 0 ? `en ${analysis.best_store_name}` : 'Revisá cantidades en la ficha'}
                 </div>
               </div>
 

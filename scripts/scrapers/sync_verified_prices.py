@@ -2,6 +2,7 @@
 """Importación trazable; conserva datos anteriores e historial incluso si falla la fuente."""
 import argparse
 import csv
+import html
 import json
 import math
 import os
@@ -13,7 +14,7 @@ import time
 import unicodedata
 from urllib.parse import urlencode, urlparse, quote
 from urllib.request import Request, urlopen
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 ROOT = Path(__file__).resolve().parents[2]
 SNAPSHOT = ROOT / 'src/data/live-prices.json'
@@ -187,6 +188,129 @@ def collect_mas(stamp, terms=None):
     if not observations: raise ValueError('Sin cotizaciones locales válidas de ChangoMás; se conserva la última lectura')
     return list(products.values()),list(observations.values()),branch,errors
 
+
+MAKRO_URL = 'https://makro.com.ar/canastabasicaneuquen/'
+MONTHS = {name:index for index,name in enumerate('enero febrero marzo abril mayo junio julio agosto septiembre octubre noviembre diciembre'.split(),1)}
+
+def plain_html(value):
+    return ' '.join(html.unescape(re.sub(r'<[^>]+>', ' ',value)).split())
+
+def parse_makro(page, stamp):
+    text=normalize(plain_html(page))
+    if 'iva incluido para la sucursal de neuquen' not in text:
+        raise ValueError('Makro: no se confirmó sucursal Neuquén e IVA incluido')
+    date_element=re.search(r'<p[^>]*class=["\'][^"\']*mlp-lista-precios__fecha[^"\']*["\'][^>]*>(.*?)</p>',page,re.S)
+    date_match=re.search(r'(\d{1,2}) de (\w+) de (\d{4}),\s*(\d{2}):(\d{2})',normalize(plain_html(date_element.group(1)))) if date_element else None
+    if not date_match: raise ValueError('Makro: fecha de publicación ausente')
+    day,month,year,hour,minute=date_match.groups()
+    published=datetime(int(year),MONTHS[month],int(day),int(hour),int(minute),tzinfo=timezone(timedelta(hours=-3)))
+    now=datetime.fromisoformat(stamp)
+    if published>now or now-published>timedelta(hours=72): raise ValueError('Makro: lista futura o de más de 72 horas')
+    table=re.search(r'<table[^>]*class=["\'][^"\']*mlp-lista-precios__table["\'][^>]*>(.*?)</table>',page,re.S)
+    if not table: raise ValueError('Makro: tabla ausente')
+    headers=[normalize(plain_html(v)) for v in re.findall(r'<th\b[^>]*>(.*?)</th>',table.group(1),re.S)]
+    if headers!=['codigo','producto','precio regular','precio sin impuestos nacionales']:
+        raise ValueError('Makro: cambió el orden de columnas; no se importan precios')
+    products,observations=[],[]
+    for row in re.findall(r'<tr\b[^>]*>(.*?)</tr>',table.group(1),re.S):
+        cells=[plain_html(v) for v in re.findall(r'<td\b[^>]*>(.*?)</td>',row,re.S)]
+        if not cells: continue
+        if len(cells)!=4: raise ValueError('Makro: fila incompleta')
+        code,name,regular,_=cells
+        if not code.isdigit() or not name: raise ValueError('Makro: producto sin identidad')
+        # Unspecified weighed cuts and ambiguous multipacks are not unit prices.
+        size=re.search(r'(?:x|\b)(\d+(?:[.,]\d+)?)\s*(kg|grs|gr|g|ml|cc|l)\.?$',normalize(name))
+        if not size or re.search(r'\d+\s*(?:s|u|un)\s*x',normalize(name)): continue
+        if not re.fullmatch(r'\$\s*[0-9.]+,\d{2}',regular): raise ValueError('Makro: importe no reconocido')
+        price=positive(regular.replace('$','').replace('.','').replace(',','.').strip())
+        amount,raw=size.groups();amount=positive(amount.replace(',','.'))
+        unit='kg' if raw in ('kg','g','gr','grs') else 'litro'
+        quantity=amount/1000 if raw in ('g','gr','grs','ml','cc') else amount
+        pid='makro_'+code
+        cat=category(name)
+        if normalize(name).startswith(('cerv ','gaseo ','soda ','vino ')): cat='Bebidas'
+        product={'id':pid,'name':name,'brand':'Según descripción','category':cat,'image_url':'','unit_measure':unit,'net_content_number':quantity,'net_content_str':f'{amount:g} {raw}'}
+        observation={'id':pid+'@makro_neuquen@store','product_id':pid,'supermarket_id':'makro','branch_id':'makro_neuquen','branch_name':'Makro Mayorista Neuquén','branch_address':'Teodoro Planas 4141, esquina El Cholar','regular_price':price,'current_price':price,'price_per_unit':round(price/quantity,2),'unit_label':'$ / kg' if unit=='kg' else '$ / L','query_date':published.isoformat(),'retrieved_at':stamp,'is_verified':True,'is_demo':False,'source_url':MAKRO_URL,'source_name':'Makro · lista diaria Neuquén','channel':'store','min_quantity':1,'notes':'Precio regular con IVA incluido. Fecha del relevamiento publicado por Makro; consultar stock y condiciones en la sucursal. El código interno no es un EAN.'}
+        products.append(product);observations.append(observation)
+    if not observations: raise ValueError('Makro: sin presentaciones unitarias comprobables')
+    return products,observations,None,[]
+
+def collect_makro(stamp):
+    with urlopen(Request(MAKRO_URL,headers={'User-Agent':'RadarPreciosNeuquen/1.1'}),timeout=25) as response:
+        page=response.read().decode('utf-8')
+    return parse_makro(page,stamp)
+
+
+VITAL_URL='https://tiendaonline.vital.com.ar'
+
+def vital_catalog(page):
+    match=re.search(r'<template data-type="json" data-varname="__STATE__">\s*<script>(.*?)</script>',page,re.S)
+    if not match: raise ValueError('Vital: catálogo público no encontrado')
+    state=json.loads(match.group(1)); products=[]
+    for value in state.values():
+        if not isinstance(value,dict) or value.get('__typename')!='Product': continue
+        for reference in value.get('items',value.get('items({"filter":"ALL_AVAILABLE"})',[])):
+            sku=state.get(reference.get('id'),{})
+            if sku.get('__typename')!='SKU' or not valid_ean(str(sku.get('ean') or '')): continue
+            images=[state.get(r.get('id'),{}) for r in sku.get('images',[])]
+            products.append((value,{**sku,'images':images}))
+    if not products: raise ValueError('Vital: sin SKU identificados')
+    return products
+
+def vital_record(product,sku,response,stamp):
+    rows=response.get('items',[])
+    if len(rows)!=1: return None
+    row=rows[0]
+    if row.get('seller')!='arvitalne' or str(row.get('id'))!=str(sku['itemId']) or row.get('quantity')!=1 or row.get('availability')!='available': return None
+    if str(row.get('measurementUnit','')).lower()!='un' or row.get('tax',0)!=0 or row.get('priceTags'): return None
+    multiple=positive(row.get('unitMultiplier'))
+    if not multiple.is_integer() or multiple!=sku.get('unitMultiplier'): return None
+    price=positive(row.get('price'))
+    if abs(positive(row.get('sellingPrice'))-price*multiple)>.5: return None
+    if row.get('priceDefinition',{}).get('pricePerUnit')!=price: return None
+    addresses=[sla.get('pickupStoreInfo',{}).get('address') or {} for info in response.get('logisticsInfo',[]) if info.get('itemIndex')==0 for sla in info.get('slas',[]) if sla.get('deliveryChannel')=='pickup-in-point']
+    local=next((a for a in addresses if normalize(a.get('city'))=='neuquen' and a.get('postalCode')=='8300' and a.get('country')=='ARG'),None)
+    if not local: return None
+    name=sku['name'];ean=str(sku.get('ean') or '')
+    if re.search(r'\d+\s*/\s*\d+',name): return None
+    if not valid_ean(ean) or not mas_in_scope(name): return None
+    size=re.search(r'(\d+(?:[.,]\d+)?)\s*(kg|grs?|g|ml|cc|lts?|l)\b',normalize(name))
+    unit,quantity,content='unidad',1,'Unidad / presentación indicada'
+    if size:
+        amount,raw=size.groups();amount=positive(amount.replace(',','.'))
+        unit='kg' if raw in ('kg','g','gr','grs') else 'litro'
+        quantity=amount/1000 if raw in ('g','gr','grs','ml','cc') else amount
+        content=size.group()
+        pack=re.search(r'(\d+)\s*u\s+\d',normalize(name))
+        if pack:
+            quantity*=int(pack.group(1));content=f'{quantity:g} {unit} (pack)'
+    pid='ean_'+ean;price/=100
+    link=product.get('linkText','')
+    if not link or '/' in link or '?' in link: return None
+    images=sku.get('images',[])
+    p={'id':pid,'ean':ean,'name':name,'brand':product.get('brand') or 'Según descripción','category':category(name),'image_url':images[0].get('imageUrl','') if images else '', 'unit_measure':unit,'net_content_number':quantity,'net_content_str':content}
+    o={'id':pid+'@vital_neuquen@online','product_id':pid,'supermarket_id':'vital','branch_id':'vital_neuquen','branch_name':'Vital Neuquén','branch_address':'Ruta Nacional 22 Km 1218','regular_price':price,'current_price':price,'price_per_unit':round(price/quantity,2),'unit_label':{'kg':'$ / kg','litro':'$ / L','unidad':'$ / u'}[unit],'query_date':stamp,'is_verified':True,'is_demo':False,'source_url':VITAL_URL+'/'+link+'/p','source_name':'Vital · cotización de retiro Neuquén','channel':'online','min_quantity':int(multiple),'quantity_multiple':int(multiple),'notes':f'Precio por unidad. Compra por bulto de {int(multiple)} unidades: ${price*multiple:.2f}. Cotización sin cliente identificado, retiro en Neuquén. Confirmar stock y condiciones en la tienda.','source_sku':str(sku['itemId']),'source_seller':'arvitalne'}
+    return p,o
+
+def collect_vital(stamp):
+    regions=request_json(VITAL_URL+'/api/checkout/pub/regions?country=ARG&postalCode=8300&sc=1')
+    if not any(s.get('id')=='arvitalne' for region in regions for s in region.get('sellers',[])):
+        raise ValueError('Vital: no se confirmó vendedor de Neuquén')
+    with urlopen(Request(VITAL_URL+'/',headers={'User-Agent':'RadarPreciosNeuquen/1.1'}),timeout=25) as response:
+        candidates=vital_catalog(response.read().decode('utf-8'))
+    products,observations,errors={},{},[]
+    for index,(product,sku) in enumerate(candidates,1):
+        try:
+            result=request_json(VITAL_URL+'/api/checkout/pub/orderForms/simulation',{'items':[{'id':str(sku['itemId']),'quantity':1,'seller':'arvitalne'}],'country':'ARG','postalCode':'8300'})
+            record=vital_record(product,sku,result,stamp)
+            if record:
+                p,o=record;products[p['id']]=p;observations[o['id']]=o
+        except Exception as error: errors.append(f"SKU {sku['itemId']}: {type(error).__name__}: {error}")
+        if index%25==0:print(f'Vital: {index}/{len(candidates)} cotizados, {len(observations)} precios válidos.',file=sys.stderr,flush=True)
+        time.sleep(.15)
+    if not observations: raise ValueError('Vital: sin precios locales válidos')
+    return list(products.values()),list(observations.values()),None,errors
+
 def load_csv(path, now):
     products, observations = {}, []
     with open(path,newline='',encoding='utf-8-sig') as file:
@@ -225,7 +349,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--csv',type=Path)
     parser.add_argument('--max-pages',type=int,default=3)
-    parser.add_argument('--source', choices=['all','cooperativa_obrera','changomas'], default='all')
+    parser.add_argument('--source', choices=['all','cooperativa_obrera','changomas','makro','vital'], default='all')
     parser.add_argument('--mas-terms', nargs='+', help='Consultas acotadas para ampliar ChangoMás')
     args = parser.parse_args()
     now = datetime.now(timezone.utc); stamp = now.isoformat()
@@ -240,13 +364,25 @@ def main():
                 raise ValueError('El CSV contradice la identidad ya importada: '+product['id'])
         for chain in {o['supermarket_id'] for o in incoming}: snapshot['sources'][chain] = {'status':'ok','last_attempt':stamp,'message':'Importación documentada; revisar fecha y condiciones.'}
     else:
-        for chain,collector in [('cooperativa_obrera',lambda:collect_coope(stamp,args.max_pages)),('changomas',lambda:collect_mas(stamp,args.mas_terms))]:
+        for chain,collector in [('cooperativa_obrera',lambda:collect_coope(stamp,args.max_pages)),('changomas',lambda:collect_mas(stamp,args.mas_terms)),('makro',lambda:collect_makro(stamp)),('vital',lambda:collect_vital(stamp))]:
             if args.source not in ('all',chain): continue
             try:
                 ps,obs,branch,errors=collector()
-                products.extend(ps);incoming.extend(obs)
-                branches=[b for b in branches if b['id']!=branch['id']]+[branch]
-                snapshot['sources'][chain]={'status':'partial' if errors else 'ok','last_attempt':stamp,'last_success':stamp,'message':f'{len(obs)} precios consultados en {branch["name"]}.','errors':errors}
+                existing={p['id']:p for p in snapshot['products']+products}
+                accepted=[]
+                for product in ps:
+                    old=existing.get(product['id'])
+                    if old and old.get('ean') and product.get('ean')==old.get('ean'):
+                        if any(old.get(k)!=product.get(k) for k in ('unit_measure','net_content_number')):
+                            errors.append('Presentación contradictoria para '+product['id']); continue
+                        product=old
+                    accepted.append(product)
+                allowed={p['id'] for p in accepted}
+                obs=[o for o in obs if o['product_id'] in allowed]
+                if not obs: raise ValueError('No quedaron precios con identidad comprobada')
+                products.extend(accepted);incoming.extend(obs)
+                if branch: branches=[b for b in branches if b['id']!=branch['id']]+[branch]
+                snapshot['sources'][chain]={'status':'partial' if errors else 'ok','last_attempt':stamp,'last_success':stamp,'message':f'{len(obs)} precios consultados en {branch["name"] if branch else chain}.','errors':errors}
             except Exception as error:
                 snapshot['sources'][chain]={'status':'error','last_attempt':stamp,'last_success':snapshot.get('sources',{}).get(chain,{}).get('last_success'),'message':str(error)}
     for chain in CHAINS: snapshot['sources'].setdefault(chain,{'status':'pending','message':'Sin precios locales verificados. Pendiente conectar fuente o importar lista documentada.'})

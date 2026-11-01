@@ -81,3 +81,56 @@ class ChangoMasTests(TestCase):
             self.assertIsNone(sync.mas_record(*args))
         self.assertEqual(sync.category('Agua Micelar Vn 200ml'),'Cuidado Personal')
         self.assertEqual(sync.category('Agua Desmineralizada 1 Lts'),'Limpieza')
+
+
+class MakroTests(TestCase):
+    def page(self,name='ACEITE M&amp;K BTX900ML',price='$ 3.740,00'):
+        return f"""<p class="mlp-lista-precios__fecha">Fecha de publicación: Sábado 31 De Octubre De 2026, 05:01 hs</p>
+        <table class="mlp-lista-precios__table"><tr><th>Código</th><th>Producto</th><th>Precio regular</th><th>Precio sin impuestos nacionales</th></tr>
+        <tr><td>12345</td><td>{name}</td><td>{price}</td><td>$ 3.090,91</td></tr></table>
+        IVA INCLUIDO PARA LA SUCURSAL DE NEUQUÉN"""
+    def test_regular_tax_included_price_and_source_date(self):
+        ps,obs,_,_=sync.parse_makro(self.page(),'2026-10-31T23:00:00+00:00')
+        self.assertEqual(obs[0]['current_price'],3740)
+        self.assertEqual(obs[0]['query_date'],'2026-10-31T05:01:00-03:00')
+        self.assertEqual(obs[0]['channel'],'store');self.assertEqual(ps[0]['net_content_number'],.9)
+        self.assertNotIn('ean',ps[0]);self.assertEqual(ps[0]['name'],'ACEITE M&K BTX900ML')
+    def test_repeated_fetch_does_not_refresh_source_observation(self):
+        _,a,_,_=sync.parse_makro(self.page(),'2026-10-31T12:00:00+00:00')
+        _,b,_,_=sync.parse_makro(self.page(),'2026-11-01T12:00:00+00:00')
+        self.assertEqual(a[0]['query_date'],b[0]['query_date'])
+    def test_rejects_stale_future_or_missing_publication(self):
+        for stamp in ['2026-10-30T12:00:00+00:00','2026-11-05T12:00:00+00:00']:
+            with self.assertRaises(ValueError):sync.parse_makro(self.page(),stamp)
+        with self.assertRaises(ValueError):sync.parse_makro(self.page().replace('mlp-lista-precios__fecha','other'),'2026-10-31T23:00:00+00:00')
+    def test_rejects_ambiguous_units_wrong_columns_or_wrong_locality(self):
+        for page in [self.page('NALGA SIN TAPA'),self.page('TE 25S X2GR'),self.page().replace('Precio regular','Precio por bulto'),self.page().replace('NEUQUÉN','MENDOZA'),self.page(price='$ consultar')]:
+            with self.assertRaises(ValueError):sync.parse_makro(page,'2026-10-31T23:00:00+00:00')
+
+
+class VitalTests(TestCase):
+    def fixture(self):
+        p={'linkText':'aceite-natura','brand':'Natura'}
+        sku={'itemId':'123','ean':'7790272001005','name':'Aceite Natura 900 ml','unitMultiplier':12}
+        row={'id':'123','seller':'arvitalne','quantity':1,'availability':'available','measurementUnit':'UN','tax':0,'priceTags':[],'unitMultiplier':12,'price':10000,'sellingPrice':120000,'priceDefinition':{'pricePerUnit':10000}}
+        address={'city':'Neuquén','postalCode':'8300','country':'ARG'}
+        response={'items':[row],'logisticsInfo':[{'itemIndex':0,'slas':[{'deliveryChannel':'pickup-in-point','pickupStoreInfo':{'address':address}}]}]}
+        return p,sku,response,'2026-10-31T23:00:00+00:00'
+    def test_bundle_quote_keeps_unit_price_and_quantity_multiple(self):
+        p,o=sync.vital_record(*self.fixture())
+        self.assertEqual(o['current_price'],100);self.assertEqual(o['min_quantity'],12);self.assertEqual(o['quantity_multiple'],12)
+        self.assertEqual(p['net_content_number'],.9)
+    def test_rejects_wrong_seller_missing_stock_tax_or_bundle_total(self):
+        for k,v in [('seller','1'),('availability','withoutStock'),('tax',100),('sellingPrice',110000),('priceTags',[{'coupon':True}])]:
+            args=self.fixture();args[2]['items'][0][k]=v
+            self.assertIsNone(sync.vital_record(*args),k)
+        args=self.fixture();args[2]['logisticsInfo']=[];self.assertIsNone(sync.vital_record(*args))
+    def test_ambiguous_sizes_rejected_and_explicit_multipack_normalized(self):
+        args=self.fixture();args[1]['name']='Galletitas 250/300 gr';self.assertIsNone(sync.vital_record(*args))
+        args=self.fixture();args[1]['name']='Galletitas 3 u 105 gr'
+        p,_=sync.vital_record(*args);self.assertAlmostEqual(p['net_content_number'],.315)
+    def test_catalog_reads_graphql_field_name(self):
+        state={'p':{'__typename':'Product','items({"filter":"ALL_AVAILABLE"})':[{'id':'sku'}]},'sku':{'__typename':'SKU','ean':'7790272001005','itemId':'1','images':[]}}
+        import json
+        page='<template data-type="json" data-varname="__STATE__"><script>'+json.dumps(state)+'</script></template>'
+        self.assertEqual(len(sync.vital_catalog(page)),1)

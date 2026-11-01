@@ -60,6 +60,7 @@ export interface PriceObservation {
   branch_address?: string;
   channel?: 'online' | 'store';
   min_quantity?: number;
+  quantity_multiple?: number;
   source_name?: string;
   regular_price: number;
   current_price: number;

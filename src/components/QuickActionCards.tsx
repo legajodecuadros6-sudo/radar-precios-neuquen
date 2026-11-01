@@ -13,11 +13,11 @@ export const QuickActionCards: React.FC<QuickActionCardsProps> = ({ onScrollToDe
   const actions = [
     {
       id: 'deals',
-      label: 'Ofertas & Descuentos',
-      subtitle: 'Ofertas con fecha de consulta',
+      label: 'Compras por bulto',
+      subtitle: 'Mínimos, cantidades y precios',
       icon: Flame,
       color: 'text-amber-500 bg-amber-500/10 border-amber-300/40 hover:bg-amber-500/15',
-      badge: 'TOP',
+      badge: 'BULTOS',
       badgeColor: 'bg-amber-500 text-slate-950',
       onClick: onScrollToDeals
     },

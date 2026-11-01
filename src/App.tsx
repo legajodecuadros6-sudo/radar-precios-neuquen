@@ -100,7 +100,7 @@ export const AppContent: React.FC = () => {
         return analysisB.max_savings_percentage - analysisA.max_savings_percentage;
       }
       if (sortBy === 'lowest_price') {
-        return analysisA.min_price - analysisB.min_price;
+        return (analysisA.min_price || Infinity) - (analysisB.min_price || Infinity);
       }
       if (sortBy === 'name_asc') {
         return a.name.localeCompare(b.name);

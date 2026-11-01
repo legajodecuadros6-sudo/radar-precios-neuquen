@@ -69,3 +69,17 @@ test('official barcode products replace legacy examples in scanner catalogue',()
     assert.equal(matches[0].id,real.id);
   }
 });
+
+
+test('wholesale bundles require multiples, not just the minimum quantity',()=>{
+  const quote=obs({min_quantity:12,quantity_multiple:12});
+  assert.equal(basket([{product,quantity:13}],[quote]).split_trip.missing_products.length,1);
+  assert.equal(basket([{product,quantity:24}],[quote]).split_trip.total_optimized,2400);
+});
+test('bulk prices stay visible without becoming single-unit savings',()=>{
+  const {analyzeProductPrices}=load('src/utils/priceAnalyzer.ts');
+  const result=analyzeProductPrices(product,[obs({min_quantity:12,quantity_multiple:12,current_price:50}),obs({id:'retail',branch_id:'other',current_price:100})]);
+  assert.equal(result.observations.length,2);assert.equal(result.min_price,100);assert.equal(result.max_savings_amount,0);
+  const bulk=analyzeProductPrices(product,[obs({min_quantity:12,quantity_multiple:12})]);
+  assert.equal(bulk.observations.length,1);assert.equal(bulk.min_price,0);
+});

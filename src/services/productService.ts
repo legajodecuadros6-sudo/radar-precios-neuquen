@@ -53,7 +53,7 @@ export function mergeCloudData(productRows: Row[], priceRows: Row[], branchRows:
       ...productUnitPrice(price, product), query_date: row.observed_at || row.updated_at || '',
       source_url: row.source_url || '', source_name: row.source_name,
       is_verified: row.is_verified === true && Boolean(row.source_url), is_demo: row.is_demo === true,
-      channel: row.channel, min_quantity: Number(row.min_quantity) || 1,
+      channel: row.channel, min_quantity: Number(row.min_quantity) || 1, quantity_multiple: Number(row.quantity_multiple) || 1,
       promo_condition: row.promo_condition || undefined
     });
   }

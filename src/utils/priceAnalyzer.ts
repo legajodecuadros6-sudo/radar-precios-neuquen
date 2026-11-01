@@ -24,12 +24,13 @@ export const analyzeProductPrices = (
   allObservations: PriceObservation[],
   historyPoints?: PriceHistoryPoint[]
 ): ProductPriceSummary => {
-  const observations = allObservations.filter(o => o.product_id === product.id && priceIsUsable(o) && (o.min_quantity || 1) <= 1 && !o.promo_condition);
+  const available = allObservations.filter(o => o.product_id === product.id && priceIsUsable(o));
+  const observations = available.filter(o => (o.min_quantity || 1) <= 1 && (o.quantity_multiple || 1) <= 1 && !o.promo_condition);
 
   if (observations.length === 0) {
     return {
       product,
-      observations: [],
+      observations: available,
       min_price: 0,
       max_price: 0,
       avg_price: 0,
@@ -63,7 +64,7 @@ export const analyzeProductPrices = (
 
   return {
     product,
-    observations,
+    observations: available,
     min_price,
     max_price,
     avg_price,
