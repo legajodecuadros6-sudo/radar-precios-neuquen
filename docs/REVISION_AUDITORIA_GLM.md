@@ -26,3 +26,9 @@ El archivo completo `src/data/price-history.json` se conserva y deja de importar
 El archivo generado no se versiona: se regenera automáticamente en Vercel y en el flujo diario. Las pruebas del resumen y del servicio de carga pasan a formar parte de la verificación diaria junto con las pruebas del lector. No se modificaron precios ni registros históricos en esta entrega.
 
 Validación: 46 pruebas aprobadas y compilación correcta. JavaScript principal: 3.809,92 → 2.559,28 KB (gzip: 578,27 → 518,87 KB). Resumen histórico: 104.552 bytes. Sigue pendiente dividir otras dependencias grandes; no se afirma una medición de velocidad móvil.
+
+## Tercera entrega: H8 y H15
+
+El catálogo agrupa las observaciones por producto y calcula un resumen una sola vez cuando cambian productos o precios. Buscar, filtrar y ordenar reutilizan ese índice, evitando recorrer todas las cotizaciones en cada comparación del ordenamiento. El filtro por comercio utiliza cotizaciones utilizables. El orden de precio unitario deja los productos exclusivamente por bulto después de los que sí tienen precio unitario y nunca trata un precio ausente como cero.
+
+La consulta a Supabase informa la cantidad de productos y cotizaciones excluidos por identidad no confirmada, datos incompletos o falta de stock. Los registros originales permanecen en la base; no se escribe ni elimina información remota. Se mantienen las reglas de verificación y la explicación visible de fallos de conexión. H5 (persistencia) sigue pendiente.

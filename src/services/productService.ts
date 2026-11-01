@@ -10,6 +10,7 @@ export interface DataFetchResult {
   observations: PriceObservation[];
   isLiveCloud: boolean;
   message: string;
+  excluded?: { products: number; prices: number };
 }
 // Retain historical source files, but never treat their hardcoded prices as fresh evidence.
 export const localData: DataFetchResult = {
@@ -22,8 +23,9 @@ export const localData: DataFetchResult = {
 export function mergeCloudData(productRows: Row[], priceRows: Row[], branchRows: Row[]): DataFetchResult {
   const products = new Map(localData.products.map(p => [p.id, p]));
   const ids = new Map<string, string>();
+  const excluded = { products: 0, prices: 0 };
   for (const row of productRows) {
-    if (!row.id || !row.name) continue;
+    if (!row.id || !row.name) { excluded.products++; continue; }
     const existing = products.get(row.id);
     // Legacy cloud units conflict with EANs in the test catalog: never merge by EAN alone.
     if (existing) { ids.set(row.id, existing.id); continue; }
@@ -35,7 +37,7 @@ export function mergeCloudData(productRows: Row[], priceRows: Row[], branchRows:
       net_content_str: row.net_content_str || row.unit || 'Unidad', description: row.description
     };
     // A duplicate barcode with conflicting product identity is quarantined until reviewed.
-    if (product.ean && [...products.values()].some(p => p.ean === product.ean)) continue;
+    if (product.ean && [...products.values()].some(p => p.ean === product.ean)) { excluded.products++; continue; }
     products.set(product.id, product); ids.set(row.id, product.id);
   }
   const observations: PriceObservation[] = [];
@@ -44,7 +46,7 @@ export function mergeCloudData(productRows: Row[], priceRows: Row[], branchRows:
     const branch = branchRows.find(b => b.id === row.supermarket_id);
     const chain = mapSupermarketId(branch?.brand || row.supermarket_id || '');
     const regular = Number(row.regular_price), price = row.offer_price == null ? regular : Number(row.offer_price);
-    if (!product || !chain || !Number.isFinite(price) || price <= 0 || row.in_stock === false) continue;
+    if (!product || !chain || !Number.isFinite(price) || price <= 0 || row.in_stock === false) { excluded.prices++; continue; }
     observations.push({
       id: String(row.id), product_id: product.id, supermarket_id: chain,
       branch_id: row.branch_id || branch?.id, branch_name: branch?.branch_name || row.supermarket_id,
@@ -56,7 +58,7 @@ export function mergeCloudData(productRows: Row[], priceRows: Row[], branchRows:
       promo_condition: row.promo_condition || undefined
     });
   }
-  return { products: [...products.values()], observations: mergePrices(localData.observations, observations), isLiveCloud: true, message: 'Catálogo sincronizado. La conexión no garantiza que todos los precios estén vigentes.' };
+  return { products: [...products.values()], observations: mergePrices(localData.observations, observations), isLiveCloud: true, excluded, message: 'Catálogo consultado. La conexión no garantiza precios vigentes.' + (excluded.products || excluded.prices ? ` Se excluyeron ${excluded.products} productos y ${excluded.prices} cotizaciones por identidad sin confirmar, datos incompletos o falta de disponibilidad.` : '') };
 }
 
 export async function fetchLiveRadarData(): Promise<DataFetchResult> {

@@ -83,3 +83,25 @@ test('bulk prices stay visible without becoming single-unit savings',()=>{
   const bulk=analyzeProductPrices(product,[obs({min_quantity:12,quantity_multiple:12})]);
   assert.equal(bulk.observations.length,1);assert.equal(bulk.min_price,0);
 });
+
+
+test('catalog index preserves analyses and never combines different products',()=>{
+  const {buildCatalogIndex,compareCatalogProducts}=load('src/utils/catalogIndex.ts');
+  const {analyzeProductPrices}=load('src/utils/priceAnalyzer.ts');
+  const products=[product,{...product,id:'bulk'},{...product,id:'missing'}];
+  const rows=[obs(),obs({product_id:'bulk',min_quantity:12,current_price:10}),obs({product_id:'missing',query_date:'2020-01-01'})];
+  const index=buildCatalogIndex(products,rows);
+  for(const p of products) assert.equal(JSON.stringify(index.get(p.id)),JSON.stringify(analyzeProductPrices(p,rows)));
+  const sorted=[...index.values()].reverse().sort((a,b)=>compareCatalogProducts(a,b,'lowest_price'));
+  assert.equal(sorted.map(a=>a.product.id).join(','),'test-product,bulk,missing');
+  assert.equal(compareCatalogProducts(index.get('bulk'),index.get('bulk'),'lowest_price'),0);
+});
+test('cloud duplicate barcode and orphan prices are counted without corrupting local identity',()=>{
+  const {localData}=load('src/services/productService.ts');
+  const real=localData.products.find(p=>p.ean);
+  const result=mergeCloudData([{...product,id:'duplicate-cloud',ean:real.ean},{id:'broken'}],[{id:'orphan',product_id:'duplicate-cloud',supermarket_id:'coto',regular_price:100}],[]);
+  assert.equal(result.excluded.products,2);assert.equal(result.excluded.prices,1);
+  assert.ok(result.message.includes('2 productos y 1 cotizaciones'));
+  assert.equal(result.products.find(p=>p.ean===real.ean).id,real.id);
+  assert.ok(!result.observations.some(o=>o.id==='orphan'));
+});

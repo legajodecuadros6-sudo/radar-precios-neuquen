@@ -14,7 +14,7 @@ import { CoveragePanel } from './components/CoveragePanel';
 import { priceIsUsable, matchesProduct, CHAIN_NAMES } from './utils/dataQuality';
 import { fetchLiveRadarData, localData } from './services/productService';
 import { useBasket } from './context/BasketContext';
-import { analyzeProductPrices } from './utils/priceAnalyzer';
+import { buildCatalogIndex, compareCatalogProducts } from './utils/catalogIndex';
 import { Shield, Database, Cloud, CheckCircle2, ShoppingCart } from 'lucide-react';
 import { Product, PriceObservation } from './types';
 
@@ -82,34 +82,20 @@ export const AppContent: React.FC = () => {
     return counts;
   }, [products]);
 
+  const catalogIndex = useMemo(() => buildCatalogIndex(products, observations), [products, observations]);
+
   // Filter and Sort Products
   const filteredProducts = useMemo(() => {
     let result = products.filter(product => {
       const matchesCategory = selectedCategory === 'Todos' || product.category === selectedCategory;
       return matchesCategory && matchesProduct(product, searchQuery) &&
-        (chainFilter === 'all' || observations.some(o => o.product_id === product.id && o.supermarket_id === chainFilter));
+        (chainFilter === 'all' || catalogIndex.get(product.id)!.observations.some(o => o.supermarket_id === chainFilter));
     });
 
-    // Sorting
-    result.sort((a, b) => {
-      const analysisA = analyzeProductPrices(a, observations);
-      const analysisB = analyzeProductPrices(b, observations);
-
-      if (Boolean(analysisA.observations.length) !== Boolean(analysisB.observations.length)) return analysisA.observations.length ? -1 : 1;
-      if (sortBy === 'max_savings') {
-        return analysisB.max_savings_percentage - analysisA.max_savings_percentage;
-      }
-      if (sortBy === 'lowest_price') {
-        return (analysisA.min_price || Infinity) - (analysisB.min_price || Infinity);
-      }
-      if (sortBy === 'name_asc') {
-        return a.name.localeCompare(b.name);
-      }
-      return 0;
-    });
+    result.sort((a, b) => compareCatalogProducts(catalogIndex.get(a.id)!, catalogIndex.get(b.id)!, sortBy));
 
     return result;
-  }, [products, observations, selectedCategory, searchQuery, sortBy, chainFilter]);
+  }, [products, catalogIndex, selectedCategory, searchQuery, sortBy, chainFilter]);
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col selection:bg-cyan-500 selection:text-slate-950 font-['Plus_Jakarta_Sans',sans-serif]">
