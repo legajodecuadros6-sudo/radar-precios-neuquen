@@ -32,3 +32,7 @@ Validación: 46 pruebas aprobadas y compilación correcta. JavaScript principal:
 El catálogo agrupa las observaciones por producto y calcula un resumen una sola vez cuando cambian productos o precios. Buscar, filtrar y ordenar reutilizan ese índice, evitando recorrer todas las cotizaciones en cada comparación del ordenamiento. El filtro por comercio utiliza cotizaciones utilizables. El orden de precio unitario deja los productos exclusivamente por bulto después de los que sí tienen precio unitario y nunca trata un precio ausente como cero.
 
 La consulta a Supabase informa la cantidad de productos y cotizaciones excluidos por identidad no confirmada, datos incompletos o falta de stock. Los registros originales permanecen en la base; no se escribe ni elimina información remota. Se mantienen las reglas de verificación y la explicación visible de fallos de conexión. H5 (persistencia) sigue pendiente.
+
+## Cuarta entrega: navegación y productos solicitados
+
+Vistas por comercio y mayoristas, botón independiente para ofertas minoristas, categorías de alcohol/snacks, Lay’s y búsqueda diaria de Manaos pomelo, imágenes heredadas corregidas y fin de paginación de Coope. Véase `PENDIENTES_Y_COBERTURA.md` para las limitaciones de fuentes y el orden de pendientes acordado con el usuario.

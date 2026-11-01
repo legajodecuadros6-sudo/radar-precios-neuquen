@@ -4,6 +4,9 @@ import snapshot from '../data/live-prices.json';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { mapSupermarketId, mergePrices, productUnitPrice } from '../utils/dataQuality';
 
+import { catalogCategory, productImage } from '../utils/catalogViews';
+const presentProduct = (p: Product): Product => ({ ...p, category: catalogCategory(p), image_url: productImage(p) });
+
 type Row = Record<string, any>;
 export interface DataFetchResult {
   products: Product[];
@@ -14,7 +17,7 @@ export interface DataFetchResult {
 }
 // Retain historical source files, but never treat their hardcoded prices as fresh evidence.
 export const localData: DataFetchResult = {
-  products: [...INITIAL_PRODUCTS.filter(p => !p.ean || !snapshot.products.some(real => 'ean' in real && real.ean === p.ean)).map(p => ({ ...p, ean_aliases: [] })), ...snapshot.products as Product[]],
+  products: [...INITIAL_PRODUCTS.filter(p => !p.ean || !snapshot.products.some(real => 'ean' in real && real.ean === p.ean)).map(p => ({ ...p, ean_aliases: [] })), ...snapshot.products as Product[]].map(presentProduct),
   observations: mergePrices(INITIAL_PRICE_OBSERVATIONS.map(o => ({ ...o, is_verified: false, notes: 'Registro anterior sin trazabilidad suficiente' })), snapshot.observations as PriceObservation[]),
   isLiveCloud: false,
   message: 'Última importación guardada. Cada precio indica su fuente y fecha.'
@@ -38,7 +41,7 @@ export function mergeCloudData(productRows: Row[], priceRows: Row[], branchRows:
     };
     // A duplicate barcode with conflicting product identity is quarantined until reviewed.
     if (product.ean && [...products.values()].some(p => p.ean === product.ean)) { excluded.products++; continue; }
-    products.set(product.id, product); ids.set(row.id, product.id);
+    products.set(product.id, presentProduct(product)); ids.set(row.id, product.id);
   }
   const observations: PriceObservation[] = [];
   for (const row of priceRows) {

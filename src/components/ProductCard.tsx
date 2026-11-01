@@ -39,7 +39,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             loading="lazy"
             onError={(e) => {
               // Fallback si la imagen no carga
-              e.currentTarget.onerror = null; e.currentTarget.src = '/product-placeholder.svg';
+              e.currentTarget.onerror = null; e.currentTarget.src = product.category === 'Carnicería' ? '/meat-placeholder.svg' : '/product-placeholder.svg';
             }}
           />
 

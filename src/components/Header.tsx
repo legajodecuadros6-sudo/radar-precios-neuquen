@@ -22,7 +22,7 @@ export const Header: React.FC<HeaderProps> = ({ onSearchFocus, onScrollToDeals }
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         
         {/* Main Header Container */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between py-2.5 md:py-0 md:h-20 gap-2.5 md:gap-4">
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between py-2.5 xl:py-0 xl:h-20 gap-2.5 xl:gap-4">
           
           {/* Top Bar Row (Mobile: Brand + Location + Cart | Desktop: Left Brand) */}
           <div className="flex items-center justify-between gap-3 shrink-0">
@@ -56,7 +56,7 @@ export const Header: React.FC<HeaderProps> = ({ onSearchFocus, onScrollToDeals }
             </div>
 
             {/* Mobile-Only Fast Cart Trigger */}
-            <div className="flex md:hidden items-center gap-2">
+            <div className="flex xl:hidden items-center gap-2">
               <button
                 onClick={toggleBasket}
                 className="relative flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-cyan-600 to-blue-600 active:scale-95 text-white rounded-xl shadow-md shadow-cyan-600/30 transition-all"
@@ -116,7 +116,7 @@ export const Header: React.FC<HeaderProps> = ({ onSearchFocus, onScrollToDeals }
           </div>
 
           {/* Desktop Actions */}
-          <div className="hidden md:flex items-center gap-2.5">
+          <div className="hidden xl:flex items-center gap-2.5">
             
             {/* Deals & Discounts Button */}
             <button
@@ -125,7 +125,7 @@ export const Header: React.FC<HeaderProps> = ({ onSearchFocus, onScrollToDeals }
               title="Ver precios y condiciones de compra"
             >
               <Flame className="w-4 h-4 text-amber-400 fill-amber-400" />
-              <span>Precios y condiciones</span>
+              <span>Mayoristas</span>
             </button>
 
             {/* Map Trigger */}

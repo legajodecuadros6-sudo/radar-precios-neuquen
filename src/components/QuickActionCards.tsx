@@ -5,22 +5,24 @@ import { useBasket } from '../context/BasketContext';
 
 interface QuickActionCardsProps {
   onScrollToDeals: () => void;
+  onRetailOffers: () => void;
 }
 
-export const QuickActionCards: React.FC<QuickActionCardsProps> = ({ onScrollToDeals }) => {
+export const QuickActionCards: React.FC<QuickActionCardsProps> = ({ onScrollToDeals, onRetailOffers }) => {
   const { setIsScannerOpen, setIsMapOpen, toggleBasket, itemCount } = useBasket();
 
   const actions = [
     {
       id: 'deals',
-      label: 'Compras por bulto',
-      subtitle: 'Mínimos, cantidades y precios',
+      label: 'Mayoristas',
+      subtitle: 'Precios y compras por bulto',
       icon: Flame,
       color: 'text-amber-500 bg-amber-500/10 border-amber-300/40 hover:bg-amber-500/15',
       badge: 'BULTOS',
       badgeColor: 'bg-amber-500 text-slate-950',
       onClick: onScrollToDeals
     },
+    { id: 'retail-offers', label: 'Ofertas minoristas', subtitle: 'Descuentos con condiciones verificadas', icon: Flame, color: 'text-emerald-700 bg-emerald-50 border-emerald-200', badge: 'OFERTAS', badgeColor: 'bg-emerald-100 text-emerald-900', onClick: onRetailOffers },
     {
       id: 'map',
       label: 'Radar Mapa',
@@ -54,7 +56,7 @@ export const QuickActionCards: React.FC<QuickActionCardsProps> = ({ onScrollToDe
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 my-4">
       {actions.map(action => {
         const Icon = action.icon;
         return (
@@ -68,7 +70,7 @@ export const QuickActionCards: React.FC<QuickActionCardsProps> = ({ onScrollToDe
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
-                <span className="font-extrabold text-xs text-slate-900 truncate block">
+                <span className="font-extrabold text-xs text-slate-900 block">
                   {action.label}
                 </span>
                 <span className={`text-[9px] font-black px-1.5 py-0.2 rounded-md ${action.badgeColor}`}>

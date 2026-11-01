@@ -21,7 +21,7 @@ SNAPSHOT = ROOT / 'src/data/live-prices.json'
 HISTORY = ROOT / 'src/data/price-history.json'
 CHAINS = ['coto','la_anonima','changomas','vea','cooperativa_obrera','yaguar','vital','diarco','makro']
 API = 'https://api.lacoopeencasa.coop/api/'
-TERMS = ['aceite','leche','yerba','arroz','fideos','harina','azucar','galletitas','cafe','yogur','queso','manteca','gaseosa','agua','lavandina','detergente','jabon','papel','pan','pollo']
+TERMS = ['aceite','leche','yerba','arroz','fideos','harina','azucar','galletitas','cafe','yogur','queso','manteca','gaseosa','agua','lavandina','detergente','jabon','papel','pan','pollo','lays','manaos pomelo','cerveza','vino','fernet']
 
 def normalize(value):
     return ''.join(c for c in unicodedata.normalize('NFD', str(value).lower()) if unicodedata.category(c) != 'Mn')
@@ -51,11 +51,14 @@ def valid_ean(code):
 
 def category(name):
     name = normalize(name).strip()
+    if name.startswith('cerveza') and re.search(r'sin alcohol|0[.,]0\s*%', name): return 'Bebidas'
     # Classify the product itself, not an ingredient/flavour mentioned later.
     groups = [
         ('Cuidado Personal', r'^(?:agua micelar|aceite para bebe|jabon (?:de tocador|liquido para manos)|shampoo|champu|acondicionador|crema (?:corporal|facial)|papel higienico|desodorante corporal)\b'),
         ('Limpieza', r'^(?:agua desmineralizada|lavandina|detergente|jabon (?:en polvo|para ropa)|limpiador|suavizante|desinfectante|papel (?:cocina|de cocina)|rollo de cocina)\b'),
         ('Lácteos y Frescos', r'^(?:leche|yogur|yogurt|queso|manteca|crema de leche|dulce de leche)\b'),
+        ('Bebidas alcohólicas', r'^(?:cerveza|cerv |vino|fernet|aperitivo|vodka|whisky|ron |gin |sidra|espumante)\b'),
+        ('Snacks', r'^(?:papas fritas|snack)\b'),
         ('Bebidas', r'^(?:gaseosa|agua|jugo|cerveza)\b'),
         ('Carnicería', r'^(?:pollo (?:entero|fresco)|asado|carne|pechuga|pata muslo|muslo|suprema)\b'),
         ('Panadería', r'^(?:pan|panificado)\b'),
@@ -94,6 +97,7 @@ def collect_coope(stamp, max_pages=3, terms=None):
         for _ in range(max_pages):
             try:
                 data = request_json(API+'buscar/articulos?'+urlencode({'q':term,'offset':offset,'pedido':0,'id_local':124}))
+                if data.get('estado') == 2 and data.get('datos') == []: break
                 if data.get('estado')!=1 or not isinstance(data.get('datos'),list): raise ValueError('Respuesta inválida')
                 articles = data['datos']
                 new_codes = {str(a.get('cod_interno')) for a in articles}-seen
@@ -228,7 +232,7 @@ def parse_makro(page, stamp):
         quantity=amount/1000 if raw in ('g','gr','grs','ml','cc') else amount
         pid='makro_'+code
         cat=category(name)
-        if normalize(name).startswith(('cerv ','gaseo ','soda ','vino ')): cat='Bebidas'
+        if normalize(name).startswith(('gaseo ','soda ')): cat='Bebidas'
         product={'id':pid,'name':name,'brand':'Según descripción','category':cat,'image_url':'','unit_measure':unit,'net_content_number':quantity,'net_content_str':f'{amount:g} {raw}'}
         observation={'id':pid+'@makro_neuquen@store','product_id':pid,'supermarket_id':'makro','branch_id':'makro_neuquen','branch_name':'Makro Mayorista Neuquén','branch_address':'Teodoro Planas 4141, esquina El Cholar','regular_price':price,'current_price':price,'price_per_unit':round(price/quantity,2),'unit_label':'$ / kg' if unit=='kg' else '$ / L','query_date':published.isoformat(),'retrieved_at':stamp,'is_verified':True,'is_demo':False,'source_url':MAKRO_URL,'source_name':'Makro · lista diaria Neuquén','channel':'store','min_quantity':1,'notes':'Precio regular con IVA incluido. Fecha del relevamiento publicado por Makro; consultar stock y condiciones en la sucursal. El código interno no es un EAN.'}
         products.append(product);observations.append(observation)
@@ -350,6 +354,7 @@ def main():
     parser.add_argument('--csv',type=Path)
     parser.add_argument('--max-pages',type=int,default=3)
     parser.add_argument('--source', choices=['all','cooperativa_obrera','changomas','makro','vital'], default='all')
+    parser.add_argument('--coope-terms', nargs='+', help='Consultas específicas de Coope')
     parser.add_argument('--mas-terms', nargs='+', help='Consultas acotadas para ampliar ChangoMás')
     args = parser.parse_args()
     now = datetime.now(timezone.utc); stamp = now.isoformat()
@@ -364,7 +369,7 @@ def main():
                 raise ValueError('El CSV contradice la identidad ya importada: '+product['id'])
         for chain in {o['supermarket_id'] for o in incoming}: snapshot['sources'][chain] = {'status':'ok','last_attempt':stamp,'message':'Importación documentada; revisar fecha y condiciones.'}
     else:
-        for chain,collector in [('cooperativa_obrera',lambda:collect_coope(stamp,args.max_pages)),('changomas',lambda:collect_mas(stamp,args.mas_terms)),('makro',lambda:collect_makro(stamp)),('vital',lambda:collect_vital(stamp))]:
+        for chain,collector in [('cooperativa_obrera',lambda:collect_coope(stamp,args.max_pages,args.coope_terms)),('changomas',lambda:collect_mas(stamp,args.mas_terms)),('makro',lambda:collect_makro(stamp)),('vital',lambda:collect_vital(stamp))]:
             if args.source not in ('all',chain): continue
             try:
                 ps,obs,branch,errors=collector()

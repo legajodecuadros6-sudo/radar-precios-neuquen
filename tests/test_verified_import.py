@@ -7,6 +7,11 @@ spec=importlib.util.spec_from_file_location('sync',Path(__file__).resolve().pare
 sync=importlib.util.module_from_spec(spec);spec.loader.exec_module(sync)
 class VerifiedImportTests(TestCase):
     def test_categories_do_not_confuse_flavours_with_product_types(self):
+        self.assertEqual(sync.category('Vino tinto 1L'), 'Bebidas alcohólicas')
+        self.assertEqual(sync.category('Cerveza sin alcohol 473cc'), 'Bebidas')
+        self.assertEqual(sync.category('Papas fritas lays 134grs'), 'Snacks')
+        self.assertIn('manaos pomelo', sync.TERMS)
+        self.assertIn('lays', sync.TERMS)
         self.assertEqual(sync.category('Ramen arcor sabor pollo 70grs'), 'Almacén')
         self.assertEqual(sync.category('Aceite en aerosol sabor manteca'), 'Almacén')
         self.assertEqual(sync.category('Galletitas de agua'), 'Almacén')
@@ -18,6 +23,13 @@ class VerifiedImportTests(TestCase):
         self.assertNotIn('ean',product);self.assertEqual(product['net_content_number'],.9)
         self.assertEqual(obs['current_price'],100);self.assertEqual(obs['regular_price'],100)
         self.assertEqual(obs['branch_id'],'cooperativa_124')
+    def test_empty_end_page_is_not_a_source_failure(self):
+        branch={'id_local':124,'localidad_desc':'Neuquén','cod_postal':8300,'descripcion':'Oeste','direccion':'Dirección','datos':{'coordenadas':{'latitud':-38.95,'longitud':-68.1}}}
+        article={'cod_interno':'123','descripcion':'papas fritas lays 134grs','estado':'1','precio':100,'gramaje':134,'unimed_desc':'grs'}
+        with mock.patch.object(sync,'request_json',side_effect=[{'datos':[branch]},{'estado':1,'datos':[article]},{'estado':2,'datos':[]}]),mock.patch.object(sync.time,'sleep'):
+            products,observations,_,errors=sync.collect_coope('2026-11-01T00:00:00+00:00',terms=['lays'])
+        self.assertEqual(len(products),1);self.assertEqual(len(observations),1);self.assertEqual(errors,[])
+
     def test_unknown_or_wrong_city_prevents_import(self):
         with mock.patch.object(sync,'request_json',return_value={'datos':[{'id_local':'124','localidad_desc':'Bahía Blanca','cod_postal':'8000'}]}):
             with self.assertRaises(ValueError):sync.collect_coope('2026-10-30T00:00:00+00:00')

@@ -40,7 +40,7 @@ export interface Product {
   ean_aliases?: string[];
   name: string;
   brand: string;
-  category: 'Almacén' | 'Lácteos y Frescos' | 'Bebidas' | 'Carnicería' | 'Limpieza' | 'Cuidado Personal' | 'Congelados' | 'Panadería';
+  category: 'Bebidas alcohólicas' | 'Snacks' | 'Almacén' | 'Lácteos y Frescos' | 'Bebidas' | 'Carnicería' | 'Limpieza' | 'Cuidado Personal' | 'Congelados' | 'Panadería';
   image_url: string;
   unit_measure: UnitType;
   net_content_number: number;

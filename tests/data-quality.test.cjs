@@ -105,3 +105,28 @@ test('cloud duplicate barcode and orphan prices are counted without corrupting l
   assert.equal(result.products.find(p=>p.ean===real.ean).id,real.id);
   assert.ok(!result.observations.some(o=>o.id==='orphan'));
 });
+
+
+test('store views isolate products and quotes; missing chains are empty instead of showing other stores',()=>{
+  const {selectCatalogView}=load('src/utils/catalogViews.ts');
+  const other={...product,id:'other'};
+  const rows=[obs(),obs({product_id:'other',supermarket_id:'makro'})];
+  const selected=selectCatalogView([product,other],rows,'makro','all');
+  assert.equal(selected.products.length,1);assert.equal(selected.products[0].id,'other');
+  assert.equal(selected.observations[0].supermarket_id,'makro');
+  assert.equal(selectCatalogView([product,other],rows,'yaguar','all').products.length,0);
+  assert.equal(selectCatalogView([product,other],rows,'all','wholesale').products[0].id,'other');
+});
+test('retail offers require an identified promotion and never include base prices or wholesale terms',()=>{
+  const {isRetailOffer}=load('src/utils/catalogViews.ts');
+  const offer=obs({regular_price:150,promo_label:'Oferta online'});
+  assert.equal(isRetailOffer(offer),true);
+  for(const change of [{promo_label:undefined},{regular_price:100},{supermarket_id:'makro'},{min_quantity:6},{promo_condition:'Tarjeta'},{query_date:'2020-01-01'}]) assert.equal(isRetailOffer({...offer,...change}),false);
+});
+test('alcohol and snacks are discoverable and unrelated stock images are replaced',()=>{
+  const {catalogCategory,productImage}=load('src/utils/catalogViews.ts');
+  assert.equal(catalogCategory({...product,name:'Vino tinto 1 L'}),'Bebidas alcohólicas');
+  assert.equal(catalogCategory({...product,name:'Cerveza sin alcohol 473 ml'}),'Bebidas');
+  assert.equal(catalogCategory({...product,name:'Papas fritas Lays clásicas 134g'}),'Snacks');
+  assert.equal(productImage({...product,category:'Carnicería',image_url:'https://images.unsplash.com/photo-vinyl'}),'/meat-placeholder.svg');
+});

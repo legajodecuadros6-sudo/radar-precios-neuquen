@@ -104,7 +104,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               alt={product.name}
               onError={(e) => {
                 (e.currentTarget as HTMLImageElement).src =
-                  'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=400&q=80';
+                  product.category === 'Carnicería' ? '/meat-placeholder.svg' : '/product-placeholder.svg';
               }}
               className="w-24 h-24 sm:w-28 sm:h-28 object-contain p-2 rounded-2xl bg-white border border-slate-200 shrink-0 shadow-sm"
             />

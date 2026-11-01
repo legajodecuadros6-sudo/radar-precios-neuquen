@@ -1,6 +1,7 @@
 import React from 'react';
 import { TrendingDown, ShieldAlert, Zap, ArrowUpRight, CheckCircle2, Radar } from 'lucide-react';
 import { Product, PriceObservation } from '../types';
+import { isRetailOffer } from '../utils/catalogViews';
 import { formatCurrency } from '../utils/formatters';
 
 interface BentoDealsGridProps {
@@ -16,7 +17,7 @@ export const BentoDealsGrid: React.FC<BentoDealsGridProps> = ({
 }) => {
   // Find top real deals (highest discount percentage with verified flag)
   const topDealObs = [...observations]
-    .filter(o => o.discount_percentage && o.discount_percentage > 0)
+    .filter(isRetailOffer)
     .sort((a, b) => (b.discount_percentage || 0) - (a.discount_percentage || 0))[0];
 
   const topDealProduct = topDealObs ? products.find(p => p.id === topDealObs.product_id) : null;
@@ -138,7 +139,7 @@ export const BentoDealsGrid: React.FC<BentoDealsGridProps> = ({
             </div>
 
             <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-cyan-700 font-bold">
-              <span>Comparar cortes en el mapa</span>
+              <span>Ver precio, sucursal y fuente</span>
               <ArrowUpRight className="w-4 h-4" />
             </div>
           </div>
