@@ -15,10 +15,10 @@ Las cantidades son cotizaciones guardadas en esta entrega, no el catálogo compl
 
 | Cadena | Cotizaciones | Alcance |
 |---|---:|---|
-| Cooperativa Obrera | 813 | Local 124, Sucursal del Oeste, Neuquén; precio base online |
-| ChangoMás | 190 | Sucursal 3608, Perticone, cotización local individual |
+| Cooperativa Obrera | 823 | Local 124, Sucursal del Oeste, Neuquén; precio base online |
+| ChangoMás | 215 | Sucursal 3608, Perticone, cotización local individual |
 | Makro | 36 | Lista pública de Neuquén, con IVA y fecha de publicación |
-| Vital | 87 | Vendedor Neuquén; cotización por bulto, mínimos y múltiplos |
+| Vital | 94 | Vendedor Neuquén; cotización por bulto, mínimos y múltiplos |
 
 ## Productos solicitados
 
