@@ -11,7 +11,7 @@ import { BarcodeScannerModal } from './components/BarcodeScannerModal';
 import { NeuquenMapModal } from './components/NeuquenMapModal';
 import { SearchAutocomplete } from './components/SearchAutocomplete';
 import { CoveragePanel } from './components/CoveragePanel';
-import { priceIsUsable, matchesProduct, CHAIN_NAMES } from './utils/dataQuality';
+import { priceIsUsable, matchesProduct, CHAIN_NAMES, ACTIVE_CHAIN_NAMES } from './utils/dataQuality';
 import { fetchLiveRadarData, localData } from './services/productService';
 import { useBasket } from './context/BasketContext';
 import { isRetailOffer, WHOLESALE_CHAINS, selectCatalogView } from './utils/catalogViews';
@@ -128,7 +128,7 @@ export const AppContent: React.FC = () => {
           Filtrar por comercio
           <select aria-label="Filtrar por comercio" value={chainFilter} onChange={event => { setChainFilter(event.target.value); setMarketView('all'); setSearchQuery(''); setSelectedCategory('Todos'); }} className="block w-full sm:w-80 mt-2 p-3 rounded-xl border border-slate-300 bg-white">
             <option value="all">Todos los comercios</option>
-            {Object.entries(CHAIN_NAMES).map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+            {Object.entries(ACTIVE_CHAIN_NAMES).map(([id, name]) => <option key={id} value={id}>{name}</option>)}
           </select>
         </label>
 

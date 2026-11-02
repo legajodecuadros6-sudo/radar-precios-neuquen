@@ -4,6 +4,9 @@ export const CHAIN_NAMES: Record<SupermarketId, string> = {
   coto: 'Coto', la_anonima: 'La Anónima', changomas: 'ChangoMás', vea: 'Vea',
   cooperativa_obrera: 'Cooperativa Obrera', yaguar: 'Yaguar', vital: 'Vital', diarco: 'Diarco', makro: 'Makro'
 };
+// Retired from the public catalogue by product decision; historical IDs remain valid.
+export const isActiveChain = (id: string) => id !== 'vea' && id !== 'diarco';
+export const ACTIVE_CHAIN_NAMES = Object.fromEntries(Object.entries(CHAIN_NAMES).filter(([id]) => isActiveChain(id)));
 export const normalizeText = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 export function mapSupermarketId(value: string): SupermarketId | undefined {
   const text = normalizeText(value).replace(/[-_]/g, '');
@@ -11,7 +14,7 @@ export function mapSupermarketId(value: string): SupermarketId | undefined {
 }
 export function priceIsUsable(observation: PriceObservation, now = Date.now()): boolean {
   const time = Date.parse(observation.query_date);
-  return observation.is_verified && !observation.is_demo && Boolean(observation.branch_id) &&
+  return isActiveChain(observation.supermarket_id) && observation.is_verified && !observation.is_demo && Boolean(observation.branch_id) &&
     Number.isFinite(observation.current_price) && observation.current_price > 0 &&
     Number.isFinite(time) && time <= now && now - time <= 72 * 3600 * 1000 &&
     /^https:\/\//.test(observation.source_url) &&

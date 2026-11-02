@@ -1,19 +1,19 @@
 import React from 'react';
 import { PriceObservation, SupermarketId } from '../types';
-import { CHAIN_NAMES, priceIsUsable } from '../utils/dataQuality';
+import { CHAIN_NAMES, ACTIVE_CHAIN_NAMES, priceIsUsable } from '../utils/dataQuality';
 import { formatDateDisplay } from '../utils/formatters';
 import snapshot from '../data/live-prices.json';
 
 export function CoveragePanel({ observations }: { observations: PriceObservation[] }) {
   const active = observations.filter(o => priceIsUsable(o));
-  const expired = snapshot.observations.filter(o => o.is_verified && !o.is_demo && Date.now() - Date.parse(o.query_date) > 72 * 3600 * 1000);
+  const expired = snapshot.observations.filter(o => o.supermarket_id !== 'vea' && o.supermarket_id !== 'diarco' && o.is_verified && !o.is_demo && Date.now() - Date.parse(o.query_date) > 72 * 3600 * 1000);
   const chains = new Set(active.map(o => o.supermarket_id));
   return <details className="mb-4 rounded-2xl border border-slate-200 bg-white p-4" open>
-    <summary className="cursor-pointer font-bold text-slate-800">Cobertura real: {chains.size} de 9 cadenas con precios vigentes</summary>
+    <summary className="cursor-pointer font-bold text-slate-800">Cobertura real: {chains.size} de {Object.keys(ACTIVE_CHAIN_NAMES).length} cadenas con precios vigentes</summary>
     <p className="my-2 text-xs text-slate-500">Los precios sin fuente suficiente o con más de 72 horas no participan en las comparaciones. La conexión a una base no garantiza precios actualizados.</p>
     {expired.length > 0 && <p role="status" className="my-3 rounded-xl bg-amber-50 border border-amber-200 p-3 text-sm text-amber-900">Hay {expired.length} cotizaciones vencidas en {new Set(expired.map(o => o.supermarket_id)).size} cadena(s). Se excluyen de los totales hasta que se actualicen. La cobertura puede estar incompleta.</p>}
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 mt-3">
-      {Object.entries(CHAIN_NAMES).map(([id, name]) => {
+      {Object.entries(ACTIVE_CHAIN_NAMES).map(([id, name]) => {
         const rows = active.filter(o => o.supermarket_id === id);
         const dates = rows.map(o => o.query_date).sort();
         const source = snapshot.sources[id as keyof typeof snapshot.sources];

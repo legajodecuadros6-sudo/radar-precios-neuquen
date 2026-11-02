@@ -130,3 +130,14 @@ test('alcohol and snacks are discoverable and unrelated stock images are replace
   assert.equal(catalogCategory({...product,name:'Papas fritas Lays clásicas 134g'}),'Snacks');
   assert.equal(productImage({...product,category:'Carnicería',image_url:'https://images.unsplash.com/photo-vinyl'}),'/meat-placeholder.svg');
 });
+
+ test('retired chains are absent from public coverage, map and basket even with fresh prices', () => {
+  const {SUPERMARKETS_NEUQUEN} = load('src/data/supermarkets.ts');
+  for (const id of ['vea', 'diarco']) {
+    assert.equal(quality.ACTIVE_CHAIN_NAMES[id], undefined);
+    assert.equal(SUPERMARKETS_NEUQUEN.some(b => b.supermarket_id === id), false);
+    assert.equal(quality.priceIsUsable(obs({supermarket_id:id})), false);
+    assert.equal(basket([{product,quantity:1}], [obs({supermarket_id:id})]).split_trip.store_groups.length, 0);
+  }
+  assert.equal(Object.keys(quality.ACTIVE_CHAIN_NAMES).length, 7);
+ });

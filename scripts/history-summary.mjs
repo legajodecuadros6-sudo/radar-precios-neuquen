@@ -4,7 +4,7 @@ export function summarizeHistory(rows, now = Date.now()) {
   const formatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Argentina/Salta', year: 'numeric', month: '2-digit', day: '2-digit' });
   for (const row of rows) {
     const time = Date.parse(row.query_date);
-    if (!row.is_verified || row.is_demo || !row.branch_id || !row.product_id ||
+    if (['vea', 'diarco'].includes(row.supermarket_id) || !row.is_verified || row.is_demo || !row.branch_id || !row.product_id ||
         !Number.isFinite(time) || time > now || now - time > 91 * 86400000 ||
         !Number.isFinite(row.current_price) || row.current_price <= 0 ||
         !/^https:\/\//.test(row.source_url || '') ||

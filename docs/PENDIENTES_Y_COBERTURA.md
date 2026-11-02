@@ -50,3 +50,20 @@ Los bloqueos de fuentes anteriores no fueron vueltos a probar en esta entrega, s
 - Mejorar ranking de búsqueda y tolerancia a errores de escritura.
 - Revisar persistencia de canasta y normalización de códigos GTIN con pruebas específicas.
 - Pruebas físicas del lector con más envases y dispositivos. Las pruebas automatizadas no sustituyen esa comprobación.
+
+
+## Decisión del usuario — 1 de noviembre de 2026
+
+Vea y Diarco retirados de la página: filtros, cobertura, mapa, comparaciones,
+canasta y resumen histórico publicado. Se preservan registros originales para
+trazabilidad. La cobertura pública pasa a siete cadenas; no es una afirmación
+sobre inexistencia de sucursales o falta absoluta de entrega.
+
+El nuevo informe aportado informa acceso a Store API de Yaguar Neuquén,
+HTML y EAN de La Anónima y condiciones promocionales de Coope. Repriorizar
+su verificación e integración; los 403 anteriores eran observaciones puntuales,
+no imposibilidad permanente. Los precios del informe todavía no se incorporan
+como cotizaciones verificadas. Manaos 2,25 L no equivale a la presentación 2 L
+solicitada. Antes de integrar: confirmar sede, stock, impuestos, unidad, mínimos
+y condiciones; en La Anónima confirmar también alcance local de los precios.
+Coto y decisión de arquitectura de Supabase quedan después de estas vías.

@@ -1,4 +1,5 @@
 import { SupermarketBranch } from '../types';
+import { isActiveChain } from '../utils/dataQuality';
 import snapshot from './live-prices.json';
 
 export interface SupermarketBranchExtended extends SupermarketBranch {
@@ -459,7 +460,7 @@ export const SUPERMARKETS_NEUQUEN: SupermarketBranchExtended[] = [
     corridor_zone: 'oeste_cercania' as const,
     osm_precision: 'Coordenadas publicadas por la tienda',
   } as SupermarketBranchExtended))
-];
+].filter(branch => isActiveChain(branch.supermarket_id));
 
 export const getSupermarketById = (id: string): SupermarketBranchExtended | undefined => {
   return SUPERMARKETS_NEUQUEN.find(s => s.id === id || s.supermarket_id === id);
