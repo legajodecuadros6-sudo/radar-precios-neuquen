@@ -6,72 +6,69 @@
 
 - **Agente que entrega:** Antigravity
 - **Modelo:** Gemini 2.5 Pro (Antigravity standard)
-- **Fecha y hora:** 03-11-2026 (~12:50 UTC)
-- **Objetivo recibido:** Continuar trabajando específicamente en la cobertura de precios que todavía falta agregar (La Anónima), verificar antes de considerar completado, y actualizar REGLAS DE TRABAJO y memoria compartida para que Codex tome el relevo.
+- **Fecha y hora:** 03-11-2026 (~18:00 UTC / 15:00 ART)
+- **Objetivo recibido:** Auditoría técnica de Radar de Precios sobre la desaparición de precios de Makro de la página, causa raíz, recorrido completo de datos, verificación de antecedente de 71 productos (28/08/2026), regla de conservación de precios y plan de reparación para Codex. En esta etapa: **sin modificar código, precios ni producción**.
 
 ## Trabajo realizado en esta sesión
 
-1. **Integración oficial de La Anónima como 6ª fuente del pipeline:**
-   - Colector `collect_la_anonima()` en `scripts/scrapers/sync_verified_prices.py`.
-   - Preflight de sucursal `anonima_branch()` validando contra API oficial `https://api.laanonima.com.ar/sucursal/8300` (Paseo de la Patagonia, Antártida Argentina 1111, `idSucursalSuper: 8`).
-   - Parser nativo con biblioteca estándar `AnonimaCardParser(HTMLParser)`: sin dependencias externas (`bs4`), resistente a espacios en atributos y signos `>` en categorías.
-   - Constructor de registro `anonima_record()`: normalización de unidades (`kg`, `litro`, `unidad`), detección de multipacks (para no desnormalizar bultos), filtro de stock (`stock <= 0` / `-1`), y captura de ofertas (`promo_label: 'Oferta online'`, `discount_percentage`).
-   - Unificación de ID: utiliza `ean_<ean>` cuando la ficha de detalle expone GTIN válido comprobado (`data-flix-ean`), o `anonima_<code>` cuando no lo expone, unificando observaciones con otras cadenas (ej: Aceite Cocinero 1.5 L `7790060023684`).
-   - Soporte CLI para `--source la_anonima` y `--anonima-terms`.
-2. **Suite de pruebas unitarias:**
-   - Clase `LaAnonimaTests` con 5 casos de prueba en `tests/test_verified_import.py` (normalización de unidades, ofertas, filtro de stock, multipacks, parser de tarjetas y rechazo de sucursal no-Neuquén).
-3. **Primera importación real de La Anónima:**
-   - Ejecutado `sync_verified_prices.py --source la_anonima`: **676 observaciones verificadas** incorporadas con fecha real de hoy (03-11), 174 ofertas minoristas y 25 EANs oficiales vinculados.
-   - Saldo total del catálogo: **3.602 productos / 3.612 observaciones** y **10.563 puntos históricos** acumulados.
-4. **Actualización de REGLAS DE TRABAJO permanentes:**
-   - Incorporación obligatoria del HANDOFF al finalizar cualquier sesión o preventivamente ante límite de contexto/tokens.
-   - Historial permanente e inmutable en `agent_memory/history/AAAA-MM-DD_HHMM_AGENTE_MODELO.md`.
-   - Instrucción estricta para agentes futuros: leer primero `HANDOFF.md` y **no** leer automáticamente todo `history/`.
-5. **Archivo histórico del relevo previo:**
-   - El relevo anterior de GLM (OpenCode) quedó archivado de forma inmutable en `agent_memory/history/2026-11-03_0430_GLM_OpenCode.md`.
+1. **Auditoría forense completa del ciclo de vida del dato Makro:**
+   - Inspección del recorrido: `https://makro.com.ar/canastabasicaneuquen/` $\rightarrow$ `scripts/scrapers/sync_verified_prices.py` $\rightarrow$ `src/data/live-prices.json` y `price-history.json` $\rightarrow$ `src/utils/dataQuality.ts` (`priceIsUsable`) $\rightarrow$ `src/App.tsx` / `catalogViews.ts` $\rightarrow$ `src/components/CoveragePanel.tsx` $\rightarrow$ Producción en Vercel.
+2. **Determinación concluyente de causa raíz:**
+   - Los precios de Makro **NO fueron eliminados ni sobrescritos**. Están intactos en `src/data/live-prices.json` (36 productos, 36 observaciones), `src/data/price-history.json` (36 registros históricos) y `public/history-summary.json` (36 productos en serie diaria).
+   - Su desaparición de la pantalla es provocada por el filtro client-side `priceIsUsable(o)` (`dataQuality.ts:19` y `App.tsx:39`) que descarta toda cotización con más de 72 horas de antigüedad (`now - time > 72 * 3600 * 1000`).
+   - La lista de Makro tiene `query_date: "2026-10-31T05:01:00-03:00"`. La ventana de 72 horas venció hoy **03-11-2026 a las 05:01 ART (08:01 UTC)**. A partir de ese momento, `priceIsUsable` evaluó en `false` para el 100% de las observaciones de Makro, volviéndolas invisibles en el catálogo, en los filtros y en el changuito.
+3. **Comprobación del antecedente de 71 productos (28/08/2026):**
+   - Se localizaron físicamente los archivos originales en `.user_uploaded/media_1792888206651.csv` y `.user_uploaded/media_1792888206663.txt`.
+   - Contienen exactamente **71 filas de productos** con fecha `Viernes 28 De Agosto De 2026, 11:00 hs`.
+   - Dichos 71 productos **nunca fueron importados al catálogo oficial** porque al crearse el importador trazable (31/10) tenían más de 64 días de antigüedad y violaban la regla de 72 horas.
+   - Al cruzar los 71 códigos: 33 fueron re-importados en la lista del 31/10; 38 quedaron fuera (16 filtrados por regex de normalización de unidades/multipacks y 22 porque Makro no los incluyó en la lista del 31/10).
+4. **Diseño de la Regla Permanente de Conservación de Precios:**
+   - Propuesta de arquitectura con **Estado Tripartito de Cotizaciones**:
+     1. *Vigente / Confirmado* ($\le 72$ h): participa en optimizador de changuito y cálculo de mejor precio.
+     2. *Precio de Referencia / En Revisión* ($> 72$ h): visible en tarjeta y catálogo con badge *"Precio de referencia al 31/10 · Pendiente de actualización por Makro"*, excluido del cálculo de mejor precio para evitar inducción a error.
+     3. *Histórico / Archivado*: serie temporal gráfica en modal de histórico (90 días).
+5. **Auditoría general a otras cadenas:**
+   - Se documentó el riesgo sistémico de "efecto bloque": si una fuente falla 3 días consecutivos en el cron, todos sus productos desaparecen simultáneamente de la web.
+   - Makro es la más vulnerable por ser la única fuente dependiente de actualización manual por parte del supermercadista en una página estática (y no de una API de stock).
+6. **Preservación inmutable del handoff previo:**
+   - El relevo anterior quedó archivado en `agent_memory/history/2026-11-03_0955_Antigravity_Gemini.md`.
 
-## Archivos modificados en esta sesión
+## Archivos examinados durante la auditoría
 
-- `scripts/scrapers/sync_verified_prices.py` (colector La Anónima, parser HTMLParser, sucursal 8300, CLI `--source la_anonima` y `--anonima-terms`)
-- `tests/test_verified_import.py` (suite `LaAnonimaTests`, 5 tests unitarios)
-- `src/data/live-prices.json` (datos del sync de La Anónima del 03-11: 3.602 productos / 3.612 obs)
-- `src/data/price-history.json` (histórico extendido a 10.563 registros)
-- `agent_memory/REGLAS_TRABAJO.md` (nuevas reglas de relevo, historial e inmutabilidad)
-- `agent_memory/history/README.md` (convención de nombrado e inmutabilidad)
-- `agent_memory/history/2026-11-03_0430_GLM_OpenCode.md` (archivo inmutable del relevo previo)
-- `agent_memory/CURRENT_STATE.md` (estado actualizado con 6 fuentes oficiales)
-- `agent_memory/TASKS.md` (La Anónima y reglas completadas; pendientes actualizados)
-- `agent_memory/DECISIONS.md` (decisiones D9 y D10 agregadas)
-- `agent_memory/LEARNINGS.md` (sección técnica de La Anónima agregada)
-- `agent_memory/HANDOFF.md` (este documento de relevo)
+- `src/data/live-prices.json` (3.602 productos, 3.612 obs; 36 obs de Makro al 31-10 confirmadas intactas)
+- `src/data/price-history.json` (10.563 registros históricos; 36 de Makro al 31-10 confirmados)
+- `public/history-summary.json` (36 productos de Makro presentes en la serie diaria)
+- `src/utils/dataQuality.ts` (función `priceIsUsable`, corte estricto `now - time <= 72 * 3600 * 1000`)
+- `src/App.tsx` (líneas 39 y 62, filtro `priceIsUsable` al inicializar estado)
+- `src/utils/catalogViews.ts` (línea 23, filtro `priceIsUsable` en vistas de catálogo y tiendas)
+- `src/components/CoveragePanel.tsx` (líneas 8 a 22, alerta de cotizaciones vencidas y estado 'Sin precios verificados')
+- `src/utils/priceAnalyzer.ts` (línea 27, exclusión de cotizaciones vencidas)
+- `src/utils/basketOptimizer.ts` (línea 13, exclusión de cotizaciones vencidas)
+- `scripts/scrapers/sync_verified_prices.py` (líneas 197-247, colector `parse_makro`, extracción de fecha HTML y excepción `ValueError` ante listas > 72 h)
+- `tests/test_verified_import.py` (clase `MakroTests`, líneas 98-121)
+- `docs/REVISION_AUDITORIA_GLM.md`, `docs/DATOS_Y_COBERTURA.md`, `docs/PENDIENTES_Y_COBERTURA.md`
+- `.user_uploaded/media_1792888206651.csv` y `.user_uploaded/media_1792888206663.txt` (antecedente de los 71 productos de Makro al 28-08)
 
-## Pruebas ejecutadas y resultados
+## Evidencias encontradas
 
-- `python3 -m unittest discover -s tests -p 'test_*.py'` $\rightarrow$ **33/33 OK** (28 previos + 5 nuevos de `LaAnonimaTests`).
-- `node --test tests/*.test.cjs` $\rightarrow$ **31/31 pass** (todas las pruebas de calidad de datos, escáner, canasta, ofertas minoristas y vistas por tienda pasan sin regresiones).
-- `npm run build` $\rightarrow$ **OK** (tsc && vite build en 20.6s, salida en `dist/`).
-- Sincronización real: `python3 scripts/scrapers/sync_verified_prices.py --source la_anonima` $\rightarrow$ exit code 0, 676 observaciones, 0 errores.
+1. `now - Date.parse("2026-10-31T05:01:00-03:00") = 81.68` horas ($> 72$ h) $\rightarrow$ `priceIsUsable` retorna `false`.
+2. `CoveragePanel.tsx` muestra alerta: *"Hay 36 cotizaciones vencidas en 1 cadena(s)"* y recuadro gris *"Sin precios verificados"*.
+3. Endpoint de Makro (`https://makro.com.ar/canastabasicaneuquen/`): responde `HTTP/1.1 200 OK` en HEAD, pero GET del cuerpo sufre timeout intermitente en la infraestructura de Makro (Apache + BunnyCDN / W3 Total Cache).
+4. El importador `sync_verified_prices.py:213` bloquea la recolección si la fecha del HTML tiene $> 72$ h, provocando que la corrida diaria marque a Makro con error en vez de registrar su estado.
 
-## Estado real del repo y producción al entregar
+## Estado real del repo y producción
 
-- Working tree limpio (`commit 2300e88` en local).
-- **Producción en vivo verificada:** Desplegado en Vercel con `npx vercel deploy --prod --yes` (`radar-precios-neuquen-lnmx7ajjr-radar-de-precios.vercel.app`), alias activo `https://radar-precios-neuquen.vercel.app` sirviendo bundle `index-ko1fkvTz.js` con las 6 fuentes oficiales y 676 precios de La Anónima.
-- 6 fuentes oficiales activas y verificadas: Coope (784), ChangoMás (187), Makro (36), Vital (90), Yaguar (1.718), La Anónima (676).
-- Coto permanece postergada al final por decisión D5. Diarco y Vea excluidas por decisión D3.
-
-## Advertencias importantes
-
-1. **Tamaño del bundle JS (H3 de auditoría):**
-   Con la suma de Yaguar y La Anónima, el archivo embebido `price-history.json` hace que el bundle JS `dist/assets/index-*.js` pese 5,5 MB. Se recomienda mover el histórico a `public/` con fetch lazy como próxima prioridad técnica.
-2. **Entorno local sin token GitHub:**
-   `git push` pide credenciales en el entorno local (sin token ni clave SSH configurada). La publicación a producción se realizó exitosamente vía CLI directo de Vercel (`npx vercel deploy --prod`). Los commits locales quedan listos para pushear cuando se configure un token de GitHub.
-3. **Riesgo de 72 horas:**
-   Las 4 cadenas sincronizadas a las 04:16 UTC del 03-11 y La Anónima sincronizada a las 12:43 UTC del 03-11 vencen entre el 06-11 04:16 y 12:43 UTC.
+- **Repositorio:** Clean working tree. No se realizaron modificaciones de código ni de datos en esta auditoría.
+- **Producción:** Despliegue en Vercel alineado con los datos locales (bundle `index-ko1fkvTz.js`).
 
 ## Próximo paso recomendado para Codex
 
-1. **Mover histórico fuera del bundle (H3):**
-   Mover `price-history.json` a `public/data/price-history.json` y cargarlo bajo demanda (fetch lazy) en `productService.ts` / `HistoryModal`, reduciendo el bundle JS de 5,5 MB a menos de 1 MB.
-2. **Coto (si el usuario lo autoriza):**
-   Última cadena pendiente del roadmap acordado. Requiere evaluar la ingeniería inversa del BFF `api.coto.com.ar` o automatización con Playwright headless.
+1. **Revisar y ejecutar el plan de reparación de conservación de precios (Sección 7 del informe de auditoría):**
+   - Migrar `priceIsUsable` a evaluación de 3 estados (`fresh`, `stale`, `invalid`).
+   - Permitir que las cotizaciones `stale` se muestren en el catálogo y ficha de producto con badge de "Precio de referencia anterior" y fecha visible.
+   - Mantener la exclusión de precios `stale` del optimizador de changuito y mejor precio garantizado.
+   - En `sync_verified_prices.py`, manejar listas de Makro $> 72$ h sin abortar la ejecución, registrando la observación con estado `stale`.
+   - Ajustar los tests correspondientes en `tests/test_verified_import.py` y `tests/data-quality.test.cjs`.
+2. **Tarea H3 pendiente:** Mover `price-history.json` fuera del bundle JS principal a `public/data/`.
+
 
