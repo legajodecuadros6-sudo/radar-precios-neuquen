@@ -12,6 +12,7 @@ from pathlib import Path
 import tempfile
 import time
 import unicodedata
+from html.parser import HTMLParser
 from urllib.parse import urlencode, urlparse, quote
 from urllib.request import Request, urlopen
 from datetime import datetime, timezone, timedelta
@@ -386,6 +387,209 @@ def collect_yaguar(stamp,terms=None,per_page=100,pages=3):
         raise ValueError('Yaguar: sin precios válidos ('+detail+'); se conserva la última lectura')
     return list(products.values()),list(observations.values()),None,[f'{t}: la consulta llegó al tope de páginas (posible recorte)' for t in at_limit]
 
+
+ANONIMA_URL = 'https://www.laanonima.com.ar'
+ANONIMA_API = 'https://api.laanonima.com.ar'
+ANONIMA_UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+ANONIMA_HEADERS = {
+    'User-Agent': ANONIMA_UA,
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept-Language': 'es-AR,es;q=0.9',
+    'Cookie': 'codigoPostal=8300; Id-Sucursal-Super=8; descripcionLocalidadCabezal=Neuqu%C3%A9n%20Paseo%20de%20la%20Patagonia; seleccionocp=1; idZonaPrecio=8'
+}
+
+class AnonimaCardParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.items = []
+        self.in_item = False
+        self.card = None
+
+    def handle_starttag(self, tag, attrs):
+        attr_dict = {k.lower(): v for k, v in attrs}
+        classes = attr_dict.get('class', '').split()
+        if tag == 'div' and 'producto-item' in classes:
+            if self.card and self.card.get('code'):
+                self.items.append(self.card)
+            self.in_item = True
+            self.card = {'code': None, 'name': None, 'brand': None, 'price': None, 'regular_price': None, 'offer_price': None, 'href': None, 'image_url': '', 'stock': None}
+        if self.in_item and self.card:
+            if tag == 'a' and 'data-codigo' in attr_dict:
+                self.card['code'] = attr_dict.get('data-codigo')
+                self.card['name'] = attr_dict.get('data-nombre')
+                self.card['brand'] = attr_dict.get('data-marca')
+                self.card['price'] = attr_dict.get('data-precio')
+                self.card['regular_price'] = attr_dict.get('data-precio_anterior')
+                self.card['offer_price'] = attr_dict.get('data-precio_oferta')
+                self.card['href'] = attr_dict.get('href')
+            if 'data-stock' in attr_dict and not self.card['stock']:
+                self.card['stock'] = attr_dict.get('data-stock')
+            if tag == 'img' and 'data-src' in attr_dict and not self.card['image_url']:
+                self.card['image_url'] = attr_dict.get('data-src')
+
+    def close(self):
+        super().close()
+        if self.card and self.card.get('code'):
+            self.items.append(self.card)
+            self.card = None
+
+def anonima_branch():
+    req = Request(ANONIMA_API + '/sucursal/8300', headers={'User-Agent': ANONIMA_UA, 'Accept': 'application/json'})
+    with urlopen(req, timeout=15) as res:
+        data = json.loads(res.read().decode('utf-8'))
+    super_data = data.get('super') or {}
+    sucursales = super_data.get('sucursales') or []
+    branch = next((s for s in sucursales if 'neuquen' in normalize(s.get('descLocalidad', '')) and s.get('idSucursalSuper') == '8'), None)
+    if not branch or not super_data.get('haySucursalSuper'):
+        raise ValueError('No se confirmó la sucursal de La Anónima en Neuquén (Paseo de la Patagonia)')
+    raw_addr = branch.get('direccion', 'Antártida Argentina 1111').split('<')[0].strip()
+    return {
+        'id': 'la_anonima_patagonia',
+        'supermarket_id': 'la_anonima',
+        'name': 'La Anónima · Paseo de la Patagonia',
+        'brand_name': 'La Anónima',
+        'type': 'minorista',
+        'address': raw_addr or 'Antártida Argentina 1111',
+        'city': 'Neuquén',
+        'postal_code': '8300',
+        'lat': -38.94662,
+        'lng': -68.07421,
+        'opening_hours': 'Lun a Dom 9:00 a 21:30 hs',
+        'logo_color': '#2563eb',
+        'badge_bg': 'bg-blue-50',
+        'badge_text': 'La Anónima',
+        'has_ecommerce': True,
+        'ecommerce_url': ANONIMA_URL
+    }
+
+def anonima_record(item, branch, stamp, ean=None):
+    code = str(item.get('code') or '').strip()
+    name = html.unescape(str(item.get('name') or '')).strip()
+    if not code or not name or not mas_in_scope(name): return None
+    stock_val = str(item.get('stock') or '').strip()
+    if stock_val == '-1' or (stock_val.isdigit() and int(stock_val) <= 0): return None
+    price = positive(item.get('price'))
+    raw_reg = item.get('regular_price')
+    regular = positive(raw_reg) if raw_reg and str(raw_reg).isdigit() else price
+    regular_price = max(regular, price)
+
+    matches = list(re.finditer(r'(\d+(?:[.,]\d+)?)\s*(kg|grs?|g|ml|cc|cm3|lts?|l)\b', normalize(name)))
+    unit, quantity, content = 'unidad', 1, 'Unidad / presentación indicada'
+    is_pack = bool(re.search(r'\b(pack|combo|kit)\b|\b\d+\s*[xu]\b', normalize(name)))
+    if not is_pack and len(matches) == 1:
+        m = matches[0]
+        rem = normalize(name)[:m.start()] + normalize(name)[m.end():]
+        if re.search(r'(?:\bx\s*\d+\b|\b\d+\s*x\b)', rem):
+            is_pack = True
+    if len(matches) == 1 and not is_pack:
+        amount, raw = matches[0].groups()
+        amount = positive(amount.replace(',', '.'))
+        unit = 'kg' if raw in ('kg', 'gr', 'grs', 'g') else 'litro'
+        quantity = amount / 1000 if raw in ('gr', 'grs', 'g', 'ml', 'cc', 'cm3') else amount
+        content = matches[0].group()
+
+    pid = 'ean_' + str(ean) if ean and valid_ean(str(ean)) else 'anonima_' + code
+    brand = str(item.get('brand') or 'La Anónima').strip()
+    product = {
+        'id': pid,
+        'name': name.capitalize(),
+        'brand': brand,
+        'category': category(name),
+        'image_url': item.get('image_url') or '',
+        'unit_measure': unit,
+        'net_content_number': quantity,
+        'net_content_str': content
+    }
+    if ean and valid_ean(str(ean)):
+        product['ean'] = str(ean)
+
+    href = str(item.get('href') or '').strip()
+    source_url = f'{ANONIMA_URL}{href}' if href.startswith('/') else ANONIMA_URL
+    notes = 'Precio del catálogo online de La Anónima para la sucursal Paseo de la Patagonia (CP 8300). Confirmar disponibilidad y promociones en la tienda.'
+    discount = round(((regular_price - price) / regular_price) * 100) if regular_price > price else 0
+    if discount > 0:
+        notes += f' Oferta online: {discount}% de descuento sobre precio regular (${regular_price:g}).'
+
+    obs = {
+        'id': pid + '@la_anonima_patagonia@online',
+        'product_id': pid,
+        'supermarket_id': 'la_anonima',
+        'branch_id': branch['id'],
+        'branch_name': branch['name'],
+        'branch_address': branch['address'],
+        'regular_price': regular_price,
+        'current_price': price,
+        'price_per_unit': round(price / quantity, 2),
+        'unit_label': {'kg': '$ / kg', 'litro': '$ / L', 'unidad': '$ / u'}[unit],
+        'query_date': stamp,
+        'is_verified': True,
+        'is_demo': False,
+        'source_url': source_url,
+        'source_name': 'La Anónima · sucursal Paseo de la Patagonia',
+        'channel': 'online',
+        'min_quantity': 1,
+        'notes': notes
+    }
+    if discount > 0:
+        obs['discount_percentage'] = discount
+        obs['promo_label'] = 'Oferta online'
+    return product, obs
+
+def collect_la_anonima(stamp, terms=None, max_detail_eans=25):
+    branch = anonima_branch()
+    raw_candidates, errors = {}, []
+    for term in terms or TERMS:
+        try:
+            req = Request(f'{ANONIMA_URL}/buscar/{quote(term)}', headers=ANONIMA_HEADERS)
+            with urlopen(req, timeout=15) as res:
+                page = res.read().decode('utf-8', errors='ignore')
+            parser = AnonimaCardParser()
+            parser.feed(page)
+            parser.close()
+            for item in parser.items:
+                code = str(item.get('code') or '').strip()
+                if code and code not in raw_candidates:
+                    raw_candidates[code] = item
+            time.sleep(0.2)
+        except Exception as error:
+            errors.append(f'{term}: {type(error).__name__}: {error}')
+
+    eans = {}
+    ean_count = 0
+    if max_detail_eans > 0:
+        for code, item in raw_candidates.items():
+            if ean_count >= max_detail_eans:
+                break
+            href = item.get('href')
+            if not href or not href.startswith('/'):
+                continue
+            try:
+                detail_url = f'{ANONIMA_URL}{href}'
+                req = Request(detail_url, headers=ANONIMA_HEADERS)
+                with urlopen(req, timeout=10) as res:
+                    detail_page = res.read().decode('utf-8', errors='ignore')
+                m = re.search(r'data-flix-ean=\"(\d+)\"', detail_page)
+                if m and valid_ean(m.group(1)):
+                    eans[code] = m.group(1)
+                ean_count += 1
+                time.sleep(0.15)
+            except Exception:
+                pass
+
+    products, observations = {}, {}
+    for code, item in raw_candidates.items():
+        try:
+            record = anonima_record(item, branch, stamp, ean=eans.get(code))
+            if record:
+                p, o = record
+                products[p['id']], observations[o['id']] = p, o
+        except (ValueError, TypeError) as error:
+            errors.append(f'art_{code}: {error}')
+
+    if not observations:
+        raise ValueError('La Anónima: sin precios válidos; se conserva la última lectura')
+    return list(products.values()), list(observations.values()), branch, errors
+
 def load_csv(path, now):
     products, observations = {}, []
     with open(path,newline='',encoding='utf-8-sig') as file:
@@ -424,9 +628,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--csv',type=Path)
     parser.add_argument('--max-pages',type=int,default=3)
-    parser.add_argument('--source', choices=['all','cooperativa_obrera','changomas','makro','vital','yaguar'], default='all')
+    parser.add_argument('--source', choices=['all','cooperativa_obrera','changomas','makro','vital','yaguar','la_anonima'], default='all')
     parser.add_argument('--coope-terms', nargs='+', help='Consultas específicas de Coope')
     parser.add_argument('--mas-terms', nargs='+', help='Consultas acotadas para ampliar ChangoMás')
+    parser.add_argument('--anonima-terms', nargs='+', help='Consultas específicas de La Anónima')
     args = parser.parse_args()
     now = datetime.now(timezone.utc); stamp = now.isoformat()
     snapshot = read_json(SNAPSHOT,{'products':[],'observations':[],'branches':[],'sources':{}})
@@ -440,7 +645,7 @@ def main():
                 raise ValueError('El CSV contradice la identidad ya importada: '+product['id'])
         for chain in {o['supermarket_id'] for o in incoming}: snapshot['sources'][chain] = {'status':'ok','last_attempt':stamp,'message':'Importación documentada; revisar fecha y condiciones.'}
     else:
-        for chain,collector in [('cooperativa_obrera',lambda:collect_coope(stamp,args.max_pages,args.coope_terms)),('changomas',lambda:collect_mas(stamp,args.mas_terms)),('makro',lambda:collect_makro(stamp)),('vital',lambda:collect_vital(stamp)),('yaguar',lambda:collect_yaguar(stamp,TERMS))]:
+        for chain,collector in [('cooperativa_obrera',lambda:collect_coope(stamp,args.max_pages,args.coope_terms)),('changomas',lambda:collect_mas(stamp,args.mas_terms)),('makro',lambda:collect_makro(stamp)),('vital',lambda:collect_vital(stamp)),('yaguar',lambda:collect_yaguar(stamp,TERMS)),('la_anonima',lambda:collect_la_anonima(stamp,args.anonima_terms))]:
             if args.source not in ('all',chain): continue
             try:
                 ps,obs,branch,errors=collector()

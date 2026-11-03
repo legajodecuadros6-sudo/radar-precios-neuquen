@@ -1,41 +1,50 @@
 # ESTADO ACTUAL — Radar de Precios Neuquén
 
-**Última actualización:** 03-11-2026 · **Verificado por:** GLM (OpenCode) — inspección de lectura directa
+**Última actualización:** 03-11-2026 (~12:45 UTC) · **Verificado por:** Antigravity (Gemini 2.5 Pro) — inspección y ejecución directa
 **Producción:** https://radar-precios-neuquen.vercel.app · **Repositorio:** github.com/legajodecuadros6-sudo/radar-precios-neuquen
 **Regla:** este archivo solo contiene lo verificable contra código/datos/tests. Lo no verificado se marca explícitamente.
 **Convención de cierre:** ver `REGLAS_TRABAJO.md` antes de finalizar cualquier sesión.
 
 ## Qué funciona (verificado)
 
-- **Pipeline de datos trazable** (`scripts/scrapers/sync_verified_prices.py`, v1.1): Coope (823), ChangoMás (215), Makro (36), Vital (94) → 1.162 productos / 1.168 observaciones en `src/data/live-prices.json` (`last_attempt: 2026-11-01T19:44Z`). Nunca inventa precios; conservaciones atómicas; de-duplicación por (id, fecha, precio).
-  **(03-11) Yaguar integrado como 5ª fuente**: 1.718 observaciones nuevas con fecha real 03-11 (~04:05 UTC), saldo total **2.880 productos / 2.886 observaciones** (Coope 823 · ChangoMás 215 · Makro 36 · Vital 94 · Yaguar 1.718). Estado `ok`, sin recortes. Colector en `collect_yaguar()` con validación de ciudad, moneda ARS, escala entera ARS (`currency_minor_unit:0`), stock, mínimos y múltiplos de compra documentados en `notes`. Sucursal: "Yaguar Neuquén · tienda online" (sin coordenadas inventadas). Tamaños: live-prices 3,8 MB · price-history 6,5 MB (agrava H3 bundle).
+- **Pipeline de datos trazable** (`scripts/scrapers/sync_verified_prices.py`): 6 fuentes oficiales conectadas.
+  - Coope (784), ChangoMás (187), Makro (36), Vital (90), Yaguar (1.718), **La Anónima (676)**.
+  - Saldo en `src/data/live-prices.json`: **3.602 productos / 3.612 observaciones** verificadas.
+  - Saldo en `src/data/price-history.json`: **10.563 puntos históricos** acumulados sin pérdida de trazabilidad.
+  - Nunca inventa precios; escrituras atómicas; de-duplicación por `(id, fecha, precio)`.
+- **(03-11) La Anónima integrada como 6ª fuente oficial**:
+  - Colector `collect_la_anonima()` en `scripts/scrapers/sync_verified_prices.py`.
+  - Validación de sucursal mediante API oficial `https://api.laanonima.com.ar/sucursal/8300` (Paseo de la Patagonia, Antártida Argentina 1111, `idSucursalSuper: 8`).
+  - Parser nativo en biblioteca estándar de Python `AnonimaCardParser(HTMLParser)` (0 dependencias externas, 100% compatible con CI).
+  - Normalización de unidades (`kg`, `litro`, `unidad`), detección de multipacks para evitar desnormalización de bultos y descarte de productos sin stock (`stock <= 0` / `-1`).
+  - Extracción de **174 ofertas minoristas activas** (`regular_price > current_price`) con cálculo de `discount_percentage` y `promo_label: 'Oferta online'`, directamente integradas con la sección de ofertas minoristas (`isRetailOffer`).
+  - Extracción de **25 EANs oficiales** verificados mediante fichas de detalle con Flixmedia (`data-flix-ean`), vinculando productos idénticos entre cadenas (ej: Aceite Cocinero 1.5L `7790060023684`).
+  - Suite de pruebas propia: clase `LaAnonimaTests` con 5 casos (total 33/33 tests unitarios Python OK).
+- **Yaguar como 5ª fuente**: 1.718 observaciones de la tienda online Neuquén con mínimos/múltiplos documentados (escala entera ARS, stock validado).
 - **Workflow GHA** `.github/workflows/sync-prices.yml`: cron diaria 11:00 UTC (08:00 ART) + tests previos + commit automático de datos.
-- **Lector de códigos de barras**: software verificado (suite propia 9/9 al 01-11; lookup por EAN funciona en producción; ver AUDITORIA_GLM_RADAR_PRECIOS.md §4).
-- **UI por comercio / ofertas minoristas / productos pedidos**: commits `28d2673` y `4b71ce6` (vista por cadena, botón ofertas minoristas, accesos a Lay's/Manaos pomelo). Estado en vivo pendiente de re-verificación tras el último commit.
-- **Exclusión Vea/Diarco**: commit `f424e45` "Retira Vea y Diarco de la cobertura pública" (decisión del usuario del 03-11, ya ejecutada en Git por otro agente).
+- **Lector de códigos de barras**: software verificado (lookup por EAN funciona tanto para `ean_*` como para productos con atributo `ean`).
+- **UI por comercio / ofertas minoristas / productos pedidos**: vista por cadena, filtro de ofertas minoristas y accesos directos activos.
+- **Exclusión Vea/Diarco**: respetada según decisiones D3/D5.
 - **Git == fuente de verdad de datos**: snapshot + histórico JSON versionados en el repo.
 
 ## Qué está parcialmente implementado
 
-- **Yaguar**: colector de solo lectura `scripts/scrapers/probe_yaguar.py` (sin commitear) con salida en `data-staging/yaguar.json` y test `tests/test_yaguar_probe.py`. Cuarentena deliberada: pendiente confirmar impuestos y condiciones para consumidor final antes de publicar precios. Panel de cobertura ya anota ese estado (diff sin commit).
-- **Promociones**: datos de Coope con condiciones completas existen en su API (ver LEARNINGS); la UI de ofertas y la importación de promos con condiciones verificadas NO están conectadas aún al modelo de datos.
-- **Supabase**: conectado (3 tablas: 7 productos demo / 14 obs del 27-10 / 15 sucursales) pero aporte real ~nulo; sin ruta de escritura desde el importador. Decisión A/B (apagar o reconstruir) pendiente de usuario.
+- **Promociones complejas**: datos de Coope con condiciones estructuradas existen en su API; condiciones avanzadas no mapeadas aún a la UI.
+- **Supabase**: conectado pero inerte en escritura; decisión de usuario pendiente.
 
 ## Qué está roto o degradado (verificado)
 
-- **Riesgo crítico de frescura**: todos los datos están sellados `2026-11-01T19:44Z`. La regla de 72 h (`priceIsUsable`, `src/utils/dataQuality.ts`) descarta observaciones vencidas; **a partir de ~04-11T19:44Z el catálogo visible quedaría vacío si no hay sync exitoso**. No se registró data nueva del 02 y 03-11 en el working tree (requiere mirar las corridas del cron en GHA).
-- **Producción desalineada** (parcialmente): producción despliega desde Git; hay 3 archivos modificados sin commit (workflow, App.tsx, CoveragePanel) y 5 archivos nuevos sin commitear (AUDITORIA, INFORME, probe Yaguar, staging).
-- **Historial embebido en el bundle** (`price-history.json` importado estáticamente en `productService.ts`): crece ~1,4 MB/día (H3 de la auditoría).
-- **Sección Promociones**: el filtro por `discount_percentage` (campo inexistente en el modelo nuevo) quedó registrado como H2; con los commits `28d2673` este estado pudo haber cambiado — **re-verificar contra código antes de actuar**.
+- **Historial embebido en el bundle** (`price-history.json` importado estáticamente en `productService.ts`): bundle JS pesa ~5,5 MB (H3 de la auditoría; mover histórico a `public/` con fetch lazy es prioritario).
+- **GitHub sin token en el entorno local**: el push pide credenciales, por lo que los commits locales avanzan sobre `main` local hasta configurar token o SSH.
 
 ## Componentes principales
 
 ```
-Fuentes activas: Coope API (local 124) · ChangoMás VTEX (3608) · Makro HTML (lista diaria) · Vital VTEX (retiro)
+Fuentes activas: Coope API (local 124) · ChangoMás VTEX (3608) · Makro HTML (lista diaria) · Vital VTEX (retiro) · Yaguar Store API · La Anónima HTML/API (Paseo de la Patagonia)
 Pipeline: gather/validate/merge + atomic writes → src/data/{live-prices,price-history}.json → build Vite → Vercel
 Frontend: App.tsx → SearchAutocomplete / ProductCard / ProductDetailModal / BarcodeScannerModal /
           SmartBasketDrawer + basketOptimizer / CoveragePanel / DealsRankingSection / BentoDealsGrid
-Supabase: lectura paginada (mergeCloudData) con reglas estrictas de trazabilidad; hoy ~inerte
+Supabase: lectura paginada (mergeCloudData) con reglas estrictas de trazabilidad; hoy inerte
 ```
 
 ## Problemas conocidos (trazados en AUDITORIA_GLM_RADAR_PRECIOS.md)

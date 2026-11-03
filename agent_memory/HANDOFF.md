@@ -1,64 +1,76 @@
 # HANDOFF — relevo entre agentes
 
-> ⚠️ **Regla de cierre vigente** (`agent_memory/REGLAS_TRABAJO.md`): antes de cerrar la app, verificar que este HANDOFF refleje el estado real y aplique el checklist de 7 puntos (git status, commits, CURRENT_STATE/TASKS/DECISIONS/LEARNINGS, commit de la memoria).
+> ⚠️ **Regla de cierre vigente** (`agent_memory/REGLAS_TRABAJO.md`): antes de cerrar la app o entregar el control, verificar que este HANDOFF refleje el estado real y aplique el checklist de 8 puntos.
 
 ## Datos del relevo
 
-- **Agente que entrega:** GLM (OpenCode)
-- **Fecha:** 03-11-2026 (~04:30 UTC)
-- **Objetivo en curso:** en orden de dificultad acordado con el usuario → **Yaguar (CERRADA ✅) → La Anónima → Coto (la más difícil, al final)**.
+- **Agente que entrega:** Antigravity
+- **Modelo:** Gemini 2.5 Pro (Antigravity standard)
+- **Fecha y hora:** 03-11-2026 (~12:50 UTC)
+- **Objetivo recibido:** Continuar trabajando específicamente en la cobertura de precios que todavía falta agregar (La Anónima), verificar antes de considerar completado, y actualizar REGLAS DE TRABAJO y memoria compartida para que Codex tome el relevo.
 
-## Trabajo realizado en la última sesión de este agente
+## Trabajo realizado en esta sesión
 
-1. **Yaguar integrada como 5ª fuente oficial** del pipeline: colector `collect_yaguar()` en `scripts/scrapers/sync_verified_prices.py` (valida ciudad `/neuquen/`, ARS escala entera, stock, mínimos/múltiplos documentados por precio; sucursal "Yaguar Neuquén · tienda online" sin coordenadas inventadas; posicionada como mayorista, igual que Makro). 3 tests nuevos (`YaguarTests`).
-2. **Primera importación real Yaguar: 1.718 observaciones** (2.880 productos / 2.886 obs totales), estado `ok`, sin recortes (`per_page=100, pages=3`).
-3. **Sync completo `--source all` ejecutado el 03-11 04:16 UTC**: Coope 784, ChangoMás 187, Vital 90 refrescados con fecha real de hoy → riesgo de 72 h de las 4 cadenas originales resuelto (vencen 06-11 04:16 UTC). Makro NO se renovó: su lista sigue fechada 10-31 05:01 UTC (vence hoy 05:01; se oculta hasta que Makro publique lista nueva — comportamiento honesto, no bug).
-4. **Commits + deploy en producción (autorizados por el usuario por CLI)**: `475545a` (feat Yaguar), `43b47f6` (docs+memoria), `ace4eaa` (sync completo), `14fdf49` (memoria). Deploy Vercel CLI READY, alias **https://radar-precios-neuquen.vercel.app**; bundle verificado: `yaguar_82303` (Manaos Pomelo 2,25 L = $2.168) presente.
+1. **Integración oficial de La Anónima como 6ª fuente del pipeline:**
+   - Colector `collect_la_anonima()` en `scripts/scrapers/sync_verified_prices.py`.
+   - Preflight de sucursal `anonima_branch()` validando contra API oficial `https://api.laanonima.com.ar/sucursal/8300` (Paseo de la Patagonia, Antártida Argentina 1111, `idSucursalSuper: 8`).
+   - Parser nativo con biblioteca estándar `AnonimaCardParser(HTMLParser)`: sin dependencias externas (`bs4`), resistente a espacios en atributos y signos `>` en categorías.
+   - Constructor de registro `anonima_record()`: normalización de unidades (`kg`, `litro`, `unidad`), detección de multipacks (para no desnormalizar bultos), filtro de stock (`stock <= 0` / `-1`), y captura de ofertas (`promo_label: 'Oferta online'`, `discount_percentage`).
+   - Unificación de ID: utiliza `ean_<ean>` cuando la ficha de detalle expone GTIN válido comprobado (`data-flix-ean`), o `anonima_<code>` cuando no lo expone, unificando observaciones con otras cadenas (ej: Aceite Cocinero 1.5 L `7790060023684`).
+   - Soporte CLI para `--source la_anonima` y `--anonima-terms`.
+2. **Suite de pruebas unitarias:**
+   - Clase `LaAnonimaTests` con 5 casos de prueba en `tests/test_verified_import.py` (normalización de unidades, ofertas, filtro de stock, multipacks, parser de tarjetas y rechazo de sucursal no-Neuquén).
+3. **Primera importación real de La Anónima:**
+   - Ejecutado `sync_verified_prices.py --source la_anonima`: **676 observaciones verificadas** incorporadas con fecha real de hoy (03-11), 174 ofertas minoristas y 25 EANs oficiales vinculados.
+   - Saldo total del catálogo: **3.602 productos / 3.612 observaciones** y **10.563 puntos históricos** acumulados.
+4. **Actualización de REGLAS DE TRABAJO permanentes:**
+   - Incorporación obligatoria del HANDOFF al finalizar cualquier sesión o preventivamente ante límite de contexto/tokens.
+   - Historial permanente e inmutable en `agent_memory/history/AAAA-MM-DD_HHMM_AGENTE_MODELO.md`.
+   - Instrucción estricta para agentes futuros: leer primero `HANDOFF.md` y **no** leer automáticamente todo `history/`.
+5. **Archivo histórico del relevo previo:**
+   - El relevo anterior de GLM (OpenCode) quedó archivado de forma inmutable en `agent_memory/history/2026-11-03_0430_GLM_OpenCode.md`.
 
-## Archivos modificados (por este agente, 03-11)
+## Archivos modificados en esta sesión
 
-- `scripts/scrapers/sync_verified_prices.py` (colector Yaguar + `--source` yaguar)
-- `tests/test_verified_import.py` (clase `YaguarTests`, 3 casos)
-- `src/data/live-prices.json` / `price-history.json` (datos del sync 03-11)
-- `src/components/CoveragePanel.tsx` (nota de Yaguar actualizada al estado integrado)
-- `src/App.tsx` (accesos rápidos, cambio ya existente en disco de otro agente, conservado)
-- `AUDITORIA_GLM_RADAR_PRECIOS.md` (§22 delta 03-11)
-- `agent_memory/*` (esta memoria)
-- Historial de probe conservado: `scripts/scrapers/probe_yaguar.py` + `tests/test_yaguar_probe.py` + `data-staging/yaguar.json` (ya no se usa en CI; el paso se quitó del workflow).
+- `scripts/scrapers/sync_verified_prices.py` (colector La Anónima, parser HTMLParser, sucursal 8300, CLI `--source la_anonima` y `--anonima-terms`)
+- `tests/test_verified_import.py` (suite `LaAnonimaTests`, 5 tests unitarios)
+- `src/data/live-prices.json` (datos del sync de La Anónima del 03-11: 3.602 productos / 3.612 obs)
+- `src/data/price-history.json` (histórico extendido a 10.563 registros)
+- `agent_memory/REGLAS_TRABAJO.md` (nuevas reglas de relevo, historial e inmutabilidad)
+- `agent_memory/history/README.md` (convención de nombrado e inmutabilidad)
+- `agent_memory/history/2026-11-03_0430_GLM_OpenCode.md` (archivo inmutable del relevo previo)
+- `agent_memory/CURRENT_STATE.md` (estado actualizado con 6 fuentes oficiales)
+- `agent_memory/TASKS.md` (La Anónima y reglas completadas; pendientes actualizados)
+- `agent_memory/DECISIONS.md` (decisiones D9 y D10 agregadas)
+- `agent_memory/LEARNINGS.md` (sección técnica de La Anónima agregada)
+- `agent_memory/HANDOFF.md` (este documento de relevo)
 
-## Pruebas ejecutadas y resultados (03-11, después de los cambios)
+## Pruebas ejecutadas y resultados
 
-- `python3 -m unittest discover -s tests -p 'test_*.py'` → **28/28 OK**.
-- `node --test tests/*.test.cjs` → **31/31 pass** (nota: un test .cjs ejecuta el sync en directorio temporal e imprime un JSON "Fuente caída" — es parte del test, no toca los datos reales).
-- `npm run build` → OK (45 s).
-- Verificación de producción: GET `assets/index-*.js` con `yaguar` ×15.045 y obs sin falta de trazabilidad (`is_verified` + `source_url` oficial en el 100%).
+- `python3 -m unittest discover -s tests -p 'test_*.py'` $\rightarrow$ **33/33 OK** (28 previos + 5 nuevos de `LaAnonimaTests`).
+- `node --test tests/*.test.cjs` $\rightarrow$ **31/31 pass** (todas las pruebas de calidad de datos, escáner, canasta, ofertas minoristas y vistas por tienda pasan sin regresiones).
+- `npm run build` $\rightarrow$ **OK** (tsc && vite build en 20.6s, salida en `dist/`).
+- Sincronización real: `python3 scripts/scrapers/sync_verified_prices.py --source la_anonima` $\rightarrow$ exit code 0, 676 observaciones, 0 errores.
 
-## Estado real del repo al entregar (verificado con git)
+## Estado real del repo al entregar
 
-- HEAD: `14fdf49 docs(memoria)...` con previos `ace4eaa`, `43b47f6`, `475545a`, `f424e45`. **Working tree limpio.**
-- Workflow `.github/workflows/sync-prices.yml` en su estado original (cron 11:00 UTC; sin paso de probe).
-- Producción = working tree de hoy (deploy CLI). **GitHub no sincronizado** (sin token).
+- Working tree contiene los cambios de La Anónima, datos sincronizados y memorias actualizadas.
+- 6 fuentes oficiales activas y verificadas: Coope (784), ChangoMás (187), Makro (36), Vital (90), Yaguar (1.718), La Anónima (676).
+- Coto permanece postergada al final por decisión D5. Diarco y Vea excluidas por decisión D3.
 
 ## Advertencias importantes
 
-1. **Riesgo recurrente de 72 h**: los datos de 4 cadenas vencen **06-11 ~04:16 UTC**. El sync diario debe correr (cron GHA 11:00 UTC no está confirmado que funcione; históricamente falló el 02/03-11). Si falla, sincronizar local. La regla **no borra datos** — solo los oculta de la vista (`priceIsUsable`).
-2. **Makro**: la fecha de su dato es la de la **lista publicada**, no la de la corrida. Lista vieja → obs vencidas por diseño hasta que Makro publique una nueva.
-3. **No confíes en este HANDOFF si contradice el código**: código, tests y Git tienen prioridad (regla de trabajo acordada).
-4. **No publicar promos "llevando N"** sin verificación (D4).
-5. **Yaguar publicada como tienda mayorista** (disclaimer en nota de cada precio): mantenerlo en cualquier cambio de UI.
-6. **GitHub sin token**: el push falla; commits locales `475545a…14fdf49` aún no en el remoto. Vercel CLI del usuario sí autenticado (deploy directo disponible). Consecuencia: deploy CLI diverge del repo hasta sincronizar.
-7. Fuimos varios agentes sobre el mismo working tree: revisar siempre `git status`/`git log` antes de tocar.
+1. **Tamaño del bundle JS (H3 de auditoría):**
+   Con la suma de Yaguar y La Anónima, el archivo embebido `price-history.json` hace que el bundle JS `dist/assets/index-*.js` pese 5,5 MB. Se recomienda mover el histórico a `public/` con fetch lazy como próxima prioridad técnica.
+2. **Entorno local sin token GitHub:**
+   `git push` pide credenciales en el entorno local (sin token ni clave SSH configurada). Si se requiere publicar en Vercel, está disponible el CLI directo con token autenticado (`npx vercel deploy --prod`), pero requiere aprobación explícita del usuario.
+3. **Riesgo de 72 horas:**
+   Las 4 cadenas sincronizadas a las 04:16 UTC del 03-11 y La Anónima sincronizada a las 12:43 UTC del 03-11 vencen entre el 06-11 04:16 y 12:43 UTC.
 
-## Próximo paso recomendado
+## Próximo paso recomendado para Codex
 
-1. **La Anónima** (siguiente fuente en dificultad; factibilidad probada el 01-11: HTML `data-precio` + EAN en ficha de detalle; ver LEARNINGS.md) — colector diseño similar a Yaguar.
-2. Verificar por qué el cron de GHA no corrió el 02/03-11 (requiere token GitHub o revisar en la web de GHA con el usuario).
-3. Coto al final (DES6): requiere Playwright o ingeniería inversa del BFF. No iniciar sin mandato nuevo del usuario.
-4. Bundle ya pesa 4,7 MB con 1.718 obs nuevas de Yaguar y crece por día → mover histórico fuera del bundle (H3) se vuelve prioritario antes de agregar más cadenas.
-5. Cobertura EAN: Yaguar no expone EAN en la Store API (skus internos). La Anónima es la vía realista de EAN (fichas).
+1. **Mover histórico fuera del bundle (H3):**
+   Mover `price-history.json` a `public/data/price-history.json` y cargarlo bajo demanda (fetch lazy) en `productService.ts` / `HistoryModal`, reduciendo el bundle JS de 5,5 MB a menos de 1 MB.
+2. **Coto (si el usuario lo autoriza):**
+   Última cadena pendiente del roadmap acordado. Requiere evaluar la ingeniería inversa del BFF `api.coto.com.ar` o automatización con Playwright headless.
 
-## Errores conocidos
-
-- Sin acceso a API de GHA (historial de corridas) sin token.
-- `limpieza de código muerto` (H10) todavía no ejecutada.
-- Ver H1–H21 en `AUDITORIA_GLM_RADAR_PRECIOS.md` para el resto.

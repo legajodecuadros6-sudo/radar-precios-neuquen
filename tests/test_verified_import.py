@@ -174,3 +174,93 @@ class YaguarTests(TestCase):
         _,obs=sync.yagu_record(item,'2026-11-03T00:00:00+00:00')
         self.assertEqual(obs['regular_price'],4020);self.assertEqual(obs['current_price'],3638)
         self.assertEqual(obs['min_quantity'],2);self.assertEqual(obs['quantity_multiple'],2)
+
+class LaAnonimaTests(TestCase):
+    def branch_fixture(self):
+        return {
+            'id': 'la_anonima_patagonia',
+            'supermarket_id': 'la_anonima',
+            'name': 'La Anónima · Paseo de la Patagonia',
+            'address': 'Antártida Argentina 1111',
+            'city': 'Neuquén',
+            'postal_code': '8300'
+        }
+
+    def test_record_units_offers_and_ean(self):
+        branch = self.branch_fixture()
+        item = {
+            'code': '2438409',
+            'name': 'Aceite de Girasol La Anónima x 900 cc.',
+            'brand': 'La Anonima',
+            'price': '5200',
+            'regular_price': '6000',
+            'href': '/aceite-de-girasol-la-anonima-x-900-cc/art_2438409/',
+            'image_url': 'https://d34zqip92wkcpm.cloudfront.net/test.jpg',
+            'stock': '779'
+        }
+        product, obs = sync.anonima_record(item, branch, '2026-11-03T00:00:00+00:00', ean='7799044003780')
+        self.assertEqual(product['id'], 'ean_7799044003780')
+        self.assertEqual(product['ean'], '7799044003780')
+        self.assertEqual(product['net_content_number'], 0.9)
+        self.assertEqual(product['unit_measure'], 'litro')
+        self.assertEqual(obs['product_id'], 'ean_7799044003780')
+        self.assertEqual(obs['current_price'], 5200.0)
+        self.assertEqual(obs['regular_price'], 6000.0)
+        self.assertEqual(obs['discount_percentage'], 13)
+        self.assertEqual(obs['promo_label'], 'Oferta online')
+        self.assertEqual(obs['branch_id'], 'la_anonima_patagonia')
+        self.assertEqual(obs['source_url'], 'https://www.laanonima.com.ar/aceite-de-girasol-la-anonima-x-900-cc/art_2438409/')
+        self.assertTrue(obs['is_verified'])
+
+        # Without EAN, product id uses anonima_<code>
+        p_no_ean, _ = sync.anonima_record(item, branch, '2026-11-03T00:00:00+00:00', ean=None)
+        self.assertEqual(p_no_ean['id'], 'anonima_2438409')
+        self.assertNotIn('ean', p_no_ean)
+
+    def test_rejects_out_of_stock_motor_oil_and_missing_code(self):
+        branch = self.branch_fixture()
+        base = {'code': '123', 'name': 'Aceite de Girasol 900 cc', 'price': '1000', 'stock': '10', 'href': '/art_123/'}
+        self.assertIsNone(sync.anonima_record({**base, 'stock': '-1'}, branch, 'stamp'))
+        self.assertIsNone(sync.anonima_record({**base, 'stock': '0'}, branch, 'stamp'))
+        self.assertIsNone(sync.anonima_record({**base, 'name': 'Aceite Totalenergies 10w40 1l'}, branch, 'stamp'))
+        self.assertIsNone(sync.anonima_record({**base, 'code': ''}, branch, 'stamp'))
+
+    def test_multipacks_kept_as_units(self):
+        branch = self.branch_fixture()
+        pack = {'code': '1', 'name': 'Cerveza Quilmes Lata 710 cc x 4', 'price': '10000', 'stock': '5'}
+        p1, _ = sync.anonima_record(pack, branch, 'stamp')
+        self.assertEqual(p1['unit_measure'], 'unidad')
+        self.assertEqual(p1['net_content_number'], 1)
+
+        single = {'code': '2', 'name': 'Yerba Mate c/Palo Suave Playadito x 1 Kg.', 'price': '4950', 'stock': '20'}
+        p2, _ = sync.anonima_record(single, branch, 'stamp')
+        self.assertEqual(p2['unit_measure'], 'kg')
+        self.assertEqual(p2['net_content_number'], 1.0)
+
+    def test_html_parser_extracts_cards_with_spaced_attributes(self):
+        mock_html = """
+        <div id-codigo-producto="101" class="producto-item large-4 cell">
+            <a href="/yerba-playadito/art_101/" data-codigo = "101" data-nombre = "Yerba Mate Playadito x 1 Kg."
+               data-marca = "Playadito" data-precio = "4950" data-precio_anterior = "5500" data-precio_oferta = "4950">
+                <img data-src="https://img.test/yerba.jpg">
+                <span data-stock="15"></span>
+            </a>
+        </div>
+        """
+        parser = sync.AnonimaCardParser()
+        parser.feed(mock_html)
+        parser.close()
+        self.assertEqual(len(parser.items), 1)
+        self.assertEqual(parser.items[0]['code'], '101')
+        self.assertEqual(parser.items[0]['name'], 'Yerba Mate Playadito x 1 Kg.')
+        self.assertEqual(parser.items[0]['price'], '4950')
+        self.assertEqual(parser.items[0]['stock'], '15')
+
+    def test_branch_validation_rejects_missing_neuquen(self):
+        with mock.patch.object(sync, 'urlopen') as mock_url:
+            mock_resp = mock.MagicMock()
+            mock_resp.read.return_value = b'{"super":{"haySucursalSuper":true,"sucursales":[{"descLocalidad":"Bariloche","idSucursalSuper":"5"}]}}'
+            mock_url.return_value.__enter__.return_value = mock_resp
+            with self.assertRaises(ValueError):
+                sync.anonima_branch()
+

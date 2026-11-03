@@ -54,3 +54,14 @@ Solo hechos comprobados con evidencia. Cada punto indica fecha de verificación.
 - La API ocasionalmente devuelve variantes transitorias del payload; la respuesta de válida podía venir vacía al primer intento (03:54–03:57 UTC). El colector registra los errores internos en el mensaje de estado para diagnosticar.
 - Precios del 03-11 verificados contra el snapshot: Manaos Pomelo 2,25 = $2.168 / Manaos Cola 2,25 = $2.168 / Lay's 330 g ≈ $6.999 — coherentes con tienda mayorista, con stock real.
 - El workflow `.yml` había sido modificado por otro agente para correr `probe_yaguar.py` en CI (sin confirmar); el colector oficial ya no depende de ese paso.
+
+## Integración La Anónima (03-11-2026, integración oficial)
+
+- **API de sucursal oficial**: `GET https://api.laanonima.com.ar/sucursal/8300` devuelve JSON estructurado con `super.haySucursalSuper: true` y lista de sucursales que confirma `Neuquén Paseo de la Patagonia` (`idSucursalSuper: "8"`, `direccion: "Antártida Argentina 1111"`). Se usa como preflight check obligatorio.
+- **Cookies de geolocalización**: enviar `Cookie: codigoPostal=8300; Id-Sucursal-Super=8; seleccionocp=1; idZonaPrecio=8` asegura que los precios cotizados correspondan a la sucursal de Neuquén Capital.
+- **Cabeceras obligatorias**: exige User-Agent de navegador completo (`Mozilla/5.0...`); UAs de Python o incompletos son bloqueados con HTTP 403 por WAF.
+- **Stock en tarjeta**: `data-stock="-1"` o `data-stock="0"` representa sin stock y se excluye del pipeline. Stock $> 0$ es producto disponible.
+- **Descuentos minoristas**: los atributos `data-precio` (precio actual) y `data-precio_anterior` (precio regular) reflejan promociones oficiales. Cuando `data-precio_anterior > data-precio`, se calcula `discount_percentage` y se etiqueta con `promo_label: 'Oferta online'`, haciéndolo visible de inmediato en la sección de Ofertas Minoristas (`isRetailOffer`).
+- **EAN y unificación entre cadenas**: fichas de detalle con integración Flixmedia exponen `data-flix-ean="779..."` (GTIN-13 validado por checksum). Si el EAN es válido, el ID del producto es `ean_<ean>`, lo que une automáticamente el producto con las demás cadenas que venden el mismo artículo (ej: Aceite Cocinero 1.5 L `7790060023684`). Si no expone EAN, se mantiene como `anonima_<code>` sin inventar códigos.
+- **Parser estándar sin dependencias**: `HTMLParser` nativo de Python procesa los atributos con espacios (`data-marca = "..."`) y signos `>` en `data-rutacategorias` sin requerir `beautifulsoup4`, asegurando ejecución limpia en GitHub Actions.
+
