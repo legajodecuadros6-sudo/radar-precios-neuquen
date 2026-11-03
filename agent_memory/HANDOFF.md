@@ -52,9 +52,10 @@
 - `npm run build` $\rightarrow$ **OK** (tsc && vite build en 20.6s, salida en `dist/`).
 - Sincronización real: `python3 scripts/scrapers/sync_verified_prices.py --source la_anonima` $\rightarrow$ exit code 0, 676 observaciones, 0 errores.
 
-## Estado real del repo al entregar
+## Estado real del repo y producción al entregar
 
-- Working tree contiene los cambios de La Anónima, datos sincronizados y memorias actualizadas.
+- Working tree limpio (`commit 2300e88` en local).
+- **Producción en vivo verificada:** Desplegado en Vercel con `npx vercel deploy --prod --yes` (`radar-precios-neuquen-lnmx7ajjr-radar-de-precios.vercel.app`), alias activo `https://radar-precios-neuquen.vercel.app` sirviendo bundle `index-ko1fkvTz.js` con las 6 fuentes oficiales y 676 precios de La Anónima.
 - 6 fuentes oficiales activas y verificadas: Coope (784), ChangoMás (187), Makro (36), Vital (90), Yaguar (1.718), La Anónima (676).
 - Coto permanece postergada al final por decisión D5. Diarco y Vea excluidas por decisión D3.
 
@@ -63,7 +64,7 @@
 1. **Tamaño del bundle JS (H3 de auditoría):**
    Con la suma de Yaguar y La Anónima, el archivo embebido `price-history.json` hace que el bundle JS `dist/assets/index-*.js` pese 5,5 MB. Se recomienda mover el histórico a `public/` con fetch lazy como próxima prioridad técnica.
 2. **Entorno local sin token GitHub:**
-   `git push` pide credenciales en el entorno local (sin token ni clave SSH configurada). Si se requiere publicar en Vercel, está disponible el CLI directo con token autenticado (`npx vercel deploy --prod`), pero requiere aprobación explícita del usuario.
+   `git push` pide credenciales en el entorno local (sin token ni clave SSH configurada). La publicación a producción se realizó exitosamente vía CLI directo de Vercel (`npx vercel deploy --prod`). Los commits locales quedan listos para pushear cuando se configure un token de GitHub.
 3. **Riesgo de 72 horas:**
    Las 4 cadenas sincronizadas a las 04:16 UTC del 03-11 y La Anónima sincronizada a las 12:43 UTC del 03-11 vencen entre el 06-11 04:16 y 12:43 UTC.
 

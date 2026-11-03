@@ -1,7 +1,7 @@
 # ESTADO ACTUAL — Radar de Precios Neuquén
 
-**Última actualización:** 03-11-2026 (~12:45 UTC) · **Verificado por:** Antigravity (Gemini 2.5 Pro) — inspección y ejecución directa
-**Producción:** https://radar-precios-neuquen.vercel.app · **Repositorio:** github.com/legajodecuadros6-sudo/radar-precios-neuquen
+**Última actualización:** 03-11-2026 (~13:00 UTC) · **Verificado por:** Antigravity (Gemini 2.5 Pro) — inspección y ejecución directa
+**Producción:** https://radar-precios-neuquen.vercel.app (Deploy verificado `radar-precios-neuquen-lnmx7ajjr-radar-de-precios.vercel.app` con bundle `index-ko1fkvTz.js` con La Anónima en vivo) · **Repositorio:** github.com/legajodecuadros6-sudo/radar-precios-neuquen
 **Regla:** este archivo solo contiene lo verificable contra código/datos/tests. Lo no verificado se marca explícitamente.
 **Convención de cierre:** ver `REGLAS_TRABAJO.md` antes de finalizar cualquier sesión.
 
