@@ -146,3 +146,31 @@ class VitalTests(TestCase):
         import json
         page='<template data-type="json" data-varname="__STATE__"><script>'+json.dumps(state)+'</script></template>'
         self.assertEqual(len(sync.vital_catalog(page)),1)
+
+class YaguarTests(TestCase):
+    def test_price_scale_minimum_and_last_page_warning(self):
+        item={'id':82303,'type':'simple','is_purchasable':True,'is_in_stock':True,'is_on_backorder':False,
+              'permalink':'https://yaguar.com.ar/neuquen/producto/gaseosa-manaos-pomelo-blanco-225lt/',
+              'prices':{'currency_code':'ARS','currency_minor_unit':0,'price':'2168','regular_price':'2168','price_range':None},
+              'add_to_cart':{'minimum':1,'multiple_of':1},'name':'GASEOSA MANAOS POMELO BLANCO 2,25LT','brands':[]}
+        product,obs=sync.yagu_record(item,'2026-11-03T00:00:00+00:00')
+        self.assertEqual(product['id'],'yaguar_82303');self.assertEqual(product['net_content_number'],2.25)
+        self.assertEqual(obs['current_price'],2168);self.assertEqual(obs['min_quantity'],1)
+    def test_rejects_wrong_city_ambiguo_or_out_of_stock(self):
+        base={'id':1,'type':'simple','is_purchasable':True,'is_in_stock':True,'is_on_backorder':False,
+              'permalink':'https://yaguar.com.ar/neuquen/producto/x/','prices':{'currency_code':'ARS','currency_minor_unit':0,'price':'100','regular_price':'100','price_range':None},'add_to_cart':{'minimum':1,'multiple_of':1},'name':'GASEOSA X'}
+        self.assertIsNone(sync.yagu_record({**base,'is_in_stock':False},'s'))
+        with self.assertRaises(ValueError):sync.yagu_record({**base,'permalink':'https://yaguar.com.ar/producto/x/'},'s')
+        with self.assertRaises(ValueError):sync.yagu_record({**base,'permalink':'https://yaguar.com.ar/cipolletti/producto/x/'},'s')
+        bad={**base,'prices':{**base['prices'],'currency_minor_unit':'0'}}
+        with self.assertRaises(ValueError):sync.yagu_record(bad,'s')
+        bad2={**base,'add_to_cart':{'minimum':0,'multiple_of':1}}
+        with self.assertRaises(ValueError):sync.yagu_record(bad2,'s')
+    def test_minimum_greater_than_one_translates_to_terms(self):
+        item={'id':2,'type':'simple','is_purchasable':True,'is_in_stock':True,'is_on_backorder':False,
+              'permalink':'https://yaguar.com.ar/neuquen/producto/papas-fritas-lays-ketchup-77gr/',
+              'prices':{'currency_code':'ARS','currency_minor_unit':0,'price':'3638','regular_price':'4020','price_range':None},
+              'add_to_cart':{'minimum':2,'multiple_of':2},'name':'PAPAS FRITAS LAYS KETCHUP 77GR','brands':[]}
+        _,obs=sync.yagu_record(item,'2026-11-03T00:00:00+00:00')
+        self.assertEqual(obs['regular_price'],4020);self.assertEqual(obs['current_price'],3638)
+        self.assertEqual(obs['min_quantity'],2);self.assertEqual(obs['quantity_multiple'],2)

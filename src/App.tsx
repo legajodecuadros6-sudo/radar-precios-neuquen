@@ -136,7 +136,7 @@ export const AppContent: React.FC = () => {
         <QuickActionCards onScrollToDeals={scrollToDeals} onRetailOffers={() => { setMarketView('offers'); setChainFilter('all'); setSearchQuery(''); setSelectedCategory('Todos'); }} />
         <div className="mb-5 flex flex-wrap items-center gap-2">
           <span className="text-sm font-bold">Tus búsquedas frecuentes:</span>
-          {[['Papas Lay’s', 'papas lay'], ['Manaos pomelo', 'manaos pomelo'], ['Bebidas alcohólicas', '']].map(([label, query]) => <button key={label} className="rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-bold text-cyan-900" onClick={() => { setChainFilter('all'); setMarketView('all'); setSearchQuery(query); setSelectedCategory(label === 'Bebidas alcohólicas' ? label : 'Todos'); catalogRef.current?.scrollIntoView({ behavior: 'smooth' }); }}>{label}</button>)}
+          {[['Lay’s 330 g', 'papas lay 330'], ['Papas Lay’s · todas', 'papas lay'], ['Manaos pomelo', 'manaos pomelo'], ['Bebidas alcohólicas', '']].map(([label, query]) => <button key={label} className="rounded-full border border-cyan-200 bg-cyan-50 px-4 py-2 text-sm font-bold text-cyan-900" onClick={() => { setChainFilter('all'); setMarketView('all'); setSearchQuery(query); setSelectedCategory(label === 'Bebidas alcohólicas' ? label : 'Todos'); catalogRef.current?.scrollIntoView({ behavior: 'smooth' }); }}>{label}</button>)}
         </div>
 
         {/* Floating Autocomplete Popover */}

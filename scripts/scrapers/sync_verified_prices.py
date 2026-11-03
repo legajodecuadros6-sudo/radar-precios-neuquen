@@ -315,6 +315,77 @@ def collect_vital(stamp):
     if not observations: raise ValueError('Vital: sin precios locales válidos')
     return list(products.values()),list(observations.values()),None,errors
 
+
+YAGUAR='https://yaguar.com.ar/neuquen'
+
+def yagu_json(url):
+    with urlopen(Request(url,headers={'User-Agent':'RadarPreciosNeuquen/1.1','Accept':'application/json'}),timeout=25) as response:
+        return json.loads(response.read().decode('utf-8-sig'))
+
+def yagu_record(item,stamp):
+    link=urlparse(item.get('permalink',''))
+    if link.scheme!='https' or link.netloc!='yaguar.com.ar' or not link.path.startswith('/neuquen/producto/'): raise ValueError('Producto fuera de la tienda Neuquén')
+    if item.get('type')!='simple' or not item.get('is_purchasable') or not item.get('is_in_stock') or item.get('is_on_backorder'): return None
+    prices,limits=item.get('prices') or {},item.get('add_to_cart') or {}
+    if prices.get('currency_code')!='ARS' or prices.get('price_range') is not None: raise ValueError('Moneda o precio ambiguo')
+    decimals=prices.get('currency_minor_unit')
+    if type(decimals) is not int or not 0<=decimals<=2: raise ValueError('Escala monetaria desconocida')
+    def money(key):
+        raw=str(prices.get(key) or '')
+        if not raw.isdigit(): raise ValueError('Importe no reconocido')
+        return int(raw)/10**decimals
+    price=positive(money('price'))
+    regular=price if not str(prices.get('regular_price') or '').isdigit() else positive(money('regular_price'))
+    minimum,multiple=limits.get('minimum'),limits.get('multiple_of')
+    if type(minimum) is not int or minimum<1 or type(multiple) is not int or multiple<1: raise ValueError('Cantidad ambigua')
+    name=str(item.get('name') or '').strip()
+    if not name or not mas_in_scope(name): return None
+    matches=list(re.finditer(r'(\d+(?:[.,]\d+)?)\s*(kg|grs?|g|ml|cc|cm3|lts?|l)\b',normalize(name)))
+    unit,quantity,content='unidad',1,'Unidad / presentación indicada'
+    if len(matches)==1 and not re.search(r'\b(pack|combo|kit)\b|\b\d+\s*[xu]\b',normalize(name)):
+        amount,raw=matches[0].groups();amount=positive(amount.replace(',','.'))
+        unit='kg' if raw in ('kg','gr','grs','g') else 'litro'
+        quantity=amount/1000 if raw in ('gr','grs','g','ml','cc','cm3') else amount
+        content=matches[0].group()
+    pid='yaguar_'+str(item['id'])
+    brands=item.get('brands') or []
+    brand=brands[0].get('name') if brands and isinstance(brands[0],dict) and brands[0].get('name') else 'Según descripción'
+    product={'id':pid,'name':name.capitalize(),'brand':brand,'category':category(name),'image_url':(item.get('images') or [{}])[0].get('src',''),'unit_measure':unit,'net_content_number':quantity,'net_content_str':content}
+    notes='Cotización del catálogo online de Yaguar Neuquén tal como la publica su tienda. El sitio es mayorista: impuestos y condiciones del canal deben confirmarse en la tienda antes de comprar.'
+    if minimum>1:
+        notes+=f' Mínimo de compra: {minimum} unidades'
+        if multiple>1: notes+=f' en múltiplos de {multiple}'
+        notes+='.'
+    obs={'id':pid+'@yaguar_online@online','product_id':pid,'supermarket_id':'yaguar','branch_id':'yaguar_online','branch_name':'Yaguar Neuquén · tienda online','branch_address':'Catálogo online de la sucursal Neuquén','regular_price':max(regular,price),'current_price':price,'price_per_unit':round(price/quantity,2),'unit_label':{'kg':'$ / kg','litro':'$ / L','unidad':'$ / u'}[unit],'query_date':stamp,'is_verified':True,'is_demo':False,'source_url':item['permalink'],'source_name':'Yaguar · tienda online Neuquén (mayorista)','channel':'online','min_quantity':minimum,'quantity_multiple':multiple if multiple>1 else 1,'notes':notes}
+    return product,obs
+
+def collect_yaguar(stamp,terms=None,per_page=100,pages=3):
+    site=yagu_json(YAGUAR+'/wp-json/')
+    if 'neuquen' not in normalize(str(site.get('name',''))): raise ValueError('No se confirmó la tienda de Neuquén')
+    if str(site.get('timezone_string','')).lower()!='america/argentina/buenos_aires': raise ValueError('Zona horaria inesperada')
+    products,observations,errors,at_limit={},{},{},[]
+    for term in terms or TERMS:
+        for page in range(1,pages+1):
+            try:
+                rows=yagu_json(YAGUAR+'/wp-json/wc/store/v1/products?'+urlencode({'search':term,'per_page':per_page,'page':page},quote_via=quote))
+                if not isinstance(rows,list): break
+                if page==pages and len(rows)>=per_page: at_limit.append(term)
+                for item in rows:
+                    try:
+                        record=yagu_record(item,stamp)
+                        if record:
+                            product,obs=record
+                            products[product['id']],observations[obs['id']]=product,obs
+                    except (KeyError,TypeError,ValueError) as error: errors.append(f'{term} p{page}: descartado: {error}')
+                if len(rows)<per_page: break
+                time.sleep(.2)
+            except Exception as error:
+                errors.append(f'{term} p{page}: {type(error).__name__}: {error}');break
+    if not observations:
+        detail='; '.join(errors[:3]) or 'respuesta vacía'
+        raise ValueError('Yaguar: sin precios válidos ('+detail+'); se conserva la última lectura')
+    return list(products.values()),list(observations.values()),None,[f'{t}: la consulta llegó al tope de páginas (posible recorte)' for t in at_limit]
+
 def load_csv(path, now):
     products, observations = {}, []
     with open(path,newline='',encoding='utf-8-sig') as file:
@@ -353,7 +424,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--csv',type=Path)
     parser.add_argument('--max-pages',type=int,default=3)
-    parser.add_argument('--source', choices=['all','cooperativa_obrera','changomas','makro','vital'], default='all')
+    parser.add_argument('--source', choices=['all','cooperativa_obrera','changomas','makro','vital','yaguar'], default='all')
     parser.add_argument('--coope-terms', nargs='+', help='Consultas específicas de Coope')
     parser.add_argument('--mas-terms', nargs='+', help='Consultas acotadas para ampliar ChangoMás')
     args = parser.parse_args()
@@ -369,7 +440,7 @@ def main():
                 raise ValueError('El CSV contradice la identidad ya importada: '+product['id'])
         for chain in {o['supermarket_id'] for o in incoming}: snapshot['sources'][chain] = {'status':'ok','last_attempt':stamp,'message':'Importación documentada; revisar fecha y condiciones.'}
     else:
-        for chain,collector in [('cooperativa_obrera',lambda:collect_coope(stamp,args.max_pages,args.coope_terms)),('changomas',lambda:collect_mas(stamp,args.mas_terms)),('makro',lambda:collect_makro(stamp)),('vital',lambda:collect_vital(stamp))]:
+        for chain,collector in [('cooperativa_obrera',lambda:collect_coope(stamp,args.max_pages,args.coope_terms)),('changomas',lambda:collect_mas(stamp,args.mas_terms)),('makro',lambda:collect_makro(stamp)),('vital',lambda:collect_vital(stamp)),('yaguar',lambda:collect_yaguar(stamp,TERMS))]:
             if args.source not in ('all',chain): continue
             try:
                 ps,obs,branch,errors=collector()
