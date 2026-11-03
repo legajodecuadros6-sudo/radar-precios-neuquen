@@ -65,3 +65,12 @@ Solo hechos comprobados con evidencia. Cada punto indica fecha de verificación.
 - **EAN y unificación entre cadenas**: fichas de detalle con integración Flixmedia exponen `data-flix-ean="779..."` (GTIN-13 validado por checksum). Si el EAN es válido, el ID del producto es `ean_<ean>`, lo que une automáticamente el producto con las demás cadenas que venden el mismo artículo (ej: Aceite Cocinero 1.5 L `7790060023684`). Si no expone EAN, se mantiene como `anonima_<code>` sin inventar códigos.
 - **Parser estándar sin dependencias**: `HTMLParser` nativo de Python procesa los atributos con espacios (`data-marca = "..."`) y signos `>` en `data-rutacategorias` sin requerir `beautifulsoup4`, asegurando ejecución limpia en GitHub Actions.
 
+## Optimización de Bundle y Rendimiento (03-11-2026, H3)
+
+- **Vite JSON inlining**: Vite incluye por defecto cualquier archivo `.json` importado estáticamente directamente como código objeto en el bundle JS (`index-*.js`). Cuando el catálogo creció a 10.740 productos con Coto, `live-prices.json` (13,6 MB) infló el bundle cliente a 13,1 MB.
+- **Intercepción limpia vía plugin con `enforce: 'pre'`**: Configurar un plugin de Vite con `enforce: 'pre'` y el hook `resolveId(source)` permite interceptar las importaciones de `live-prices.json` y resolverlas a `src/data/stub-live-prices.json` (~60 bytes) sin afectar las pruebas en Node (`load('src/services/productService.ts')`).
+- **Desacoplamiento de metadatos**: `supermarkets.ts` solo necesita las sucursales (`branches`), no los 10.740 productos. Extraer `src/data/branches.json` (1 KB) y `src/data/sources.json` (1 KB) en el prebuild (`scripts/build-history.mjs`) elimina por completo el acoplamiento con el catálogo masivo.
+- **Permisos de archivos copiados a `public/`**: Al usar `copyFile` en Node en entornos Linux sandbox, el archivo puede crearse con permisos restringidos (`0600`). Es mandatorio ejecutar `chmod(livePublicTarget, 0o644)` para asegurar que Vercel y los servidores web estáticos puedan leerlo sin errores 403/ENOENT.
+- **Compresión HTTP**: `live-prices.json` pesa 13,6 MB sin comprimir, pero solo **764 KB** con compresión gzip en Vercel CDN. `JSON.parse` nativo en el navegador procesa los 10.740 productos en ~15 ms sin bloquear la interfaz.
+
+

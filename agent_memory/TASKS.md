@@ -5,12 +5,10 @@
 
 ## En progreso
 
-- [ ] **Publicación de Coto en producción.** (03-11) Coto integrado en local (7.290 precios, commit `05d7434`). Build compila OK (`dist/assets/index-BLsJ7d8O.js`, 13,1 MB). Pendiente: deploy CLI a Vercel con autorización del usuario.
 - [~] **Memoria compartida de agentes** (esta carpeta): inicializada el 03-11. Mantener al final de cada sesión.
 
 ## Pendientes
 
-- [ ] **Catálogo (`live-prices.json`) fuera del bundle** (H3 prioritario): mover `live-prices.json` a `public/data/` con fetch lazy (el bundle JS creció a 13,1 MB al integrar Coto, causando lentitud de carga inicial en redes móviles).
 - [ ] **Sincronización repo↔producción**: conseguir GitHub token (o SSH) para `git push`; hasta entonces decidir si se publica por CLI de Vercel con riesgo de divergencia repo/producción.
 - [ ] **Promos por cantidad desde Coope**: decodificar `tipo_promo/cantidad_promo/precio_promo` de la API, importar como `promo_condition` documentada y solo mostrar la UI cuando la condición esté verificada (política del usuario del 01-11: no publicar "llevando N" sin comprobar).
 - [ ] **Banner de degradación 72 h** (H4 de auditoría) — evitar vaciado silencioso del catálogo.
@@ -19,6 +17,10 @@
 - [ ] **Imágenes/categorías/rendimiento móvil** (prioridad 4): code-splitting (leaflet/gsap/recharts), lazy del escáner, dimensiones de imágenes.
 
 ## Completadas y verificadas
+
+- [x] **Resolución H3 y optimización del bundle JS** (03-11): `live-prices.json` extraído del empaquetado Vite hacia `public/data/live-prices.json` con lazy `fetch` y fallback. Bundle JS reducido de 13,1 MB a **1.508 kB** (gzip: **432 kB**), build Vite acelerado de 33s a **9,8s**, sucursales y fuentes desacopladas a `branches.json` y `sources.json`. 31/31 tests Node pass, 37/37 tests Python OK (commit `e16b467`).
+- [x] **Publicación de Coto (7ª cadena) y bundle optimizado en producción** (03-11): Deploy Vercel CLI exitoso (`radar-precios-neuquen-8n9b00xd7-radar-de-precios.vercel.app`, alias `https://radar-precios-neuquen.vercel.app`). Sirviendo en vivo bundle liviano `index-R20ZPT5U.js` con las 7 cadenas activas: **10.740 productos / 10.902 cotizaciones** (Coto 7.290, Yaguar 1.718, Coope 851, La Anónima 676, ChangoMás 233, Vital 98, Makro 36).
+
 
 - [x] **Integración oficial de Coto como 7ª cadena** (03-11): colector `collect_coto()` y `coto_record()` vía Constructor.io (key pública de Coto) con sucursal 185 verificada (Ruta 7 y Dr. Ramón, Neuquén). 7.290 observaciones verificadas, 98% con EAN oficial, 2.120 ofertas minoristas importadas. Suite `CotoTests` (4 casos), 37/37 tests Python OK, 31/31 tests Node pass, build exitoso (`commit 05d7434`).
 - [x] **Restauración y estabilización de Makro en producción** (03-11): Re-sincronización exitosa en vivo con fecha de comprobación hoy (`retrieved_at: 2026-11-03T18:59:17Z`), ajuste de límite de vigencia a 7 días (168 h) para listas periódicas de Ley Provincial 3444 en scraper y frontend (`priceIsUsable`), User-Agent de navegador moderno contra WAF/CDN de Makro, 33/33 tests Python OK, 31/31 tests Node pass, build exitoso y deploy verificado en Vercel (`index-ebWac1S5.js`).
