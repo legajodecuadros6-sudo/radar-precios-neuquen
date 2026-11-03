@@ -5,76 +5,90 @@
 ## Datos del relevo
 
 - **Agente que entrega:** Antigravity (harness) — **Modelo real utilizado: Gemini 2.5 Pro**
-- **Fecha y hora:** 03-11-2026 (~20:15 UTC / 17:15 ART)
-- **Objetivo recibido:** Tomar relevo desde el HANDOFF previo, contrastar con código/Git/tests, resolver la optimización de rendimiento H3 (catálogo fuera del bundle JS) y publicar en producción Vercel con las 7 cadenas activas bajo autorización del usuario.
+- **Fecha y hora:** 03-11-2026 (~23:50 UTC / 20:50 ART)
+- **Objetivo recibido:** Realizar un estudio técnico y empírico de factibilidad para determinar si es posible scrapear los precios de Jumbo en Neuquén (para agregarlo a la página en el mapa, filtros y catálogo), y dejar registrado el resultado y la integración como actividad pendiente en la memoria compartida.
 
 ## Trabajo realizado en esta sesión
 
-1. **Contraste de memoria vs realidad y rectificación de H3:**
-   - Se auditó la causa del bundle de 13,1 MB. Se rectificó un error en la memoria anterior: `price-history.json` ya estaba fuera del bundle (procesado en prebuild a `history-summary.json` y cargado lazy).
-   - Lo que inflaba el bundle a 13,1 MB era la importación estática de `src/data/live-prices.json` (13,6 MB en disco) en `productService.ts`, `supermarkets.ts` y `CoveragePanel.tsx`.
-2. **Implementación de H3 (catálogo fuera del bundle JS):**
-   - **Pipeline de pre-construcción** (`scripts/build-history.mjs`): copia automáticamente `src/data/live-prices.json` a `public/data/live-prices.json` con permisos de lectura `0644`. Además extrae `src/data/branches.json` (~1 KB) y `src/data/sources.json` (~1 KB).
-   - **Desvío en Vite** (`vite.config.ts`): plugin `stub-live-prices-bundle` con `enforce: 'pre'` que intercepta `live-prices.json` en tiempo de bundle y lo redirige a `src/data/stub-live-prices.json` (~60 bytes).
-   - **Carga lazy asíncrona** (`src/services/productService.ts`): `fetchLiveRadarData()` descarga `/data/live-prices.json` vía HTTP (comprimido nativamente en gzip a 764 KB por Vercel CDN), parsea los 10.740 productos en segundo plano en ~15 ms con `JSON.parse` y los almacena en caché. En Node/tests, `localData` sigue resolviendo el snapshot real del filesystem para no romper los contratos de testing.
-   - **Desacoplamiento de componentes**: `src/data/supermarkets.ts` ahora consume `branches.json` (1 KB). `CoveragePanel.tsx` consume `sources.json` y props. `App.tsx` añade un skeleton/loading amigable mientras sincroniza el catálogo.
-   - **Reducción de bundle y velocidad**:
-     - Bundle JS cliente sin comprimir: de **13.136 kB a 1.508 kB** (**-88,5% / -11,6 MB**).
-     - Bundle JS comprimido gzip: de **1.152 kB a 432 kB** (**-62,5%**).
-     - Tiempo de compilación `npm run build`: de **33 - 55 s a 9,8 s** (**3x más rápido**).
-3. **Publicación y verificación en producción (Vercel):**
-   - Ejecutado `npx vercel deploy --prod --yes` con autorización explícita del usuario.
-   - Nuevo deployment asignado al alias oficial: `https://radar-precios-neuquen.vercel.app` (Deployment ID: `radar-precios-neuquen-8n9b00xd7-radar-de-precios.vercel.app`).
-   - Verificado en vivo que sirve el nuevo bundle liviano `index-R20ZPT5U.js`.
-   - Verificado endpoint `/data/live-prices.json` con **HTTP 200 OK** y las 7 cadenas activas: **10.740 productos / 10.902 cotizaciones** (Coto 7.290, Yaguar 1.718, Coope 851, La Anónima 676, ChangoMás 233, Vital 98, Makro 36).
-
-## Decisiones nuevas (registradas en DECISIONS.md)
-
-- **D14**: Extracción de catálogo fuera del bundle JS (H3) mediante servicio estático en `public/data/`, carga lazy vía `fetch` e intercepción en Vite con `stub-live-prices.json`.
+1. **Investigación empírica y descubrimiento de arquitectura de Jumbo:**
+   - **Presencia física activa en Neuquén:** Se confirmó la existencia y operación activa del hipermercado Jumbo dentro del centro comercial **Portal Patagonia Shopping** (Av. Juan Julián Lastra 2400, CP Q8300, Neuquén Capital), compartiendo predio con Easy. Se constató que, tras el cierre de la sucursal de Vea (calle Láinez) a fines de octubre de 2026, Jumbo Portal Patagonia continúa 100% operativo con normalidad.
+   - **Plataforma de e-commerce:** Opera bajo **VTEX IO** (`account: jumboargentinaio`, `salesChannel: 32`).
+   - **Auditoría de MasterData NT:** Se consultó la API de entidades `NT` (`/api/dataentities/NT/search`), descubriendo el registro oficial de la sucursal:
+     - `storeid`: `"5216"`
+     - `SellerName`: `"jumboargentinaj5216neuquen"`
+     - `geocoordinates`: `"-38.9602105000,-68.0927295000"` (Portal Patagonia)
+     - `hasPickup`: `true` | `hasDelivery`: `true` | Teléfono: `0810-999-58626`.
+2. **Ingeniería inversa de la API y resolución de precios locales:**
+   - **Diagnóstico del catálogo general:** `GET /api/catalog_system/pub/products/search?ft=<término>` devuelve todos los productos con sus EANs oficiales (GTIN-13) y SKUs, pero con precios del seller genérico `"1"` (AMBA). No debe usarse solo para precios finales, pues publicaría precios de CABA.
+   - **Diagnóstico del error ORD027:** Las llamadas directas de simulación por código postal (`postalCode: 8300`) fallaban con `ORD027: Ítem no disponible`, porque la plataforma VTEX de Cencosud no resuelve directamente por código postal simple.
+   - **Descubrimiento del mecanismo de sesión y cotización regional:**
+     Analizando los bundles React del frontend de Jumbo (`jumboargentinaio.delivery-modal@1.0.83`), se extrajo el protocolo nativo utilizado por su selector de sucursal:
+     1. **Sesión VTEX con vendedor Neuquén:** `POST https://www.jumbo.com.ar/api/sessions?sc=32` configurando:
+        ```json
+        {
+          "public": {
+            "buyselectMethod": {"value": "recogida"},
+            "regionId": {"value": "U1cjanVtYm9hcmdlbnRpbmFqNTIxNm5ldXF1ZW4="},
+            "selectedSeller": {"value": "jumboargentinaj5216neuquen"},
+            "geoCoordinates": {"value": "-68.0927295000,-38.9602105000"}
+          }
+        }
+        ```
+        *(donde `regionId` es `btoa("SW#jumboargentinaj5216neuquen")`).*
+     2. **Batch Simulation:** `POST https://www.jumbo.com.ar/api/checkout/pub/orderForms/simulation?sc=32` con `items: [{"id": sku, "quantity": 1, "seller": "jumboargentinaj5216neuquen"}]`.
+3. **Comprobación empírica en tiempo real de precios y stock:**
+   - **Diferenciación geográfica comprobada:**
+     - Coca Cola Sabor Original 2.25 L (`EAN 7790895000997`, SKU `246613`): **$6.290 en Neuquén** vs $6.100 en Buenos Aires (Seller 1).
+     - Coca Cola Zero 2.25 L (`EAN 7790895067570`, SKU `18976`): **$6.290 en Neuquén** vs $6.100 en Buenos Aires (Seller 1).
+     - Coca Cola Sin Azúcar 1.75 L (SKU `269646`): `withoutStock` en Neuquén (filtro de stock local verificado).
+   - **Servicios de logística confirmados:** SLAs devueltos `"Retiro en Tienda - Jumbo Neuquen Av. J.J. Lastra 2400"` y `"Envío a Domicilio"`.
+   - **Batching validado:** Se comprobó simulación en lote de 11 SKUs en una sola petición HTTP (HTTP 200 OK en ~1s).
+4. **Archivo histórico y sincronización de memoria compartida:**
+   - Archivada la versión anterior de `HANDOFF.md` en `agent_memory/history/2026-11-03_2015_Antigravity_Gemini_H3_Deploy.md`.
+   - Actualizado `agent_memory/TASKS.md` registrando la actividad completada y la tarea pendiente para la implementación de Jumbo como 8ª cadena.
+   - Actualizado `agent_memory/LEARNINGS.md` con la documentación técnica de las APIs de Jumbo VTEX (`MasterData NT`, sesión regional con `regionId` en Base64, batch simulation y sucursal física).
 
 ## Archivos modificados en esta sesión
 
-- `.gitignore` (ignora `public/data/` como artefacto generado de build)
-- `scripts/build-history.mjs` (copia a `public/data/` con chmod 0644 y extrae `branches.json` / `sources.json`)
-- `src/data/branches.json` (nuevo, 4 sucursales activas, ~1 KB)
-- `src/data/sources.json` (nuevo, estado de fuentes, ~1 KB)
-- `src/data/stub-live-prices.json` (nuevo, stub liviano para bundling, ~60 bytes)
-- `src/data/supermarkets.ts` (desacoplado a `branches.json`)
-- `src/components/CoveragePanel.tsx` (desacoplado de `live-prices.json`)
-- `src/services/productService.ts` (función `buildRadarData`, lazy fetch `/data/live-prices.json`, fallback y cache)
-- `src/App.tsx` (loading state y propagación de `sources` a `CoveragePanel`)
-- `vite.config.ts` (plugin `stub-live-prices-bundle` con `enforce: 'pre'`)
-- `agent_memory/history/2026-11-03_2125_GLM_OpenCode.md` (relevo previo archivado)
-- `agent_memory/CURRENT_STATE.md`, `TASKS.md`, `DECISIONS.md`, `LEARNINGS.md`, `HANDOFF.md`
+- `agent_memory/history/2026-11-03_2015_Antigravity_Gemini_H3_Deploy.md` (nuevo archivo histórico inmutable)
+- `agent_memory/TASKS.md` (incorporado estudio completado y tarea pendiente de Jumbo)
+- `agent_memory/LEARNINGS.md` (incorporada sección completa de arquitectura y APIs de Jumbo)
+- `agent_memory/HANDOFF.md` (este documento de relevo)
 
 ## Commits realizados
 
-- `255e857`: docs(memoria): sincronizar memoria con integracion de Coto y diagnostico verificado H3
-- `e16b467`: feat(perf): optimizar H3 extrayendo live-prices.json fuera del bundle JS hacia carga lazy
+- *(Pendiente de commit de memoria al cierre de esta sesión)*
 
 ## Pruebas ejecutadas y resultados
 
-- `node --test tests/*.test.cjs` → **31/31 pass** (4.46s).
-- `python3 -m unittest discover -s tests -p 'test_*.py'` → **37/37 OK** (0.095s).
-- `npm run build` → **OK** (9.84s, bundle `index-R20ZPT5U.js` 1.508 kB / 432 kB gzip).
-- `curl -sI https://radar-precios-neuquen.vercel.app/data/live-prices.json` → **HTTP/2 200 OK**.
-- Inspección en vivo de datos servidos en producción: **10.740 productos / 10.902 cotizaciones en 7 cadenas** verificadas.
+- Pruebas empíricas de red contra `jumbo.com.ar` (MasterData NT, VTEX Session, Catalog Search, Batch OrderForm Simulation) → **Todas exitosas y documentadas**.
+- `node --test tests/*.test.cjs` → **31/31 pass**.
+- `python3 -m unittest discover -s tests -p 'test_*.py'` → **37/37 OK**.
 
 ## Estado real del repo/producción al entregar
 
-- **Producción:** 100% al día y sincronizada con el estado local de 7 cadenas y bundle optimizado (`index-R20ZPT5U.js`).
-- **Git local:** Adelantada a `origin/main` (los commits locales avanzan en `main` local porque no hay credenciales de GitHub para `git push`).
-- **Working tree:** Limpio tras el commit de la memoria.
+- **Producción:** Activa y sirviendo en `https://radar-precios-neuquen.vercel.app` las 7 cadenas verificadas (10.740 productos / 10.902 cotizaciones) con bundle JS optimizado H3 (`index-R20ZPT5U.js` de 432 kB gzip).
+- **Git local:** Limpio tras el commit de las memorias.
+- **Factibilidad de Jumbo:** **100% FACTIBLE** y lista para implementar.
 
 ## Advertencias importantes
 
-1. **GitHub sin token en el entorno local**: Los cambios están commiteados en local y desplegados en Vercel por CLI, pero no pusheados a GitHub. Se requiere configurar un token o clave SSH para sincronizar el repositorio remoto.
-2. **Frescura de datos**: Las 7 cadenas están sincronizadas con fecha de hoy (03-11). La ventana de 72 h vence el 06-11 04:16 UTC. Makro tiene vigencia de 7 días (Ley 3444 / D11).
-3. **Anomalías de Coto mantenidas sin censura (D12)**: Precios como Smartwater $1 o electrodomésticos que matchean términos de alimentos se listan tal como los publica Coto en su buscador oficial.
+1. **No usar solo el buscador nacional de Jumbo:** El endpoint `/api/catalog_system/pub/products/search` debe usarse únicamente para el descubrimiento de catálogo (nombres, marcas, imágenes y códigos EAN). Para los precios y stock, es indispensable ejecutar la simulación por lote con `seller: jumboargentinaj5216neuquen` y la cookie de sesión regional para no contaminar los precios locales de Neuquén con los de Buenos Aires.
+2. **Tokens de GitHub:** El entorno local aún no dispone de credenciales git configuradas para `git push` al repositorio remoto origin.
 
-## Próximo paso recomendado (para Codex u otro agente)
+## Próximo paso recomendado (para el agente entrante)
 
-1. Sincronizar el repositorio remoto con `git push` una vez que el usuario provea token o SSH.
-2. Abordar las promociones por cantidad de Cooperativa Obrera (`promo_condition`, ver D4 en `DECISIONS.md`).
-3. Opcional: code-splitting adicional de librerías pesadas (`leaflet`, `recharts`, `html5-qrcode`) mediante `manualChunks` si se desea reducir el bundle JS por debajo de 500 kB sin comprimir.
-
+1. **Implementar el colector de Jumbo en `sync_verified_prices.py` (`collect_jumbo`)**:
+   - Inicializar sesión regional en `POST /api/sessions?sc=32` con `regionId: U1cjanVtYm9hcmdlbnRpbmFqNTIxNm5ldXF1ZW4=`.
+   - Consultar catálogo por términos clave (`TERMS`) vía `/api/catalog_system/pub/products/search`.
+   - Agrupar SKUs y ejecutar `orderForms/simulation?sc=32` con `seller: jumboargentinaj5216neuquen` en lotes de 20-30 SKUs.
+   - Filtrar productos sin stock (`availability != 'available'`).
+2. **Agregar la sucursal de Jumbo en el mapa y configuración de frontend**:
+   - Añadir la sucursal a `SUPERMARKETS_NEUQUEN` / `branches.json`:
+     - ID: `jumbo-lastra`
+     - Nombre: `Jumbo - Portal Patagonia`
+     - Cadena: `Jumbo`
+     - Dirección: `Juan Julián Lastra 2400`
+     - Coordenadas: `[-38.9602, -68.0927]`
+     - Tipo: `Hipermercado` (con pickup y delivery)
+3. **Crear suite de pruebas unitarias (`JumboTests`)** en `tests/test_sync_verified_prices.py` validando parsing, simulación y filtros de stock.

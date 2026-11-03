@@ -9,6 +9,7 @@
 
 ## Pendientes
 
+- [ ] **Integración de Jumbo como 8ª cadena (estudio completado, pendiente implementación)**: Colector para `jumboargentinaj5216neuquen` (Portal Patagonia, J.J. Lastra 2400) vía VTEX search + sesión de pickup Neuquén (`regionId: U1cjanVtYm9hcmdlbnRpbmFqNTIxNm5ldXF1ZW4=`) + batch simulation con `sc=32` para extraer precios locales diferenciados (ej: Coca 2.25L $6.290 Neuquén vs $6.100 BsAs) y stock local real. Incorporar sucursal al mapa, filtros de cadena y catálogo.
 - [ ] **Sincronización repo↔producción**: conseguir GitHub token (o SSH) para `git push`; hasta entonces decidir si se publica por CLI de Vercel con riesgo de divergencia repo/producción.
 - [ ] **Promos por cantidad desde Coope**: decodificar `tipo_promo/cantidad_promo/precio_promo` de la API, importar como `promo_condition` documentada y solo mostrar la UI cuando la condición esté verificada (política del usuario del 01-11: no publicar "llevando N" sin comprobar).
 - [ ] **Banner de degradación 72 h** (H4 de auditoría) — evitar vaciado silencioso del catálogo.
@@ -18,6 +19,7 @@
 
 ## Completadas y verificadas
 
+- [x] **Estudio empírico de factibilidad técnica para Jumbo (03-11)**: Estudio completo realizado y verificado contra endpoints reales de VTEX Cencosud. Descubierta sucursal física activa en Portal Patagonia (Lastra 2400, lat -38.9602, lon -68.0927, storeid 5216, pickup y delivery activos en MasterData NT). Descubierto mecanismo de sesión VTEX (`selectedSeller: jumboargentinaj5216neuquen`, `regionId: btoa("SW#jumboargentinaj5216neuquen")`) y batch simulation en `/api/checkout/pub/orderForms/simulation?sc=32`. Comprobada diferenciación de precios reales locales vs AMBA (Coca 2.25L $6.290 vs $6.100) y stock local en tiempo real. 100% factible para integrar como 8ª cadena.
 - [x] **Resolución H3 y optimización del bundle JS** (03-11): `live-prices.json` extraído del empaquetado Vite hacia `public/data/live-prices.json` con lazy `fetch` y fallback. Bundle JS reducido de 13,1 MB a **1.508 kB** (gzip: **432 kB**), build Vite acelerado de 33s a **9,8s**, sucursales y fuentes desacopladas a `branches.json` y `sources.json`. 31/31 tests Node pass, 37/37 tests Python OK (commit `e16b467`).
 - [x] **Publicación de Coto (7ª cadena) y bundle optimizado en producción** (03-11): Deploy Vercel CLI exitoso (`radar-precios-neuquen-8n9b00xd7-radar-de-precios.vercel.app`, alias `https://radar-precios-neuquen.vercel.app`). Sirviendo en vivo bundle liviano `index-R20ZPT5U.js` con las 7 cadenas activas: **10.740 productos / 10.902 cotizaciones** (Coto 7.290, Yaguar 1.718, Coope 851, La Anónima 676, ChangoMás 233, Vital 98, Makro 36).
 

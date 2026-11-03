@@ -73,4 +73,44 @@ Solo hechos comprobados con evidencia. Cada punto indica fecha de verificación.
 - **Permisos de archivos copiados a `public/`**: Al usar `copyFile` en Node en entornos Linux sandbox, el archivo puede crearse con permisos restringidos (`0600`). Es mandatorio ejecutar `chmod(livePublicTarget, 0o644)` para asegurar que Vercel y los servidores web estáticos puedan leerlo sin errores 403/ENOENT.
 - **Compresión HTTP**: `live-prices.json` pesa 13,6 MB sin comprimir, pero solo **764 KB** con compresión gzip en Vercel CDN. `JSON.parse` nativo en el navegador procesa los 10.740 productos en ~15 ms sin bloquear la interfaz.
 
+## Factibilidad y arquitectura de Jumbo (03-11-2026, investigación empírica)
+
+- **Sucursal física activa en Neuquén**: Portal Patagonia Shopping (Av. J.J. Lastra 2400, CP Q8300, lat `-38.9602105`, lon `-68.0927295`). Teléfono `0810-999-58626`. Activa tras el cierre de Vea Láinez en octubre 2026.
+- **Plataforma**: VTEX IO (`account: jumboargentinaio`, `sc=32`).
+- **Metadatos en MasterData NT**:
+  - `GET /api/dataentities/NT/search?_fields=name,SellerName,storeid,geocoordinates,postalCode,city,state,street,number&_where=city=Neuquen` confirma:
+    `storeid: "5216"`, `SellerName: "jumboargentinaj5216neuquen"`, `hasPickup: true`, `hasDelivery: true`.
+- **Gotcha del buscador nacional vs precios locales**:
+  - `GET /api/catalog_system/pub/products/search?ft=<término>` devuelve el catálogo completo con EANs oficiales (GTIN-13) y SKU IDs (`itemId`), pero cotizados con el vendedor base `"1"` (precios AMBA). Si se scrapea solo este endpoint, se introducen precios de Buenos Aires violando la trazabilidad local.
+- **Gotcha de simulación sin contexto (error ORD027)**:
+  - `POST /api/checkout/pub/orderForms/simulation` con `postalCode: 8300` o SKU arbitrario devuelve `ORD027: Ítem no encontrado o no disponible` debido a que Cencosud no enruta la logística regional por código postal genérico.
+- **Protocolo exacto para obtener precios y stock de Neuquén Capital**:
+  1. **Inicialización de sesión VTEX**: `POST https://www.jumbo.com.ar/api/sessions?sc=32` con payload:
+     ```json
+     {
+       "public": {
+         "buyselectMethod": {"value": "recogida"},
+         "regionId": {"value": "U1cjanVtYm9hcmdlbnRpbmFqNTIxNm5ldXF1ZW4="},
+         "selectedSeller": {"value": "jumboargentinaj5216neuquen"},
+         "geoCoordinates": {"value": "-68.0927295000,-38.9602105000"}
+       }
+     }
+     ```
+     *(Nota: `regionId` es `btoa("SW#jumboargentinaj5216neuquen")`). Retorna cookies `vtex_session` y `vtex_segment`.*
+  2. **Batch Simulation con seller local**: `POST https://www.jumbo.com.ar/api/checkout/pub/orderForms/simulation?sc=32` pasando las cookies de sesión y el array de SKUs:
+     ```json
+     {
+       "items": [{"id": "<skuId>", "quantity": 1, "seller": "jumboargentinaj5216neuquen"}],
+       "country": "ARG"
+     }
+     ```
+     Retorna los precios locales reales en centavos (`price / 100`) y la disponibilidad exacta (`available` vs `withoutStock`). Soporta batching de múltiples SKUs por solicitud.
+- **Comprobación empírica de precios y SLAs**:
+  - Gaseosa Coca Cola 2.25 L (`EAN 7790895000997`, SKU `246613`): **$6.290 en Neuquén** vs $6.100 en AMBA.
+  - Coca Cola Zero 2.25 L (`EAN 7790895067570`, SKU `18976`): **$6.290 en Neuquén** vs $6.100 en AMBA.
+  - Coca Cola Sin Azúcar 1.75 L (SKU `269646`): `withoutStock` en Neuquén (filtro de stock local funcionando).
+  - SLAs locales confirmados: `"Retiro en Tienda - Jumbo Neuquen Av. J.J. Lastra 2400"` y `"Envío a Domicilio"`.
+- **Conclusión de factibilidad**: 100% factible, técnicamente limpio, con soporte de EANs y stock real local de Neuquén.
+
+
 
