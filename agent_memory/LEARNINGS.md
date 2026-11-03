@@ -42,6 +42,12 @@ Solo hechos comprobados con evidencia. Cada punto indica fecha de verificación.
 - API WooCommerce devuelve BOM al inicio del JSON → usar `encoding='utf-8-sig'`.
 - Inicializar acumuladores en tuplas grandes: `a,b,c,d={},{list}` compila — led a 40 min de depuración en `collect_yaguar` (los dict-initializers desparejos fallaron en silencio). Preferir líneas separadas.
 
+## Regla de frescura (03-11-2026, sync completo real)
+
+- **El sync exitoso de Makro NO refresca la fecha de las observaciones**: el importador sella cada obs con la **fecha de publicación de la lista diaria de Makro** (no con la fecha de la corrida). La lista fechada 10-31 05:01 UTC se vuelve invisible ~72 h después (03-11 05:01). Riesgo recurrente con Makro: depende de que Makro publique una lista nueva; el cron diario (11:00 UTC) la tomará si aparece.
+- La regla de 72 h **no borra nada**: las observaciones vencidas permanecen en live-prices.json/price-history.json con su historial; se filtran en la vista (`priceIsUsable`) y regresan visibles en cuanto un sync exitoso trae fecha nueva.
+- Efecto "bloque": si el cron de GHA falla 3 días seguidas, TODAS las cadenas se vencen juntas y el catálogo visible queda semi vaciado. La sync completa del 03-11 lo resolvió (fecha real 04:16 UTC, vence 06-11 04:16 UTC).
+
 ## Sondeo Yaguar (03-11-2026, integración real)
 
 - `per_page` admite hasta **100** en la Store API (25/2 páginas recortaba); con `per_page=100, pages=3` los 25 términos de `TERMS` cierran sin tope (solo `galletitas` y `jabón` necesitaron >1 página).
