@@ -175,6 +175,40 @@ class YaguarTests(TestCase):
         self.assertEqual(obs['regular_price'],4020);self.assertEqual(obs['current_price'],3638)
         self.assertEqual(obs['min_quantity'],2);self.assertEqual(obs['quantity_multiple'],2)
 
+class CotoTests(TestCase):
+    BRANCH={'id':'coto_185','supermarket_id':'coto','name':'Coto · Neuquén','brand_name':'Coto','type':'minorista','address':'Ruta Provincial Nº 7 y Dr. Ramón','city':'Neuquén','postal_code':'8300','lat':-38.9411580,'lng':-68.0631931}
+    def item(self):
+        return {'value':'Gaseosa Pomelo Blanco Manaos Bot 2.25 Ltr','data':{'sku_id':'sku00617702','sku_display_name':'Gaseosa Pomelo Blanco Manaos Bot 2.25 Ltr','product_brand':'MANAOS','product_main_ean':'7798113301024','url':'_/R-00617702-00617702-200','image_url':'https://static.cotodigital3.com.ar/sitios/fotos/large/00617700/00617702.jpg','product_format':'Litro','price':[{'id':'pl091_00617702','store':'091','listPrice':2420,'priceList':'priceList091'},{'id':'pl185_00617702','store':'185','listPrice':2420,'priceList':'priceList185','saleImage1':'oferta.png'}],'discounts':[{'discountText':'15%Dto','discountPrice':'$2057.00','comments':'No acumulable con otras promos'}]}}
+    def test_search_price_scale_ean_and_discount(self):
+        product,obs=sync.coto_record(self.item(),'185',self.BRANCH,'2026-11-03T20:00:00+00:00')
+        self.assertEqual(product['id'],'ean_7798113301024');self.assertEqual(product['ean'],'7798113301024')
+        self.assertEqual(product['unit_measure'],'litro');self.assertEqual(product['net_content_number'],2.25)
+        self.assertEqual(obs['regular_price'],2420);self.assertEqual(obs['current_price'],2057)
+        self.assertEqual(obs['discount_percentage'],15);self.assertEqual(obs['unit_label'],'$ / L')
+        self.assertTrue(obs['source_url'].startswith('https://www.cotodigital.com.ar/sitios/cdigi/browse/_/R-'))
+        self.assertIn('Confirmar stock',obs['notes'])
+    def test_without_offer_uses_list_price(self):
+        item=self.item();item['data']['discounts']=[]
+        product,obs=sync.coto_record(item,'185',self.BRANCH,'s')
+        self.assertEqual(obs['current_price'],2420);self.assertEqual(obs['regular_price'],2420)
+        self.assertNotIn('discount_percentage',obs);self.assertNotIn('promo_label',obs)
+    def test_rejects_other_store_weighed_and_multipack(self):
+        with self.assertRaises(ValueError):sync.coto_record(self.item(),'091',self.BRANCH,'s')
+        weighed=self.item();weighed['data']['sku_id']='sku90001';weighed['data']['sku_display_name']='Pomelo Rojo . Xkg';weighed['value']='Pomelo Rojo . Xkg'
+        self.assertIsNone(sync.coto_record(weighed,'185',self.BRANCH,'s'))
+        pack=self.item();pack['data']['sku_id']='sku90002';pack['data']['sku_display_name']='Pack 2 Gaseosas Manaos 2.25 lt'
+        self.assertIsNone(sync.coto_record(pack,'185',self.BRANCH,'s'))
+        overdue=self.item();overdue['data']['price']=[p for p in overdue['data']['price'] if p['store']!='185']
+        self.assertIsNone(sync.coto_record(overdue,'185',self.BRANCH,'s'))
+        no_sku=self.item();no_sku['data']['sku_id']=''
+        with self.assertRaises(ValueError):sync.coto_record(no_sku,'185',self.BRANCH,'s')
+    def test_branch_list_finds_neuquen_and_requires_it(self):
+        page='{"heading":"NEUQUÉN","rows":[{"sucursal":"185","nombre":"NEUQUEN","direccion":"RUTA PROVINCIAL N 7 Y DR RAMON - NEUQUÉN","tipo":"HIPER"}]}'
+        code,branch=sync.coto_branch(page=page)
+        self.assertEqual(code,'185');self.assertEqual(branch['id'],'coto_185')
+        page_no_nq='{"heading":"SANTA FE","rows":[{"sucursal":"060","nombre":"SANTA FE","direccion":"ROSARIO - SANTA FE"}]}'
+        with self.assertRaises(ValueError):sync.coto_branch(page=page_no_nq)
+
 class LaAnonimaTests(TestCase):
     def branch_fixture(self):
         return {

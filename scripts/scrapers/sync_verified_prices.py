@@ -591,6 +591,114 @@ def collect_la_anonima(stamp, terms=None, max_detail_eans=25):
         raise ValueError('La Anónima: sin precios válidos; se conserva la última lectura')
     return list(products.values()), list(observations.values()), branch, errors
 
+COTO_SUCURSALES = 'https://www.coto.com.ar/sucursales/'
+COTO_SEARCH = 'https://ac.cnstrc.com/search'
+COTO_KEY = 'key_r6xzz4IAoTWcipni'
+COTO_PRODUCT_BASE = 'https://www.cotodigital.com.ar/sitios/cdigi/browse/'
+COTO_HEADERS = {
+    'User-Agent': ANONIMA_UA,
+    'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Accept-Language': 'es-AR,es;q=0.9'
+}
+
+def coto_parse_branches(page):
+    """Extrae las sucursales de la lista pública en la web de Coto; devuelve lista de dicts."""
+    rows = re.findall(r'"sucursal"\s*:\s*"?(\d{3})"?\s*,\s*"nombre"\s*:\s*"([^"]*)"\s*,\s*"direccion"\s*:\s*"([^"]*)"', page)
+    return [{'code': code, 'name': html.unescape(nombre), 'address': html.unescape(direccion)} for code, nombre, direccion in rows]
+
+def coto_branch(page=None):
+    if page is None:
+        req = Request(COTO_SUCURSALES, headers=COTO_HEADERS)
+        with urlopen(req, timeout=20) as res:
+            page = res.read().decode('utf-8', errors='ignore')
+    candidates = [r for r in coto_parse_branches(page)
+                  if 'neuquen' in normalize(r['name']) and 'neuquen' in normalize(r['address'])]
+    if not candidates: raise ValueError('No se encontró la sucursal de Coto en Neuquén en la lista pública')
+    code = candidates[0]['code']
+    address = html.unescape(candidates[0]['address'].title()).replace('Dr Ramon','Dr. Ramón').replace('N 7','Nº 7').strip()
+    return code, {'id':'coto_'+code,'supermarket_id':'coto','name':'Coto · Neuquén','brand_name':'Coto','type':'minorista','address':address,'city':'Neuquén','postal_code':'8300','lat':-38.9411580,'lng':-68.0631931,'opening_hours':'Lun a Jue 8:00-21:30 · Vie y Sáb 8:00-22:00 · Dom 8:00-21:30','logo_color':'#dc2626','badge_bg':'bg-red-50','badge_text':'Coto','has_ecommerce':True,'ecommerce_url':'https://www.cotodigital.com.ar'}
+
+def coto_record(item, store, branch, stamp):
+    if not isinstance(item, dict): return None
+    data = item.get('data') if isinstance(item.get('data'), dict) else {}
+    name = html.unescape(str(data.get('sku_display_name') or item.get('value') or '')).strip()
+    norm = normalize(name)
+    if not name or not mas_in_scope(name): return None
+    if re.search(r'\bx\s*\.?\s*kg\b|\bpor kg\b', norm): return None  # pesable: precio variable por unidad real
+    sku = ''.join(ch for ch in str(data.get('sku_id') or '') if ch.isdigit())
+    if not sku: raise ValueError('SKU ausente')
+    if branch and branch.get('id') and branch['id'] != 'coto_'+str(store): raise ValueError('Sucursal '+str(store)+' no coincide con '+str(branch.get('id')))
+    price_rows = [p for p in (data.get('price') or []) if str(p.get('store'))==store]
+    if not price_rows or not isinstance(price_rows[0].get('listPrice'),(int,float)) or isinstance(price_rows[0].get('listPrice'),(bool,)): return None
+    regular = float(positive(price_rows[0]['listPrice']))
+    current = regular
+    for disc in (data.get('discounts') or []):
+        text = str(disc.get('discountPrice') or '')
+        m = re.search(r'\d+(?:[.,]\d+)?', text)
+        if not m: continue
+        try: candidate = positive(m.group(0).replace(',','.'))
+        except ValueError: continue
+        if candidate < current: current = candidate
+    ean_val = str(data.get('product_main_ean') or '')
+    ean_ok = bool(ean_val) and valid_ean(ean_val)
+    pid = ('ean_'+ean_val) if ean_ok else ('coto_'+sku)
+    matches = list(re.finditer(r'(\d+(?:[.,]\d+)?)\s*(ltr?s?|l|ml|cc|cm3|kg|gr|grs|g)\b', norm))
+    unit, quantity, content = 'unidad', 1, 'Unidad / presentación indicada'
+    is_pack = bool(re.search(r'\b(pack|combo|kit)\b|\b\d+\s*[xu]\b', norm))
+    if len(matches)==1 and not is_pack:
+        amount, raw = matches[0].groups()
+        amount = positive(amount.replace(',','.'))
+        is_weight = raw in ('kg','gr','grs','g')
+        unit = 'kg' if is_weight else 'litro'
+        quantity = amount/1000 if raw in ('gr','grs','g','ml','cc','cm3') else amount
+        content = matches[0].group()
+    if is_pack: return None  # multipack: presentación total ambigua; mismo criterio que las demás fuentes
+    brand = str(data.get('product_brand') or '').strip() or 'Según descripción'
+    product = {'id':pid,'name':name.capitalize(),'brand':brand,'category':category(name),'image_url':str(data.get('image_url') or ''),'unit_measure':unit,'net_content_number':quantity,'net_content_str':content}
+    if ean_ok: product['ean'] = ean_val
+    web_path = str(data.get('url') or '')
+    source_url = COTO_PRODUCT_BASE + web_path if web_path.startswith('_') else COTO_SUCURSALES
+    notes = 'Precio del catálogo online de Coto Neuquén tal como lo lista la web del comercio. Confirmar stock y promociones en la tienda.'
+    if regular > current:
+        notes += ' Publica '+str(round(((regular-current)/regular)*100))+'% menos que su precio de lista (${:g}).'.format(regular)
+    obs = {'id':pid+'@'+branch['id']+'@online','product_id':pid,'supermarket_id':'coto','branch_id':branch['id'],'branch_name':branch['name'],'branch_address':branch['address'],'regular_price':regular,'current_price':current,'price_per_unit':round(current/quantity,2),'unit_label':{'kg':'$ / kg','litro':'$ / L','unidad':'$ / u'}[unit],'query_date':stamp,'is_verified':True,'is_demo':False,'source_url':source_url,'source_name':'Coto · tienda online '+branch['name'][6:],'channel':'online','min_quantity':1,'notes':notes}
+    if regular > current:
+        obs['discount_percentage'] = round(((regular-current)/regular)*100)
+        obs['promo_label'] = 'Oferta Coto'
+    return product, obs
+
+def collect_coto(stamp, terms=None, per_page=100, pages=4):
+    code, branch = coto_branch()
+    products, observations, errors, capped = {}, {}, [], []
+    for term in terms or TERMS:
+        for page in range(1, pages+1):
+            try:
+                url = COTO_SEARCH+'/'+quote(term)+'?'+urlencode({'key':COTO_KEY,'num_results_per_page':per_page,'page':page})
+                req = Request(url, headers={**COTO_HEADERS,'Accept':'application/json,*/*;q=0.8'})
+                with urlopen(req, timeout=20) as res:
+                    payload = json.loads(res.read().decode('utf-8-sig'))
+                response = payload.get('response',{})
+                items = response.get('selected_items') or response.get('results') or []
+                if not isinstance(items, list) or not items: break
+                for item in items:
+                    try:
+                        record = coto_record(item, code, branch, stamp)
+                        if record:
+                            product, obs = record
+                            products[product['id']], observations[obs['id']] = product, obs
+                    except (ValueError,TypeError,KeyError) as error: errors.append(f'{term} p{page}: descartado: {error}')
+                if page == pages and len(items) >= per_page: capped.append(term)
+                if len(items) < per_page: break
+                time.sleep(0.25)
+            except Exception as error:
+                errors.append(f'{term} p{page}: {type(error).__name__}: {error}')
+                break
+    if not observations:
+        detail = '; '.join(errors[:3]) or 'respuesta vacía'
+        raise ValueError('Coto: sin precios válidos ('+detail.rstrip('; ')+"); se conserva la última lectura")
+    return list(products.values()), list(observations.values()), branch, [f'{t}: la consulta llegó al tope de páginas (posible recorte)' for t in capped]
+
+
 def load_csv(path, now):
     products, observations = {}, []
     with open(path,newline='',encoding='utf-8-sig') as file:
@@ -629,7 +737,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--csv',type=Path)
     parser.add_argument('--max-pages',type=int,default=3)
-    parser.add_argument('--source', choices=['all','cooperativa_obrera','changomas','makro','vital','yaguar','la_anonima'], default='all')
+    parser.add_argument('--source', choices=['all','cooperativa_obrera','changomas','makro','vital','yaguar','la_anonima','coto'], default='all')
     parser.add_argument('--coope-terms', nargs='+', help='Consultas específicas de Coope')
     parser.add_argument('--mas-terms', nargs='+', help='Consultas acotadas para ampliar ChangoMás')
     parser.add_argument('--anonima-terms', nargs='+', help='Consultas específicas de La Anónima')
@@ -646,7 +754,7 @@ def main():
                 raise ValueError('El CSV contradice la identidad ya importada: '+product['id'])
         for chain in {o['supermarket_id'] for o in incoming}: snapshot['sources'][chain] = {'status':'ok','last_attempt':stamp,'message':'Importación documentada; revisar fecha y condiciones.'}
     else:
-        for chain,collector in [('cooperativa_obrera',lambda:collect_coope(stamp,args.max_pages,args.coope_terms)),('changomas',lambda:collect_mas(stamp,args.mas_terms)),('makro',lambda:collect_makro(stamp)),('vital',lambda:collect_vital(stamp)),('yaguar',lambda:collect_yaguar(stamp,TERMS)),('la_anonima',lambda:collect_la_anonima(stamp,args.anonima_terms))]:
+        for chain,collector in [('cooperativa_obrera',lambda:collect_coope(stamp,args.max_pages,args.coope_terms)),('changomas',lambda:collect_mas(stamp,args.mas_terms)),('makro',lambda:collect_makro(stamp)),('vital',lambda:collect_vital(stamp)),('yaguar',lambda:collect_yaguar(stamp,TERMS)),('la_anonima',lambda:collect_la_anonima(stamp,args.anonima_terms)),('coto',lambda:collect_coto(stamp,TERMS))]:
             if args.source not in ('all',chain): continue
             try:
                 ps,obs,branch,errors=collector()
