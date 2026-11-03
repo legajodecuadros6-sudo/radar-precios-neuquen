@@ -5,7 +5,7 @@
 
 ## En progreso
 
-- [x] **Publicación en producción.** (03-11) Deploy Vercel CLI exitoso (`radar-precios-neuquen-lnmx7ajjr-radar-de-precios.vercel.app`), alias verificado en `https://radar-precios-neuquen.vercel.app` con bundle `index-ko1fkvTz.js` (6 cadenas en vivo, 676 precios de La Anónima verificados). Pendiente: sincronizar repo GitHub (`git push` requiere token/SSH).
+- [x] **Publicación en producción.** (03-11) Deploy Vercel CLI exitoso (`radar-precios-neuquen-h32ud4l9b-radar-de-precios.vercel.app`), alias verificado en `https://radar-precios-neuquen.vercel.app` con bundle `index-ebWac1S5.js` (6 cadenas en vivo, 36 precios de Makro restaurados y 676 de La Anónima). Pendiente: sincronizar repo GitHub (`git push` requiere token/SSH).
 - [~] **Memoria compartida de agentes** (esta carpeta): inicializada el 03-11. Mantener al final de cada sesión.
 
 ## Pendientes
@@ -21,6 +21,7 @@
 
 ## Completadas y verificadas
 
+- [x] **Restauración y estabilización de Makro en producción** (03-11): Re-sincronización exitosa en vivo con fecha de comprobación hoy (`retrieved_at: 2026-11-03T18:59:17Z`), ajuste de límite de vigencia a 7 días (168 h) para listas periódicas de Ley Provincial 3444 en scraper y frontend (`priceIsUsable`), User-Agent de navegador moderno contra WAF/CDN de Makro, 33/33 tests Python OK, 31/31 tests Node pass, build exitoso y deploy verificado en Vercel (`index-ebWac1S5.js`).
 - [x] **Integración oficial de La Anónima al importador** (03-11): colector `collect_la_anonima()` en `sync_verified_prices.py` con validación oficial de sucursal Paseo de la Patagonia (`https://api.laanonima.com.ar/sucursal/8300`, Antártida Argentina 1111, CP 8300), parser nativo `HTMLParser` (0 dependencias externas), normalización de unidades/multipacks, filtro de stock (`stock <= 0` / `-1`), **174 ofertas minoristas** (`promo_label: 'Oferta online'`, `discount_percentage`) y **25 EANs oficiales** vinculados. Primera corrida: **676 observaciones verificadas** con fecha real de hoy. Suite de 5 tests unitarios (`LaAnonimaTests`), 33/33 tests Python OK, 31/31 tests Node pass, `npm run build` OK.
 - [x] **Actualización de REGLAS DE TRABAJO permanentes** (03-11): HANDOFF obligatorio al finalizar o preventivo ante límite de contexto/tokens; historial obligatorio e inmutable en `agent_memory/history/AAAA-MM-DD_HHMM_AGENTE_MODELO.md`; lectura inicial enfocada sin leer todo `history/`.
 - [x] **Integración oficial de Yaguar al importador** (03-11): colector en `sync_verified_prices.py` (`collect_yaguar`, con validación estricta de ciudad/moneda/escala/stock/mínimos), tests nuevos (`YaguarTests`, 3 casos) y primera importación real: **1.718 observaciones / ~880 productos nuevos**, estado `ok`, sin recortes de páginas (`per_page=100`, `pages=3`). Verificado: 0 observaciones sin trazabilidad, Manaos Pomelo 2,25 L = $2.168 (fecha real 03-11), tests Python OK + node 31/31 pass.

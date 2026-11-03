@@ -14,9 +14,10 @@ export function mapSupermarketId(value: string): SupermarketId | undefined {
 }
 export function priceIsUsable(observation: PriceObservation, now = Date.now()): boolean {
   const time = Date.parse(observation.query_date);
+  const maxAgeMs = (observation.supermarket_id === 'makro' ? 7 * 24 : 72) * 3600 * 1000;
   return isActiveChain(observation.supermarket_id) && observation.is_verified && !observation.is_demo && Boolean(observation.branch_id) &&
     Number.isFinite(observation.current_price) && observation.current_price > 0 &&
-    Number.isFinite(time) && time <= now && now - time <= 72 * 3600 * 1000 &&
+    Number.isFinite(time) && time <= now && now - time <= maxAgeMs &&
     /^https:\/\//.test(observation.source_url) &&
     !/^https:\/\/(?:radar-precios-neuquen\.vercel\.app|supabase\.com)(?:\/|$)/.test(observation.source_url);
 }

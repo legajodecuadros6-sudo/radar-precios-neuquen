@@ -112,7 +112,7 @@ class MakroTests(TestCase):
         _,b,_,_=sync.parse_makro(self.page(),'2026-11-01T12:00:00+00:00')
         self.assertEqual(a[0]['query_date'],b[0]['query_date'])
     def test_rejects_stale_future_or_missing_publication(self):
-        for stamp in ['2026-10-30T12:00:00+00:00','2026-11-05T12:00:00+00:00']:
+        for stamp in ['2026-10-20T12:00:00+00:00','2026-11-10T12:00:00+00:00']:
             with self.assertRaises(ValueError):sync.parse_makro(self.page(),stamp)
         with self.assertRaises(ValueError):sync.parse_makro(self.page().replace('mlp-lista-precios__fecha','other'),'2026-10-31T23:00:00+00:00')
     def test_rejects_ambiguous_units_wrong_columns_or_wrong_locality(self):

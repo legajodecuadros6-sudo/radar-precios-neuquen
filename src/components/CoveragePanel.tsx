@@ -6,7 +6,7 @@ import snapshot from '../data/live-prices.json';
 
 export function CoveragePanel({ observations }: { observations: PriceObservation[] }) {
   const active = observations.filter(o => priceIsUsable(o));
-  const expired = snapshot.observations.filter(o => o.supermarket_id !== 'vea' && o.supermarket_id !== 'diarco' && o.is_verified && !o.is_demo && Date.now() - Date.parse(o.query_date) > 72 * 3600 * 1000);
+  const expired = snapshot.observations.filter(o => o.supermarket_id !== 'vea' && o.supermarket_id !== 'diarco' && o.is_verified && !o.is_demo && Date.now() - Date.parse(o.query_date) > (o.supermarket_id === 'makro' ? 7 * 24 : 72) * 3600 * 1000);
   const chains = new Set(active.map(o => o.supermarket_id));
   return <details className="mb-4 rounded-2xl border border-slate-200 bg-white p-4" open>
     <summary className="cursor-pointer font-bold text-slate-800">Cobertura real: {chains.size} de {Object.keys(ACTIVE_CHAIN_NAMES).length} cadenas con precios vigentes</summary>

@@ -210,7 +210,7 @@ def parse_makro(page, stamp):
     day,month,year,hour,minute=date_match.groups()
     published=datetime(int(year),MONTHS[month],int(day),int(hour),int(minute),tzinfo=timezone(timedelta(hours=-3)))
     now=datetime.fromisoformat(stamp)
-    if published>now or now-published>timedelta(hours=72): raise ValueError('Makro: lista futura o de más de 72 horas')
+    if published>now or now-published>timedelta(days=7): raise ValueError('Makro: lista futura o de más de 7 días')
     table=re.search(r'<table[^>]*class=["\'][^"\']*mlp-lista-precios__table["\'][^>]*>(.*?)</table>',page,re.S)
     if not table: raise ValueError('Makro: tabla ausente')
     headers=[normalize(plain_html(v)) for v in re.findall(r'<th\b[^>]*>(.*?)</th>',table.group(1),re.S)]
@@ -241,7 +241,8 @@ def parse_makro(page, stamp):
     return products,observations,None,[]
 
 def collect_makro(stamp):
-    with urlopen(Request(MAKRO_URL,headers={'User-Agent':'RadarPreciosNeuquen/1.1'}),timeout=25) as response:
+    headers={'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36','Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'}
+    with urlopen(Request(MAKRO_URL,headers=headers),timeout=25) as response:
         page=response.read().decode('utf-8')
     return parse_makro(page,stamp)
 

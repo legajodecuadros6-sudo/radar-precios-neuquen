@@ -1,17 +1,21 @@
 # ESTADO ACTUAL — Radar de Precios Neuquén
 
-**Última actualización:** 03-11-2026 (~13:00 UTC) · **Verificado por:** Antigravity (Gemini 2.5 Pro) — inspección y ejecución directa
-**Producción:** https://radar-precios-neuquen.vercel.app (Deploy verificado `radar-precios-neuquen-lnmx7ajjr-radar-de-precios.vercel.app` con bundle `index-ko1fkvTz.js` con La Anónima en vivo) · **Repositorio:** github.com/legajodecuadros6-sudo/radar-precios-neuquen
+**Última actualización:** 03-11-2026 (~19:05 UTC / 16:05 ART) · **Verificado por:** Antigravity (Gemini 2.5 Pro) — inspección y ejecución directa
+**Producción:** https://radar-precios-neuquen.vercel.app (Deploy verificado `radar-precios-neuquen-h32ud4l9b-radar-de-precios.vercel.app` con bundle `index-ebWac1S5.js` con Makro restaurado y en vivo) · **Repositorio:** github.com/legajodecuadros6-sudo/radar-precios-neuquen
 **Regla:** este archivo solo contiene lo verificable contra código/datos/tests. Lo no verificado se marca explícitamente.
 **Convención de cierre:** ver `REGLAS_TRABAJO.md` antes de finalizar cualquier sesión.
 
 ## Qué funciona (verificado)
 
-- **Pipeline de datos trazable** (`scripts/scrapers/sync_verified_prices.py`): 6 fuentes oficiales conectadas.
-  - Coope (784), ChangoMás (187), Makro (36), Vital (90), Yaguar (1.718), **La Anónima (676)**.
+- **Pipeline de datos trazable** (`scripts/scrapers/sync_verified_prices.py`): 6 fuentes oficiales conectadas y con status `ok`.
+  - Coope (784), ChangoMás (187), Makro (36), Vital (90), Yaguar (1.718), La Anónima (676).
   - Saldo en `src/data/live-prices.json`: **3.602 productos / 3.612 observaciones** verificadas.
   - Saldo en `src/data/price-history.json`: **10.563 puntos históricos** acumulados sin pérdida de trazabilidad.
   - Nunca inventa precios; escrituras atómicas; de-duplicación por `(id, fecha, precio)`.
+- **(03-11 16:00 ART) Restauración y estabilización de Makro**:
+  - Re-sincronización exitosa contra `https://makro.com.ar/canastabasicaneuquen/` (`status: ok`, `retrieved_at: 2026-11-03T18:59:17Z`, `query_date: 2026-10-31T05:01:00-03:00`).
+  - Ventana de vigencia adaptada a **7 días (168 horas)** en scraper y frontend (`priceIsUsable`), correspondiente al ciclo periódico semanal de la Canasta Básica bajo Ley Provincial 3444 (D11).
+  - Publicado y verificado en vivo en producción Vercel (`index-ebWac1S5.js`). Makro vuelve a ser visible en la sección Mayoristas y en su vista de tienda.
 - **(03-11) La Anónima integrada como 6ª fuente oficial**:
   - Colector `collect_la_anonima()` en `scripts/scrapers/sync_verified_prices.py`.
   - Validación de sucursal mediante API oficial `https://api.laanonima.com.ar/sucursal/8300` (Paseo de la Patagonia, Antártida Argentina 1111, `idSucursalSuper: 8`).
