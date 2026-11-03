@@ -37,6 +37,9 @@ export const AppContent: React.FC = () => {
 
   const [products, setProducts] = useState<Product[]>(localData.products);
   const [observations, setObservations] = useState<PriceObservation[]>(localData.observations.filter(o => priceIsUsable(o)));
+  const [allObservations, setAllObservations] = useState<PriceObservation[]>(localData.observations);
+  const [sources, setSources] = useState<Record<string, any> | undefined>(localData.sources);
+  const [isLoading, setIsLoading] = useState<boolean>(localData.products.length === 0);
   const [connectionStatus, setConnectionStatus] = useState<{ isLiveCloud: boolean; message: string }>({
     isLiveCloud: false,
     message: 'Inicializando conexión...'
@@ -59,17 +62,25 @@ export const AppContent: React.FC = () => {
         if (result.products && result.products.length > 0) {
           setProducts(result.products);
         }
-        setObservations(result.observations.filter(o => priceIsUsable(o)));
+        if (result.observations && result.observations.length > 0) {
+          setAllObservations(result.observations);
+          setObservations(result.observations.filter(o => priceIsUsable(o)));
+        }
+        if (result.sources) {
+          setSources(result.sources);
+        }
         setConnectionStatus({
           isLiveCloud: result.isLiveCloud,
           message: result.message || ''
         });
+        setIsLoading(false);
       }
     });
     return () => {
       isMounted = false;
     };
   }, []);
+
 
   const scrollToDeals = () => {
     setMarketView('wholesale'); setChainFilter('all'); setSearchQuery(''); setSelectedCategory('Todos');
@@ -123,7 +134,7 @@ export const AppContent: React.FC = () => {
           <p className="mt-3 max-w-2xl text-sm text-slate-300">Escaneá un envase o buscá por nombre. Comparamos la misma presentación cuando tenemos datos suficientes; los precios online pueden diferir de la góndola.</p>
           <p className="mt-3 text-xs text-slate-400">{connectionStatus.message}</p>
         </section>
-        <CoveragePanel observations={observations} />
+        <CoveragePanel observations={observations} allObservations={allObservations} sources={sources} />
         <label className="block my-4 text-sm font-bold text-slate-700">
           Filtrar por comercio
           <select aria-label="Filtrar por comercio" value={chainFilter} onChange={event => { setChainFilter(event.target.value); setMarketView('all'); setSearchQuery(''); setSelectedCategory('Todos'); }} className="block w-full sm:w-80 mt-2 p-3 rounded-xl border border-slate-300 bg-white">
@@ -191,7 +202,15 @@ export const AppContent: React.FC = () => {
         </div>
 
         {/* Products Grid */}
-        {filteredProducts.length > 0 ? (
+        {isLoading ? (
+          <div className="py-20 text-center bg-white rounded-3xl border border-cyan-100 p-8 shadow-xs animate-pulse">
+            <div className="w-16 h-16 rounded-3xl bg-cyan-50 flex items-center justify-center text-cyan-600 mx-auto mb-4">
+              <Database className="w-8 h-8 animate-spin" />
+            </div>
+            <h3 className="font-bold text-slate-800 text-lg">Cargando catálogo oficial de Neuquén...</h3>
+            <p className="text-sm text-slate-500 max-w-sm mx-auto mt-1">Sincronizando 7 cadenas comerciales y más de 10.000 precios verificados.</p>
+          </div>
+        ) : filteredProducts.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-5">
             {filteredProducts.slice(0, visibleCount).map(product => (
               <ProductCard

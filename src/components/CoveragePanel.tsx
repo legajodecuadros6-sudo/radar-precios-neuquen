@@ -1,13 +1,22 @@
 import React from 'react';
-import { PriceObservation, SupermarketId } from '../types';
-import { CHAIN_NAMES, ACTIVE_CHAIN_NAMES, priceIsUsable } from '../utils/dataQuality';
+import { PriceObservation } from '../types';
+import { ACTIVE_CHAIN_NAMES, priceIsUsable } from '../utils/dataQuality';
 import { formatDateDisplay } from '../utils/formatters';
-import snapshot from '../data/live-prices.json';
+import defaultSources from '../data/sources.json';
 
-export function CoveragePanel({ observations }: { observations: PriceObservation[] }) {
+interface CoveragePanelProps {
+  observations: PriceObservation[];
+  allObservations?: PriceObservation[];
+  sources?: Record<string, any>;
+}
+
+export function CoveragePanel({ observations, allObservations, sources }: CoveragePanelProps) {
   const active = observations.filter(o => priceIsUsable(o));
-  const expired = snapshot.observations.filter(o => o.supermarket_id !== 'vea' && o.supermarket_id !== 'diarco' && o.is_verified && !o.is_demo && Date.now() - Date.parse(o.query_date) > (o.supermarket_id === 'makro' ? 7 * 24 : 72) * 3600 * 1000);
+  const candidateObservations = allObservations || observations;
+  const expired = candidateObservations.filter(o => o.supermarket_id !== 'vea' && o.supermarket_id !== 'diarco' && o.is_verified && !o.is_demo && Date.now() - Date.parse(o.query_date) > (o.supermarket_id === 'makro' ? 7 * 24 : 72) * 3600 * 1000);
   const chains = new Set(active.map(o => o.supermarket_id));
+  const activeSources = sources || (defaultSources as Record<string, any>);
+
   return <details className="mb-4 rounded-2xl border border-slate-200 bg-white p-4" open>
     <summary className="cursor-pointer font-bold text-slate-800">Cobertura real: {chains.size} de {Object.keys(ACTIVE_CHAIN_NAMES).length} cadenas con precios vigentes</summary>
     <p className="my-2 text-xs text-slate-500">Los precios sin fuente suficiente o con más de 72 horas no participan en las comparaciones. La conexión a una base no garantiza precios actualizados.</p>
@@ -16,7 +25,7 @@ export function CoveragePanel({ observations }: { observations: PriceObservation
       {Object.entries(ACTIVE_CHAIN_NAMES).map(([id, name]) => {
         const rows = active.filter(o => o.supermarket_id === id);
         const dates = rows.map(o => o.query_date).sort();
-        const source = snapshot.sources[id as keyof typeof snapshot.sources];
+        const source = activeSources[id];
         return <div key={id} className={`rounded-xl border p-3 ${rows.length ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-slate-50'}`}>
           <h3 className="font-bold text-xs text-slate-800">{name}</h3>
           <p className="text-xs mt-1 text-slate-600">{rows.length ? `${new Set(rows.map(o => o.product_id)).size} productos · ${new Set(rows.map(o => o.branch_id)).size} sucursal(es)` : 'Sin precios verificados'}</p>
@@ -28,3 +37,4 @@ export function CoveragePanel({ observations }: { observations: PriceObservation
     </div>
   </details>;
 }
+

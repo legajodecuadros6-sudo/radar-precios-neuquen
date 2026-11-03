@@ -1,6 +1,6 @@
 import { SupermarketBranch } from '../types';
 import { isActiveChain } from '../utils/dataQuality';
-import snapshot from './live-prices.json';
+import branches from './branches.json';
 
 export interface SupermarketBranchExtended extends SupermarketBranch {
   logo_svg: string;
@@ -453,8 +453,8 @@ const ORIGINAL_BRANCHES: SupermarketBranchExtended[] = [
 ];
 
 export const SUPERMARKETS_NEUQUEN: SupermarketBranchExtended[] = [
-  ...ORIGINAL_BRANCHES.filter(branch => !(branch.id === 'changomas_perticone' && snapshot.branches.some(b => b.id === 'changomas_3608'))),
-  ...snapshot.branches.filter(branch => !ORIGINAL_BRANCHES.some(b => b.id === branch.id)).map(branch => ({
+  ...ORIGINAL_BRANCHES.filter(branch => !(branch.id === 'changomas_perticone' && (branches as any[]).some(b => b.id === 'changomas_3608'))),
+  ...(branches as any[]).filter(branch => !ORIGINAL_BRANCHES.some(b => b.id === branch.id)).map(branch => ({
     ...ORIGINAL_BRANCHES.find(b => b.supermarket_id === branch.supermarket_id)!,
     ...branch,
     corridor_zone: 'oeste_cercania' as const,

@@ -1,0 +1,107 @@
+{
+  "cooperativa_obrera": {
+    "status": "ok",
+    "last_attempt": "2026-11-03T04:16:18.265229+00:00",
+    "last_success": "2026-11-03T04:16:18.265229+00:00",
+    "message": "784 precios consultados en Cooperativa Obrera · Sucursal del Oeste.",
+    "errors": []
+  },
+  "coto": {
+    "status": "partial",
+    "last_attempt": "2026-11-03T19:26:06.660954+00:00",
+    "last_success": "2026-11-03T19:26:06.660954+00:00",
+    "message": "7290 precios consultados en Coto · Neuquén.",
+    "errors": [
+      "aceite: la consulta llegó al tope de páginas (posible recorte)",
+      "leche: la consulta llegó al tope de páginas (posible recorte)",
+      "arroz: la consulta llegó al tope de páginas (posible recorte)",
+      "fideos: la consulta llegó al tope de páginas (posible recorte)",
+      "azucar: la consulta llegó al tope de páginas (posible recorte)",
+      "galletitas: la consulta llegó al tope de páginas (posible recorte)",
+      "cafe: la consulta llegó al tope de páginas (posible recorte)",
+      "yogur: la consulta llegó al tope de páginas (posible recorte)",
+      "queso: la consulta llegó al tope de páginas (posible recorte)",
+      "agua: la consulta llegó al tope de páginas (posible recorte)",
+      "jabon: la consulta llegó al tope de páginas (posible recorte)",
+      "pan: la consulta llegó al tope de páginas (posible recorte)",
+      "cerveza: la consulta llegó al tope de páginas (posible recorte)",
+      "vino: la consulta llegó al tope de páginas (posible recorte)",
+      "Presentación contradictoria para ean_7790272000831",
+      "Presentación contradictoria para ean_656750783931",
+      "Presentación contradictoria para ean_7790272000848",
+      "Presentación contradictoria para ean_7798316700808",
+      "Presentación contradictoria para ean_7798060850101",
+      "Presentación contradictoria para ean_7793913013467",
+      "Presentación contradictoria para ean_7790387015317",
+      "Presentación contradictoria para ean_7790387015324",
+      "Presentación contradictoria para ean_7790387013504",
+      "Presentación contradictoria para ean_7790710334580",
+      "Presentación contradictoria para ean_7790710334603",
+      "Presentación contradictoria para ean_7790070418265",
+      "Presentación contradictoria para ean_7790070418326",
+      "Presentación contradictoria para ean_7790070318855",
+      "Presentación contradictoria para ean_7798199870018",
+      "Presentación contradictoria para ean_7795711000175",
+      "Presentación contradictoria para ean_7792180140708",
+      "Presentación contradictoria para ean_7792180136671",
+      "Presentación contradictoria para ean_7622201735340",
+      "Presentación contradictoria para ean_7622201705992",
+      "Presentación contradictoria para ean_7622201705961",
+      "Presentación contradictoria para ean_7622201736033",
+      "Presentación contradictoria para ean_7791324157466",
+      "Presentación contradictoria para ean_7790040719804",
+      "Presentación contradictoria para ean_7790550000171",
+      "Presentación contradictoria para ean_3228020191349",
+      "Presentación contradictoria para ean_7790639003925",
+      "Presentación contradictoria para ean_7798142741129",
+      "Presentación contradictoria para ean_7793253003814",
+      "Presentación contradictoria para ean_7793253003807",
+      "Presentación contradictoria para ean_7791293049076",
+      "Presentación contradictoria para ean_7790070036117",
+      "Presentación contradictoria para ean_7790290000233"
+    ]
+  },
+  "la_anonima": {
+    "status": "ok",
+    "last_attempt": "2026-11-03T12:43:42.210433+00:00",
+    "last_success": "2026-11-03T12:43:42.210433+00:00",
+    "message": "676 precios consultados en La Anónima · Paseo de la Patagonia.",
+    "errors": []
+  },
+  "changomas": {
+    "status": "ok",
+    "last_attempt": "2026-11-03T04:16:18.265229+00:00",
+    "last_success": "2026-11-03T04:16:18.265229+00:00",
+    "message": "187 precios consultados en HIPERChangoMás Neuquén · Perticone.",
+    "errors": []
+  },
+  "vea": {
+    "status": "pending",
+    "message": "Sin precios locales verificados. Pendiente conectar fuente o importar lista documentada."
+  },
+  "yaguar": {
+    "status": "ok",
+    "last_attempt": "2026-11-03T04:16:18.265229+00:00",
+    "last_success": "2026-11-03T04:16:18.265229+00:00",
+    "message": "1718 precios consultados en yaguar.",
+    "errors": []
+  },
+  "vital": {
+    "status": "ok",
+    "last_attempt": "2026-11-03T04:16:18.265229+00:00",
+    "last_success": "2026-11-03T04:16:18.265229+00:00",
+    "message": "90 precios consultados en vital.",
+    "errors": []
+  },
+  "diarco": {
+    "status": "pending",
+    "message": "Sin precios locales verificados. Pendiente conectar fuente o importar lista documentada."
+  },
+  "makro": {
+    "status": "ok",
+    "last_attempt": "2026-11-03T18:59:17.331206+00:00",
+    "last_success": "2026-11-03T18:59:17.331206+00:00",
+    "message": "36 precios consultados en makro.",
+    "errors": []
+  }
+}

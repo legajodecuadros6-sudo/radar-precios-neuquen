@@ -5,26 +5,41 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { mapSupermarketId, mergePrices, productUnitPrice } from '../utils/dataQuality';
 
 import { catalogCategory, productImage } from '../utils/catalogViews';
-const presentProduct = (p: Product): Product => ({ ...p, category: catalogCategory(p), image_url: productImage(p) });
+export const presentProduct = (p: Product): Product => ({ ...p, category: catalogCategory(p), image_url: productImage(p) });
 
 type Row = Record<string, any>;
 export interface DataFetchResult {
   products: Product[];
   observations: PriceObservation[];
+  sources?: Record<string, any>;
   isLiveCloud: boolean;
   message: string;
   excluded?: { products: number; prices: number };
 }
-// Retain historical source files, but never treat their hardcoded prices as fresh evidence.
-export const localData: DataFetchResult = {
-  products: [...INITIAL_PRODUCTS.filter(p => !p.ean || !snapshot.products.some(real => 'ean' in real && real.ean === p.ean)).map(p => ({ ...p, ean_aliases: [] })), ...snapshot.products as Product[]].map(presentProduct),
-  observations: mergePrices(INITIAL_PRICE_OBSERVATIONS.map(o => ({ ...o, is_verified: false, notes: 'Registro anterior sin trazabilidad suficiente' })), snapshot.observations as PriceObservation[]),
-  isLiveCloud: false,
-  message: 'Última importación guardada. Cada precio indica su fuente y fecha.'
-};
 
-export function mergeCloudData(productRows: Row[], priceRows: Row[], branchRows: Row[]): DataFetchResult {
-  const products = new Map(localData.products.map(p => [p.id, p]));
+export function buildRadarData(snap: { products?: any[]; observations?: any[]; sources?: Record<string, any> }): DataFetchResult {
+  const rawProducts = snap?.products || [];
+  const rawObservations = snap?.observations || [];
+  return {
+    products: [
+      ...INITIAL_PRODUCTS.filter(p => !p.ean || !rawProducts.some((real: any) => 'ean' in real && real.ean === p.ean)).map(p => ({ ...p, ean_aliases: [] })),
+      ...(rawProducts as Product[])
+    ].map(presentProduct),
+    observations: mergePrices(
+      INITIAL_PRICE_OBSERVATIONS.map(o => ({ ...o, is_verified: false, notes: 'Registro anterior sin trazabilidad suficiente' })),
+      rawObservations as PriceObservation[]
+    ),
+    sources: snap?.sources,
+    isLiveCloud: false,
+    message: 'Última importación guardada. Cada precio indica su fuente y fecha.'
+  };
+}
+
+// Retain historical source files, but never treat their hardcoded prices as fresh evidence.
+export const localData: DataFetchResult = buildRadarData(snapshot);
+
+export function mergeCloudData(productRows: Row[], priceRows: Row[], branchRows: Row[], baseData: DataFetchResult = localData): DataFetchResult {
+  const products = new Map(baseData.products.map(p => [p.id, p]));
   const ids = new Map<string, string>();
   const excluded = { products: 0, prices: 0 };
   for (const row of productRows) {
@@ -61,11 +76,42 @@ export function mergeCloudData(productRows: Row[], priceRows: Row[], branchRows:
       promo_condition: row.promo_condition || undefined
     });
   }
-  return { products: [...products.values()], observations: mergePrices(localData.observations, observations), isLiveCloud: true, excluded, message: 'Catálogo consultado. La conexión no garantiza precios vigentes.' + (excluded.products || excluded.prices ? ` Se excluyeron ${excluded.products} productos y ${excluded.prices} cotizaciones por identidad sin confirmar, datos incompletos o falta de disponibilidad.` : '') };
+  return { products: [...products.values()], observations: mergePrices(baseData.observations, observations), sources: baseData.sources, isLiveCloud: true, excluded, message: 'Catálogo consultado. La conexión no garantiza precios vigentes.' + (excluded.products || excluded.prices ? ` Se excluyeron ${excluded.products} productos y ${excluded.prices} cotizaciones por identidad sin confirmar, datos incompletos o falta de disponibilidad.` : '') };
 }
 
+let cachedRadarData: DataFetchResult | null = null;
+let pendingFetch: Promise<DataFetchResult> | null = null;
+
 export async function fetchLiveRadarData(): Promise<DataFetchResult> {
-  if (!isSupabaseConfigured || !supabase) return localData;
+  if (cachedRadarData && (!isSupabaseConfigured || !supabase)) {
+    return cachedRadarData;
+  }
+
+  // Fetch static snapshot from /data/live-prices.json when in browser
+  if (typeof fetch === 'function') {
+    if (!pendingFetch) {
+      pendingFetch = (async () => {
+        try {
+          const res = await fetch('/data/live-prices.json', { cache: 'no-cache' });
+          if (res.ok) {
+            const liveSnapshot = await res.json();
+            const parsed = buildRadarData(liveSnapshot);
+            cachedRadarData = parsed;
+            return parsed;
+          }
+        } catch (err) {
+          console.warn('No se pudo cargar /data/live-prices.json estático, usando respaldo local', err);
+        }
+        return localData;
+      })().finally(() => {
+        pendingFetch = null;
+      });
+    }
+  }
+
+  const baseData = pendingFetch ? await pendingFetch : (cachedRadarData || localData);
+
+  if (!isSupabaseConfigured || !supabase) return baseData;
   try {
     // Stable pagination avoids the default 1,000-row ceiling when catalog grows.
     const read = async (table: string): Promise<Row[]> => {
@@ -78,8 +124,9 @@ export async function fetchLiveRadarData(): Promise<DataFetchResult> {
       }
     };
     const [products, prices, branches] = await Promise.all([read('products'), read('price_observations'), read('supermarkets')]);
-    return mergeCloudData(products, prices, branches);
+    return mergeCloudData(products, prices, branches, baseData);
   } catch {
-    return { ...localData, message: 'No se pudo actualizar la conexión. Mostrando la última importación y sus fechas originales.' };
+    return { ...baseData, message: 'No se pudo actualizar la conexión. Mostrando el catálogo verificado y sus fechas originales.' };
   }
 }
+

@@ -35,5 +35,7 @@ __pycache__/
 .vercel
 .env*
 
-# Generated daily history digest (prebuild/predev)
+# Generated daily history digest and public data (prebuild/predev)
 public/history-summary.json
+public/data/
+
