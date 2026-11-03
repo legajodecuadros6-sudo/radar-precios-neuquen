@@ -1,17 +1,24 @@
 # ESTADO ACTUAL — Radar de Precios Neuquén
 
-**Última actualización:** 03-11-2026 (~19:05 UTC / 16:05 ART) · **Verificado por:** Antigravity (Gemini 2.5 Pro) — inspección y ejecución directa
-**Producción:** https://radar-precios-neuquen.vercel.app (Deploy verificado `radar-precios-neuquen-h32ud4l9b-radar-de-precios.vercel.app` con bundle `index-ebWac1S5.js` con Makro restaurado y en vivo) · **Repositorio:** github.com/legajodecuadros6-sudo/radar-precios-neuquen
+**Última actualización:** 03-11-2026 (~21:40 UTC / 18:40 ART) · **Verificado por:** Antigravity (Gemini 2.5 Pro) — contraste de código, tests y Git
+**Producción:** https://radar-precios-neuquen.vercel.app (Deploy vigente `radar-precios-neuquen-h32ud4l9b-radar-de-precios.vercel.app` sirviendo 6 cadenas; Coto pendiente de deploy a producción) · **Repositorio:** github.com/legajodecuadros6-sudo/radar-precios-neuquen
 **Regla:** este archivo solo contiene lo verificable contra código/datos/tests. Lo no verificado se marca explícitamente.
 **Convención de cierre:** ver `REGLAS_TRABAJO.md` antes de finalizar cualquier sesión.
 
 ## Qué funciona (verificado)
 
-- **Pipeline de datos trazable** (`scripts/scrapers/sync_verified_prices.py`): 6 fuentes oficiales conectadas y con status `ok`.
-  - Coope (784), ChangoMás (187), Makro (36), Vital (90), Yaguar (1.718), La Anónima (676).
-  - Saldo en `src/data/live-prices.json`: **3.602 productos / 3.612 observaciones** verificadas.
-  - Saldo en `src/data/price-history.json`: **10.563 puntos históricos** acumulados sin pérdida de trazabilidad.
+- **Pipeline de datos trazable** (`scripts/scrapers/sync_verified_prices.py`): 7 fuentes oficiales conectadas.
+  - Coto (7.290), Yaguar (1.718), Coope (851), La Anónima (676), ChangoMás (233), Vital (98), Makro (36).
+  - Saldo en `src/data/live-prices.json`: **10.740 productos / 10.902 observaciones** verificadas.
+  - Saldo en `src/data/price-history.json`: **25.143 puntos históricos** acumulados sin pérdida de trazabilidad.
   - Nunca inventa precios; escrituras atómicas; de-duplicación por `(id, fecha, precio)`.
+- **(03-11 18:30 ART) Coto integrado como 7ª fuente oficial**:
+  - Colector `collect_coto()` y `coto_record()` vía Constructor.io (`ac.cnstrc.com/search/...`) con key pública del portal oficial.
+  - Validación de sucursal única en Neuquén: **sucursal 185** ("NEUQUEN", HIPER, Ruta Prov. Nº 7 y Dr. Ramón; coords OSM −38.9411580, −68.0631931).
+  - **98% de cobertura EAN** (`product_main_ean` con checksum validado) habilitando comparación directa entre cadenas.
+  - 2.120 ofertas minoristas importadas con descuento numérico; promociones sin importe numérico descartadas (D4).
+  - Precios publicados tal como los lista el comercio con link a ficha canónica (D12).
+  - Suite de 4 pruebas dedicadas `CotoTests` (total 37/37 tests unitarios Python OK).
 - **(03-11 16:00 ART) Restauración y estabilización de Makro**:
   - Re-sincronización exitosa contra `https://makro.com.ar/canastabasicaneuquen/` (`status: ok`, `retrieved_at: 2026-11-03T18:59:17Z`, `query_date: 2026-10-31T05:01:00-03:00`).
   - Ventana de vigencia adaptada a **7 días (168 horas)** en scraper y frontend (`priceIsUsable`), correspondiente al ciclo periódico semanal de la Canasta Básica bajo Ley Provincial 3444 (D11).
@@ -38,7 +45,7 @@
 
 ## Qué está roto o degradado (verificado)
 
-- **Historial embebido en el bundle** (`price-history.json` importado estáticamente en `productService.ts`): bundle JS pesa ~5,5 MB (H3 de la auditoría; mover histórico a `public/` con fetch lazy es prioritario).
+- **Catálogo de precios embebido en el bundle** (`live-prices.json` de 13,6 MB importado estáticamente en `productService.ts`, `supermarkets.ts` y `CoveragePanel.tsx`): el bundle JS `dist/assets/index-BLsJ7d8O.js` creció a **13,1 MB** (1,15 MB gzip). Nota: `price-history.json` ya no se embebe (se compila a `public/history-summary.json` y se carga con fetch lazy vía `historyService.ts`). Mover `live-prices.json` a `public/data/` con fetch lazy es la prioridad técnica H3.
 - **GitHub sin token en el entorno local**: el push pide credenciales, por lo que los commits locales avanzan sobre `main` local hasta configurar token o SSH.
 
 ## Componentes principales
