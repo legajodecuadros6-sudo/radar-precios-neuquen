@@ -3,6 +3,7 @@
 **Última actualización:** 03-11-2026 · **Verificado por:** GLM (OpenCode) — inspección de lectura directa
 **Producción:** https://radar-precios-neuquen.vercel.app · **Repositorio:** github.com/legajodecuadros6-sudo/radar-precios-neuquen
 **Regla:** este archivo solo contiene lo verificable contra código/datos/tests. Lo no verificado se marca explícitamente.
+**Convención de cierre:** ver `REGLAS_TRABAJO.md` antes de finalizar cualquier sesión.
 
 ## Qué funciona (verificado)
 

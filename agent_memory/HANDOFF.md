@@ -1,5 +1,7 @@
 # HANDOFF — relevo entre agentes
 
+> ⚠️ **Regla de cierre vigente** (`agent_memory/REGLAS_TRABAJO.md`): antes de cerrar la app, verificar que este HANDOFF refleje el estado real y aplique el checklist de 7 puntos (git status, commits, CURRENT_STATE/TASKS/DECISIONS/LEARNINGS, commit de la memoria).
+
 ## Datos del relevo
 
 - **Agente que entrega:** GLM (OpenCode)
