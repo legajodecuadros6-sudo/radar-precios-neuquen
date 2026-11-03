@@ -5,7 +5,7 @@
 
 ## En progreso
 
-- [~] **Publicación en producción.** Token Vercel localizado y CLI autenticado (`npx vercel deploy --prod` operativo). Bloqueados los pasos que dependen de `git push` (ver pendientes). Cambios sin publicar en disco: colector Yaguar oficial + datos.
+- [~] **Publicación en producción.** (03-11) **Commit `475545a` **(Yaguar) + `43b47f6` **(docs/memoria) hechos localmente; deploy Vercel CLI `dpl_EjS1UY7DmLZTNQJiPgCbDhP15TWf` con alias producción verificado (bundle con datos Yaguar). Pendiente: sensibilizar el `git push` (sin token GitHub, repo↔producción no sincronizados).
 - [~] **Memoria compartida de agentes** (esta carpeta): inicializada el 03-11. Mantener al final de cada sesión.
 
 ## Pendientes

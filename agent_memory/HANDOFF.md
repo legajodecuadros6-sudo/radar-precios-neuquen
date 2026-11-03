@@ -15,7 +15,7 @@
 
 ## Archivos modificados
 
-- **Por este agente, hoy:** solo archivos NUEVOS en `agent_memory/` (CURRENT_STATE, TASKS, DECISIONS, LEARNINGS, HANDOFF, history/.gitkeep). Ningún archivo de código, datos, config ni CI.
+- **Por este agente, hoy:** `agent_memory/` completo + `scripts/scrapers/sync_verified_prices.py` (colector Yaguar), `tests/test_verified_import.py` (3 tests), ajuste de nota en `src/components/CoveragePanel.tsx`, delta en `AUDITORIA_GLM_RADAR_PRECIOS.md` §22, datos `src/data/{live-prices,price-history}.json` (1.718 obs Yaguar). Commits `475545a` (código+datos) y `43b47f6` (docs). Deploy CLI `dpl_EjS1UY7DmLZTNQJiPgCbDhP15TWf` verificado en **https://radar-precios-neuquen.vercel.app** (bundle contiene yaguar_82303 / Manaos Pomelo $2.168).
 - **Por este agente, el 01-11:** únicamente `AUDITORIA_GLM_RADAR_PRECIOS.md` (nuevo).
 
 ## Pruebas ejecutadas y resultados (01-11; re-verificar si cambió el código)
@@ -32,20 +32,20 @@
 
 ## Advertencias importantes
 
-1. **VENTANA DE 72 H**: sin sync exitoso, el catálogo visible muere ~04-11 19:44 UTC. Prioridad máxima: refrescar datos o corregir el cron.
+1. **VENTANA DE 72 H**: Coope/ChangoMás/Makro/Vital quedan sellados 2026-11-01T19:44Z → sin sync completo, esas cadenas desaparecen del catálogo visible a partir de ~04-11T19:44 UTC. Yaguar está fresco (03-11).
 2. **No confíes en este HANDOFF si contradice el código**: código, tests y Git tienen prioridad (regla de trabajo acordada).
 3. **No publicar promos "llevando N"** sin verificación (D4).
-4. **Yaguar en cuarentena** (D6) hasta verificar impuestos/condiciones; existe un prototipo read-only listo para revisar.
-5. **Deploy típico = Git push** (Vercel auto-deploy): sin token GitHub no se puede; el CLI de Vercel despliega solo desde local y diverge del repo.
+4. **Yaguar publicada como tienda mayorista** (nota por precio): manténer el disclaimer en cualquier cambio de UI.
+5. **Deploy típico = Git push** (Vercel auto-deploy): sin token GitHub, los commits `475545a`/`43b47f6` solo existen localmente y el deploy de hoy fue CLI directo. Repo↔producción NO sincronizados.
 6. Fuimos varios agentes sobre el mismo working tree: revisar siempre `git status`/`git log` antes de tocar.
 
 ## Próximo paso recomendado
 
-1. Re-frescar datos: correr `python3 scripts/scrapers/sync_verified_prices.py --source all` local (o investigar el cron en GHA) y commitear.
-2. Revisar `scripts/scrapers/probe_yaguar.py` + `data-staging/yaguar.json`: validar impuestos/condiciones; si pasa, integrar como colector oficial Yaguar (nueva cadena "Mayoristas").
-3. Implementar colector La Anónima (patrón: search HTML + EAN en fichas; ver LEARNINGS).
-4. Commit de todo el working tree pendiente y decidir publicación: CLI Vercel ya operativo.
-5. Pedir al usuario un GitHub token (o SSH) para sincronizar repo↔producción.
+1. **Refrescar datos de las 4 cadenas originales** (`python3 scripts/scrapers/sync_verified_prices.py --source all`): siguen selladas 2026-11-01T19:44Z y la regla de 72 h las descarta a partir de ~04-11T19:44Z (en producción publicado de hoy el catálogo de esas cadenas muere). Yaguar está fresco (fecha 03-11).
+2. Parar de subir contenido al deploy CLI: conseguir **GitHub PAT** y sincronizar repo↔producción (commits locales `475545a`/`43b47f6` aún no en GitHub).
+3. Revisar cobertura de Yaguar en la app: 1.718 obs agregadas; bundle creció a **4,7 MB** (H3 histórico fuera del bundle se vuelve prioritario).
+4. Implementar colector **La Anónima** (siguiente fuente en orden de dificultad, HTML estructurado + EAN en fichas).
+5. Validar con el usuario el detalle de la vista "Mayoristas" con Yaguar/Makro con los mínimos de compra.
 
 ## Errores conocidos
 
