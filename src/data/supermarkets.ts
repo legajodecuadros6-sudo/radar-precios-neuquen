@@ -38,6 +38,29 @@ const ORIGINAL_BRANCHES: SupermarketBranchExtended[] = [
     corridor_zone: 'centro_shopping',
     logo_svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><circle cx="50" cy="50" r="46" fill="#dc2626"/><text x="50" y="58" font-size="24" font-weight="900" fill="#ffffff" text-anchor="middle" font-family="sans-serif" letter-spacing="1">COTO</text></svg>`
   },
+  {
+    id: 'jumbo_portal_patagonia',
+    supermarket_id: 'jumbo',
+    name: 'Jumbo Hipermercado Portal Patagonia',
+    brand_name: 'Jumbo',
+    short_code: 'JUMBO',
+    type: 'minorista',
+    address: 'Juan Julián Lastra 2400 (Portal Patagonia Shopping)',
+    city: 'Neuquén Capital',
+    postal_code: '8300',
+    lat: -38.96021,
+    lng: -68.09273,
+    osm_precision: 'Predio Portal Patagonia Shopping / Easy',
+    phone: '0810-999-58626',
+    opening_hours: 'Lun a Dom 8:00 a 22:00 hs',
+    logo_color: '#15803d',
+    badge_bg: 'bg-emerald-50 border-emerald-200 text-emerald-700',
+    badge_text: 'Jumbo Hiper',
+    has_ecommerce: true,
+    ecommerce_url: 'https://www.jumbo.com.ar',
+    corridor_zone: 'centro_shopping',
+    logo_svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><circle cx="50" cy="50" r="46" fill="#15803d"/><text x="50" y="58" font-size="18" font-weight="900" fill="#ffffff" text-anchor="middle" font-family="sans-serif" letter-spacing="1">JUMBO</text></svg>`
+  },
 
   // ==========================================
   // 2. CORREDOR RUTA 22 (Alineación exacta sobre la ruta / colectoras)

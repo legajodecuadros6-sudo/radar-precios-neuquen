@@ -2,7 +2,8 @@ import { PriceObservation, Product, SupermarketId } from '../types';
 
 export const CHAIN_NAMES: Record<SupermarketId, string> = {
   coto: 'Coto', la_anonima: 'La Anónima', changomas: 'ChangoMás', vea: 'Vea',
-  cooperativa_obrera: 'Cooperativa Obrera', yaguar: 'Yaguar', vital: 'Vital', diarco: 'Diarco', makro: 'Makro'
+  cooperativa_obrera: 'Cooperativa Obrera', yaguar: 'Yaguar', vital: 'Vital', diarco: 'Diarco', makro: 'Makro',
+  jumbo: 'Jumbo'
 };
 // Retired from the public catalogue by product decision; historical IDs remain valid.
 export const isActiveChain = (id: string) => id !== 'vea' && id !== 'diarco';

@@ -139,5 +139,5 @@ test('alcohol and snacks are discoverable and unrelated stock images are replace
     assert.equal(quality.priceIsUsable(obs({supermarket_id:id})), false);
     assert.equal(basket([{product,quantity:1}], [obs({supermarket_id:id})]).split_trip.store_groups.length, 0);
   }
-  assert.equal(Object.keys(quality.ACTIVE_CHAIN_NAMES).length, 7);
+  assert.equal(Object.keys(quality.ACTIVE_CHAIN_NAMES).length, 8);
  });

@@ -1,23 +1,28 @@
 # ESTADO ACTUAL — Radar de Precios Neuquén
 
-**Última actualización:** 03-11-2026 (~20:10 UTC / 17:10 ART) · **Verificado por:** Antigravity (Gemini 2.5 Pro) — contraste empírico de código, tests, bundle y producción Vercel
-**Producción:** https://radar-precios-neuquen.vercel.app (Deploy vigente `radar-precios-neuquen-8n9b00xd7-radar-de-precios.vercel.app` sirviendo 7 cadenas con bundle liviano `index-R20ZPT5U.js`) · **Repositorio:** github.com/legajodecuadros6-sudo/radar-precios-neuquen
+**Última actualización:** 03-11-2026 (~21:15 ART / 00:15 UTC 04-11) · **Verificado por:** Antigravity (Gemini 2.5 Pro) — contraste empírico de código, tests, bundle y producción Vercel
+**Producción:** https://radar-precios-neuquen.vercel.app (Deploy vigente `radar-precios-neuquen-7zkwxxetc-radar-de-precios.vercel.app` sirviendo 8 cadenas con bundle liviano `index-CIrl8xcp.js`) · **Repositorio:** github.com/legajodecuadros6-sudo/radar-precios-neuquen
 **Regla:** este archivo solo contiene lo verificable contra código/datos/tests. Lo no verificado se marca explícitamente.
 **Convención de cierre:** ver `REGLAS_TRABAJO.md` antes de finalizar cualquier sesión.
 
 ## Qué funciona (verificado)
 
-- **Optimización de bundle H3 y carga lazy resuelta**:
-  - `src/data/live-prices.json` (13,6 MB) extraído del empaquetado Vite cliente mediante plugin de intercepción (`stub-live-prices-bundle`).
-  - Catálogo servido estáticamente en `/data/live-prices.json` con compresión gzip nativa (764 KB) y parseo `JSON.parse` asíncrono (~15 ms).
-  - Bundle JavaScript cliente reducido de **13,1 MB a 1.508 kB** (gzip: **432 kB**), logrando una reducción del **88,5%** en peso y tiempos de build de 9,8 s.
-  - Sucursales y fuentes desacopladas a `src/data/branches.json` (~1 KB) y `src/data/sources.json` (~1 KB), eliminando dependencias pesadas en componentes secundarios.
-- **Producción Vercel con las 7 cadenas oficiales activas y verificadas en vivo**:
-  - Total: **10.740 productos / 10.902 cotizaciones** verificadas servidas desde `https://radar-precios-neuquen.vercel.app/data/live-prices.json`.
-  - Coto (7.290), Yaguar (1.718), Coope (851), La Anónima (676), ChangoMás (233), Vital (98), Makro (36).
+- **Producción Vercel con las 8 cadenas oficiales activas y verificadas en vivo**:
+  - Total: **10.862 productos / 11.250 cotizaciones** verificadas servidas desde `https://radar-precios-neuquen.vercel.app/data/live-prices.json`.
+  - Coto (7.290), Yaguar (1.718), Coope (851), La Anónima (676), Jumbo (348), ChangoMás (233), Vital (98), Makro (36).
   - Trazabilidad 100% verificada a fichas y URLs oficiales de cada comercio.
-- **Pipeline de datos trazable** (`scripts/scrapers/sync_verified_prices.py`): 7 fuentes oficiales conectadas.
-  - Saldo en `src/data/price-history.json`: **25.143 puntos históricos** acumulados sin pérdida de trazabilidad.
+- **Jumbo integrado como 8ª fuente oficial**:
+  - Colector `collect_jumbo()` y `jumbo_record()` vía VTEX search + sesión regional en `POST /api/sessions?sc=32` con `regionId: U1cjanVtYm9hcmdlbnRpbmFqNTIxNm5ldXF1ZW4=` (`selectedSeller: jumboargentinaj5216neuquen`).
+  - Batch simulation en `POST /api/checkout/pub/orderForms/simulation?sc=32` para extraer precios locales diferenciados (ej: Coca 2.25L $6.290 vs $6.100 AMBA) y stock local verificado (`available` vs `withoutStock`).
+  - **348 observaciones verificadas** con fecha de hoy, EANs vinculados a catálogo cruzado y ofertas minoristas calculadas (`promo_label: 'Oferta Jumbo'`).
+  - Sucursal física en el mapa y filtros: **Jumbo Hipermercado Portal Patagonia** (Juan Julián Lastra 2400, coordenadas `-38.96021, -68.09273`), con logo verde y badges.
+  - Suite de 3 pruebas dedicadas `JumboTests` (total 40/40 tests Python OK, 31/31 tests Node pass).
+- **Optimización de bundle H3 y carga lazy resuelta**:
+  - `src/data/live-prices.json` (14,7 MB) extraído del empaquetado Vite cliente mediante plugin de intercepción (`stub-live-prices-bundle`).
+  - Catálogo servido estáticamente en `/data/live-prices.json` con compresión gzip nativa y parseo `JSON.parse` asíncrono (~15 ms).
+  - Bundle JavaScript cliente reducido a **1.512 kB** (gzip: **433 kB**), build Vite acelerado y sucursales desacopladas a `branches.json`.
+- **Pipeline de datos trazable** (`scripts/scrapers/sync_verified_prices.py`): 8 fuentes oficiales conectadas.
+  - Saldo en `src/data/price-history.json`: **25.491 puntos históricos** acumulados sin pérdida de trazabilidad.
   - Nunca inventa precios; escrituras atómicas; de-duplicación por `(id, fecha, precio)`.
 - **Coto integrado como 7ª fuente oficial**:
   - Colector `collect_coto()` y `coto_record()` vía Constructor.io (`ac.cnstrc.com/search/...`) con key pública del portal oficial.

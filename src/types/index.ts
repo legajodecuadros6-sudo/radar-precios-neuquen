@@ -7,7 +7,8 @@ export type SupermarketId =
   | 'cooperativa_obrera' 
   | 'diarco' 
   | 'vital'
-  | 'vea';
+  | 'vea'
+  | 'jumbo';
 
 export type StoreType = 'minorista' | 'mayorista' | 'cooperativa';
 

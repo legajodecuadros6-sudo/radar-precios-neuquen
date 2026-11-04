@@ -298,3 +298,55 @@ class LaAnonimaTests(TestCase):
             with self.assertRaises(ValueError):
                 sync.anonima_branch()
 
+
+class JumboTests(TestCase):
+    def test_record_units_offers_and_ean(self):
+        branch = sync.JUMBO_BRANCH
+        prod = {
+            'productName': 'Gaseosa Cola Sabor Original 2.25 Lts Coca Cola',
+            'brand': 'Coca Cola',
+            'link': 'https://www.jumbo.com.ar/gaseosa-coca-cola-2-25-lts/p'
+        }
+        sku = {
+            'itemId': '246613',
+            'name': 'Gaseosa Cola Sabor Original 2.25 Lts Coca Cola',
+            'ean': '7790895000997',
+            'images': [{'imageUrl': 'https://jumboargentinaio.vtexassets.com/test.jpg'}]
+        }
+        p, o = sync.jumbo_record(prod, sku, 6290.0, 7000.0, branch, '2026-11-03T00:00:00+00:00')
+        self.assertEqual(p['id'], 'ean_7790895000997')
+        self.assertEqual(p['ean'], '7790895000997')
+        self.assertEqual(p['unit_measure'], 'litro')
+        self.assertEqual(p['net_content_number'], 2.25)
+        self.assertEqual(o['supermarket_id'], 'jumbo')
+        self.assertEqual(o['branch_id'], 'jumbo_portal_patagonia')
+        self.assertEqual(o['current_price'], 6290.0)
+        self.assertEqual(o['regular_price'], 7000.0)
+        self.assertEqual(o['discount_percentage'], 10)
+        self.assertEqual(o['promo_label'], 'Oferta Jumbo')
+        self.assertTrue(o['is_verified'])
+
+        # Without EAN
+        sku_no_ean = {**sku, 'ean': ''}
+        p2, o2 = sync.jumbo_record(prod, sku_no_ean, 6290.0, 6290.0, branch, '2026-11-03T00:00:00+00:00')
+        self.assertEqual(p2['id'], 'jumbo_246613')
+        self.assertNotIn('ean', p2)
+        self.assertNotIn('promo_label', o2)
+
+    def test_rejects_weighed_multipack_and_out_of_scope(self):
+        branch = sync.JUMBO_BRANCH
+        prod = {'productName': 'Test', 'brand': 'Test'}
+        sku = {'itemId': '123', 'ean': '7790895000997'}
+        # Pesable
+        self.assertIsNone(sync.jumbo_record({**prod, 'productName': 'Banana x kg'}, sku, 1000, 1000, branch, 's'))
+        # Multipack
+        self.assertIsNone(sync.jumbo_record({**prod, 'productName': 'Pack 6 Cerveza 473 ml'}, sku, 1000, 1000, branch, 's'))
+        # Fuera de rubro
+        self.assertIsNone(sync.jumbo_record({**prod, 'productName': 'Aceite Totalenergies 10w40'}, sku, 1000, 1000, branch, 's'))
+
+    def test_branch_metadata_valid(self):
+        self.assertEqual(sync.JUMBO_BRANCH['id'], 'jumbo_portal_patagonia')
+        self.assertEqual(sync.JUMBO_BRANCH['supermarket_id'], 'jumbo')
+        self.assertEqual(sync.JUMBO_SELLER, 'jumboargentinaj5216neuquen')
+
+

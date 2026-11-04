@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Importación trazable; conserva datos anteriores e historial incluso si falla la fuente."""
 import argparse
+import base64
 import csv
 import html
 import json
@@ -20,7 +21,7 @@ from datetime import datetime, timezone, timedelta
 ROOT = Path(__file__).resolve().parents[2]
 SNAPSHOT = ROOT / 'src/data/live-prices.json'
 HISTORY = ROOT / 'src/data/price-history.json'
-CHAINS = ['coto','la_anonima','changomas','vea','cooperativa_obrera','yaguar','vital','diarco','makro']
+CHAINS = ['coto','la_anonima','changomas','vea','cooperativa_obrera','yaguar','vital','diarco','makro','jumbo']
 API = 'https://api.lacoopeencasa.coop/api/'
 TERMS = ['aceite','leche','yerba','arroz','fideos','harina','azucar','galletitas','cafe','yogur','queso','manteca','gaseosa','agua','lavandina','detergente','jabon','papel','pan','pollo','lays','manaos pomelo','cerveza','vino','fernet']
 
@@ -699,6 +700,176 @@ def collect_coto(stamp, terms=None, per_page=100, pages=4):
     return list(products.values()), list(observations.values()), branch, [f'{t}: la consulta llegó al tope de páginas (posible recorte)' for t in capped]
 
 
+JUMBO_SEARCH = 'https://www.jumbo.com.ar/api/catalog_system/pub/products/search'
+JUMBO_SESSION = 'https://www.jumbo.com.ar/api/sessions?sc=32'
+JUMBO_SIM = 'https://www.jumbo.com.ar/api/checkout/pub/orderForms/simulation?sc=32'
+JUMBO_SELLER = 'jumboargentinaj5216neuquen'
+JUMBO_BRANCH = {
+    'id': 'jumbo_portal_patagonia',
+    'supermarket_id': 'jumbo',
+    'name': 'Jumbo · Portal Patagonia',
+    'brand_name': 'Jumbo',
+    'type': 'minorista',
+    'address': 'Juan Julián Lastra 2400',
+    'city': 'Neuquén',
+    'postal_code': '8300',
+    'lat': -38.96021,
+    'lng': -68.09273,
+    'opening_hours': 'Lun a Dom 8:00 a 22:00 hs',
+    'logo_color': '#15803d',
+    'badge_bg': 'bg-emerald-50',
+    'badge_text': 'Jumbo Hiper',
+    'has_ecommerce': True,
+    'ecommerce_url': 'https://www.jumbo.com.ar'
+}
+JUMBO_HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    'Accept': 'application/json, text/plain, */*'
+}
+
+def init_jumbo_session():
+    reg_id = base64.b64encode(f"SW#{JUMBO_SELLER}".encode('utf-8')).decode('utf-8')
+    payload = {
+        "public": {
+            "buyselectMethod": {"value": "recogida"},
+            "regionId": {"value": reg_id},
+            "selectedSeller": {"value": JUMBO_SELLER},
+            "geoCoordinates": {"value": "-68.0927295000,-38.9602105000"}
+        }
+    }
+    req = Request(JUMBO_SESSION, data=json.dumps(payload).encode('utf-8'), headers={**JUMBO_HEADERS, 'Content-Type': 'application/json'})
+    with urlopen(req, timeout=15) as res:
+        cookies = [c.split(';')[0] for c in res.headers.get_all('Set-Cookie', [])]
+        return '; '.join(cookies)
+
+def jumbo_record(product, sku, local_price, local_list_price, branch, stamp):
+    name = html.unescape(str(sku.get('name') or product.get('productName') or '')).strip()
+    norm = normalize(name)
+    if not name or not mas_in_scope(name): return None
+    if re.search(r'\bx\s*\.?\s*kg\b|\bpor kg\b', norm): return None
+    sku_id = ''.join(ch for ch in str(sku.get('itemId') or '') if ch.isdigit())
+    if not sku_id: return None
+    ean_val = str(sku.get('ean') or '').strip()
+    ean_ok = bool(ean_val) and valid_ean(ean_val)
+    pid = ('ean_' + ean_val) if ean_ok else ('jumbo_' + sku_id)
+    
+    matches = list(re.finditer(r'(\d+(?:[.,]\d+)?)\s*(ltr?s?|l|ml|cc|cm3|kg|gr|grs|g)\b', norm))
+    unit, quantity, content = 'unidad', 1, 'Unidad / presentación indicada'
+    is_pack = bool(re.search(r'\b(pack|combo|kit)\b|\b\d+\s*[xu]\b', norm))
+    if len(matches) == 1 and not is_pack:
+        amount, raw = matches[0].groups()
+        amount = positive(amount.replace(',', '.'))
+        is_weight = raw in ('kg', 'gr', 'grs', 'g')
+        unit = 'kg' if is_weight else 'litro'
+        quantity = amount / 1000 if raw in ('gr', 'grs', 'g', 'ml', 'cc', 'cm3') else amount
+        content = matches[0].group()
+    if is_pack: return None
+    
+    brand = str(product.get('brand') or '').strip() or 'Según descripción'
+    images = sku.get('images', [])
+    image_url = images[0].get('imageUrl', '') if images else ''
+    prod_data = {
+        'id': pid,
+        'name': name.capitalize(),
+        'brand': brand,
+        'category': category(name),
+        'image_url': image_url,
+        'unit_measure': unit,
+        'net_content_number': quantity,
+        'net_content_str': content
+    }
+    if ean_ok: prod_data['ean'] = ean_val
+    
+    source_url = str(product.get('link') or 'https://www.jumbo.com.ar')
+    current = float(positive(local_price))
+    regular = float(positive(local_list_price)) if (local_list_price and local_list_price >= current) else current
+    
+    notes = 'Precio verificado de Jumbo Neuquén (Portal Patagonia, J.J. Lastra 2400). Retiro en tienda y entrega a domicilio disponibles.'
+    if regular > current:
+        disc_pct = round(((regular - current) / regular) * 100)
+        notes += f' Publica {disc_pct}% de descuento sobre precio de lista (${regular:g}).'
+    
+    obs = {
+        'id': pid + '@' + branch['id'] + '@online',
+        'product_id': pid,
+        'supermarket_id': 'jumbo',
+        'branch_id': branch['id'],
+        'branch_name': branch['name'],
+        'branch_address': branch['address'],
+        'regular_price': regular,
+        'current_price': current,
+        'price_per_unit': round(current / quantity, 2),
+        'unit_label': {'kg': '$ / kg', 'litro': '$ / L', 'unidad': '$ / u'}[unit],
+        'query_date': stamp,
+        'is_verified': True,
+        'is_demo': False,
+        'source_url': source_url,
+        'source_name': 'Jumbo · tienda online Portal Patagonia',
+        'channel': 'online',
+        'min_quantity': 1,
+        'notes': notes,
+        'source_sku': sku_id,
+        'source_seller': JUMBO_SELLER
+    }
+    if regular > current:
+        obs['discount_percentage'] = round(((regular - current) / regular) * 100)
+        obs['promo_label'] = 'Oferta Jumbo'
+    return prod_data, obs
+
+def collect_jumbo(stamp, terms=None, items_per_term=25):
+    branch = JUMBO_BRANCH
+    cookie_str = init_jumbo_session()
+    products, observations, errors = {}, {}, []
+    target_terms = terms or TERMS
+    for term in target_terms:
+        try:
+            url = f"{JUMBO_SEARCH}?ft={quote(term)}&_from=0&_to={items_per_term-1}"
+            req = Request(url, headers={**JUMBO_HEADERS, 'Cookie': cookie_str})
+            with urlopen(req, timeout=15) as res:
+                items_page = json.loads(res.read().decode('utf-8'))
+            if not isinstance(items_page, list) or not items_page:
+                continue
+            
+            sku_map = {}
+            for p in items_page:
+                for sku in p.get('items', []):
+                    sku_map[str(sku['itemId'])] = (p, sku)
+            
+            sku_ids = list(sku_map.keys())
+            batch_size = 30
+            for i in range(0, len(sku_ids), batch_size):
+                batch = sku_ids[i:i+batch_size]
+                sim_items = [{"id": s, "quantity": 1, "seller": JUMBO_SELLER} for s in batch]
+                sim_payload = {"items": sim_items, "country": "ARG"}
+                req_sim = Request(JUMBO_SIM, data=json.dumps(sim_payload).encode('utf-8'), headers={**JUMBO_HEADERS, 'Content-Type': 'application/json', 'Cookie': cookie_str})
+                with urlopen(req_sim, timeout=20) as res_sim:
+                    sim_data = json.loads(res_sim.read().decode('utf-8'))
+                
+                for it in sim_data.get('items', []):
+                    sku_id = str(it.get('id'))
+                    if it.get('availability') != 'available':
+                        continue
+                    price_raw = it.get('price')
+                    if not price_raw or price_raw <= 0:
+                        continue
+                    list_price_raw = it.get('listPrice') or price_raw
+                    prod, sku = sku_map.get(sku_id, (None, None))
+                    if not prod or not sku: continue
+                    record = jumbo_record(prod, sku, price_raw / 100.0, list_price_raw / 100.0, branch, stamp)
+                    if record:
+                        p_obj, o_obj = record
+                        products[p_obj['id']] = p_obj
+                        observations[o_obj['id']] = o_obj
+            time.sleep(0.2)
+        except Exception as error:
+            errors.append(f'{term}: {type(error).__name__}: {error}')
+    
+    if not observations:
+        detail = '; '.join(errors[:3]) or 'respuesta vacía'
+        raise ValueError(f'Jumbo: sin precios válidos ({detail.rstrip("; ")}); se conserva la última lectura')
+    return list(products.values()), list(observations.values()), branch, errors
+
+
 def load_csv(path, now):
     products, observations = {}, []
     with open(path,newline='',encoding='utf-8-sig') as file:
@@ -737,10 +908,11 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--csv',type=Path)
     parser.add_argument('--max-pages',type=int,default=3)
-    parser.add_argument('--source', choices=['all','cooperativa_obrera','changomas','makro','vital','yaguar','la_anonima','coto'], default='all')
+    parser.add_argument('--source', choices=['all','cooperativa_obrera','changomas','makro','vital','yaguar','la_anonima','coto','jumbo'], default='all')
     parser.add_argument('--coope-terms', nargs='+', help='Consultas específicas de Coope')
     parser.add_argument('--mas-terms', nargs='+', help='Consultas acotadas para ampliar ChangoMás')
     parser.add_argument('--anonima-terms', nargs='+', help='Consultas específicas de La Anónima')
+    parser.add_argument('--jumbo-terms', nargs='+', help='Consultas específicas de Jumbo')
     args = parser.parse_args()
     now = datetime.now(timezone.utc); stamp = now.isoformat()
     snapshot = read_json(SNAPSHOT,{'products':[],'observations':[],'branches':[],'sources':{}})
@@ -754,7 +926,7 @@ def main():
                 raise ValueError('El CSV contradice la identidad ya importada: '+product['id'])
         for chain in {o['supermarket_id'] for o in incoming}: snapshot['sources'][chain] = {'status':'ok','last_attempt':stamp,'message':'Importación documentada; revisar fecha y condiciones.'}
     else:
-        for chain,collector in [('cooperativa_obrera',lambda:collect_coope(stamp,args.max_pages,args.coope_terms)),('changomas',lambda:collect_mas(stamp,args.mas_terms)),('makro',lambda:collect_makro(stamp)),('vital',lambda:collect_vital(stamp)),('yaguar',lambda:collect_yaguar(stamp,TERMS)),('la_anonima',lambda:collect_la_anonima(stamp,args.anonima_terms)),('coto',lambda:collect_coto(stamp,TERMS))]:
+        for chain,collector in [('cooperativa_obrera',lambda:collect_coope(stamp,args.max_pages,args.coope_terms)),('changomas',lambda:collect_mas(stamp,args.mas_terms)),('makro',lambda:collect_makro(stamp)),('vital',lambda:collect_vital(stamp)),('yaguar',lambda:collect_yaguar(stamp,TERMS)),('la_anonima',lambda:collect_la_anonima(stamp,args.anonima_terms)),('coto',lambda:collect_coto(stamp,TERMS)),('jumbo',lambda:collect_jumbo(stamp,args.jumbo_terms))]:
             if args.source not in ('all',chain): continue
             try:
                 ps,obs,branch,errors=collector()

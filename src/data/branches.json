@@ -70,5 +70,23 @@
     "badge_text": "Coto",
     "has_ecommerce": true,
     "ecommerce_url": "https://www.cotodigital.com.ar"
+  },
+  {
+    "id": "jumbo_portal_patagonia",
+    "supermarket_id": "jumbo",
+    "name": "Jumbo · Portal Patagonia",
+    "brand_name": "Jumbo",
+    "type": "minorista",
+    "address": "Juan Julián Lastra 2400",
+    "city": "Neuquén",
+    "postal_code": "8300",
+    "lat": -38.96021,
+    "lng": -68.09273,
+    "opening_hours": "Lun a Dom 8:00 a 22:00 hs",
+    "logo_color": "#15803d",
+    "badge_bg": "bg-emerald-50",
+    "badge_text": "Jumbo Hiper",
+    "has_ecommerce": true,
+    "ecommerce_url": "https://www.jumbo.com.ar"
   }
 ]
