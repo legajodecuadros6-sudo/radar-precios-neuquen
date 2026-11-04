@@ -42,3 +42,10 @@
 - Actualizar `coto_record()` en `sync_verified_prices.py` para:
   1. Ignorar descuentos en `current_price` si son condicionales ("2da al...", "3x2", "35%Dto" condicionado a volumen), respetando la regla D4 y dejando `current_price = regular_price`.
   2. Solo aplicar `discountPrice` si `saleImage1` o la concordancia de listas confirma que la sucursal 185 participa de una oferta directa por unidad.
+
+## Incidencia de Despliegue Detectada y Solucionada (04-11-2026 ~19:50 ART)
+
+- **Síntoma:** El usuario reportó que desapareció Jumbo y solo figuraban 3 supermercados en la página de producción.
+- **Causa raíz:** El cron diario de GitHub Actions (`.github/workflows/sync-prices.yml`) se ejecutó en GitHub y realizó un `git push` a `origin/main`. Como `origin/main` estaba desfasado (19 commits detrás del local por falta de token de push), Vercel detectó el commit en GitHub y disparó un autodespliegue automático de la versión antigua del repositorio.
+- **Solución ejecutada:** Se ejecutó `npm run build` y se desplegó de inmediato a Vercel Producción con `npx vercel deploy --prod --yes` (Deploy `radar-precios-neuquen-azvy443s6-radar-de-precios.vercel.app`).
+- **Verificación en vivo:** Endpoint `/data/live-prices.json` restaurado al 100% con **11.250 observaciones y 8 cadenas activas** (Coto 7.290, Yaguar 1.718, Coope 851, La Anónima 676, Jumbo 348, ChangoMás 233, Vital 98, Makro 36).
