@@ -1,7 +1,7 @@
 # ESTADO ACTUAL — Radar de Precios Neuquén
 
-**Última actualización:** 03-11-2026 (~21:15 ART / 00:15 UTC 04-11) · **Verificado por:** Antigravity (Gemini 2.5 Pro) — contraste empírico de código, tests, bundle y producción Vercel
-**Producción:** https://radar-precios-neuquen.vercel.app (Deploy vigente `radar-precios-neuquen-7zkwxxetc-radar-de-precios.vercel.app` sirviendo 8 cadenas con bundle liviano `index-CIrl8xcp.js`) · **Repositorio:** github.com/legajodecuadros6-sudo/radar-precios-neuquen
+**Última actualización:** 03-11-2026 (~21:45 ART / 00:45 UTC 04-11) · **Verificado por:** Antigravity (Gemini 2.5 Pro) — contraste empírico de código, tests, bundle y producción Vercel
+**Producción:** https://radar-precios-neuquen.vercel.app (Deploy vigente `radar-precios-neuquen-rgjc5le65-radar-de-precios.vercel.app` sirviendo 8 cadenas con bundle liviano `index-DXx-QxSU.js`) · **Repositorio:** github.com/legajodecuadros6-sudo/radar-precios-neuquen
 **Regla:** este archivo solo contiene lo verificable contra código/datos/tests. Lo no verificado se marca explícitamente.
 **Convención de cierre:** ver `REGLAS_TRABAJO.md` antes de finalizar cualquier sesión.
 
@@ -26,7 +26,7 @@
   - Nunca inventa precios; escrituras atómicas; de-duplicación por `(id, fecha, precio)`.
 - **Coto integrado como 7ª fuente oficial**:
   - Colector `collect_coto()` y `coto_record()` vía Constructor.io (`ac.cnstrc.com/search/...`) con key pública del portal oficial.
-  - Validación de sucursal única en Neuquén: **sucursal 185** ("NEUQUEN", HIPER, Ruta Prov. Nº 7 y Dr. Ramón; coords OSM −38.9411580, −68.0631931).
+  - Validación de sucursal única en Neuquén: **sucursal 185** ("NEUQUEN", HIPER, Ruta Prov. Nº 7 y Dr. Ramón; coords OSM −38.9411580, −68.0631931). Unificada en `src/data/supermarkets.ts` con ID `coto_185` (Coto Hipermercado Alto Comahue), eliminando el marcador duplicado legacy en el mapa.
   - **98% de cobertura EAN** (`product_main_ean` con checksum validado) habilitando comparación directa entre cadenas.
   - 2.120 ofertas minoristas importadas con descuento numérico; promociones sin importe numérico descartadas (D4).
   - Precios publicados tal como los lista el comercio con link a ficha canónica (D12).

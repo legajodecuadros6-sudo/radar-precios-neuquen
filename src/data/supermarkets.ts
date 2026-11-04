@@ -16,7 +16,7 @@ const ORIGINAL_BRANCHES: SupermarketBranchExtended[] = [
   // Coordenada exacta del predio del hipermercado
   // ==========================================
   {
-    id: 'coto_alto_comahue',
+    id: 'coto_185',
     supermarket_id: 'coto',
     name: 'Coto Hipermercado Alto Comahue',
     brand_name: 'Coto',
