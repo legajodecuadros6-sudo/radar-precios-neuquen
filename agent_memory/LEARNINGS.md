@@ -114,3 +114,14 @@ Solo hechos comprobados con evidencia. Cada punto indica fecha de verificación.
 
 
 
+
+## Gotcha de Promociones de Coto en Constructor.io (04-11-2026, auditoría)
+
+- **Estructura de precios vs descuentos en Constructor.io**: En el JSON de `ac.cnstrc.com/search/...`, cada producto tiene:
+  1. `data.price`: array discriminado por sucursal (`store: "185"` para Neuquén) con `listPrice`.
+  2. `data.discounts`: array **global nacional** sin atributo `store`.
+- **Descuentos por volumen ("2da al 70%", "3x2")**: Coto expresa comercialmente una promoción como "70% de descuento en la segunda unidad" calculando el precio promedio por unidad llevando 2:
+  `$10.500 * (1 - 0.35) = $6.825` (o para McCain `$10.094 * 0.65 = $6.561,10`).
+  El campo `discountText` viene como `"35%Dto"` y `discountPrice` como `"$6825.00"` o `"$6561.10"`.
+- **Infracción de D4 al pisar precio unitario**: El colector `coto_record` asignaba ciegamente `current_price = discountPrice`. Esto es engañoso para compras individuales porque un consumidor en Neuquén que compra 1 sola unidad paga el precio de lista ($10.500 o $10.094). Para comprar a $6.825 / $6.561 debe comprar obligatoriamente 2 unidades.
+- **Ámbito regional de ofertas Coto**: Las promociones en banners y home de Coto Digital (`cotodigital.com.ar`) corresponden por defecto a **AMBA / Capital Federal (sucursal central 091/056)**. Cuando un usuario de Neuquén ingresa y selecciona la zona de entrega Neuquén (CP 8300 / Sucursal 185), las promociones de 2da unidad pueden no estar vigentes o no aplicar a la plaza local.

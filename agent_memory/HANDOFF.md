@@ -5,56 +5,40 @@
 ## Datos del relevo
 
 - **Agente que entrega:** Antigravity (harness) — **Modelo real utilizado: Gemini 2.5 Pro**
-- **Fecha y hora:** 03-11-2026 (~21:45 ART / 00:45 UTC 04-11)
-- **Objetivo recibido:** Eliminar el supermercado Coto duplicado en el mapa interactivo (figuraban dos marcadores de Coto en Alto Comahue) y publicar la corrección en producción Vercel.
+- **Fecha y hora:** 04-11-2026 (~19:35 ART / 22:35 UTC)
+- **Objetivo recibido:** Auditoría técnica sobre Coto: investigar por qué figuraba en papas Lay's 330g (o papas en general) una promoción de "70% de descuento en la segunda compra valiendo ~6560 pesos cada una", por qué ese precio no figuraba en la página principal de Coto Neuquén y por qué en internet en general sí aparecía.
 
-## Trabajo realizado en esta sesión
+## Hallazgos de la Auditoría Técnica
 
-1. **Diagnóstico del duplicado de Coto:**
-   - En `src/data/supermarkets.ts`, `ORIGINAL_BRANCHES` contenía la sucursal legacy con ID `'coto_alto_comahue'`.
-   - Cuando se integró el scraper oficial de Coto, las cotizaciones y el feed generaron la sucursal oficial `'coto_185'` en `branches.json`.
-   - Al construir `SUPERMARKETS_NEUQUEN`, como los IDs diferían (`'coto_alto_comahue'` vs `'coto_185'`), la concatenación agregaba ambos registros, provocando que se renderizaran dos pines de Coto en el mapa de Neuquén en la misma ubicación (Dr. Ramón / Alto Comahue).
-2. **Corrección y Unificación:**
-   - Se actualizó el ID de la sucursal en `ORIGINAL_BRANCHES` a `'coto_185'`, conservando el nombre descriptivo (`Coto Hipermercado Alto Comahue`), dirección precisa (`Av. Dr. Ramón 382`), horarios, logo SVG oficial y teléfono.
-   - Con esta unificación, el merge con `branches.json` de-duplica automáticamente el registro.
-   - Verificado con script de Node: el mapa ahora tiene **exactamente 1 supermercado Coto** (`coto_185`), y todos los 7.290 precios de Coto se asocian limpiamente a esta única sucursal física.
-3. **Pruebas y Verificación:**
-   - `node --test tests/*.test.cjs` → **31/31 pass** (4.2s).
-   - `python3 -m unittest discover -s tests -p 'test_*.py'` → **40/40 OK** (0.098s).
-4. **Compilación y Despliegue en Vercel:**
-   - Ejecutado `npm run build` en 22.7s (nuevo bundle cliente: `dist/assets/index-DXx-QxSU.js`, 1.512 kB / 433 kB gzip).
-   - Desplegado a producción con Vercel CLI: `npx vercel deploy --prod --yes`.
-   - Deploy ID: `radar-precios-neuquen-rgjc5le65-radar-de-precios.vercel.app`
-   - Alias oficial activo: **`https://radar-precios-neuquen.vercel.app`**
-   - Verificado en vivo que la página sirve el nuevo bundle `index-DXx-QxSU.js` con el mapa corregido.
+1. **El precio y producto exacto encontrado en los datos del sistema:**
+   - En `live-prices.json` (corrida del 03-11), **Papas Fritas Clásicas Lays 330g** (`ean_7790310985588`) tenía:
+     - `regular_price`: **$10.500,00** (precio de lista de la sucursal 185 Neuquén).
+     - `current_price`: **$6.825,00** (precio con 35% de descuento).
+     - `promo_label`: "Oferta Coto", `discount_percentage`: 35%.
+   - En la misma consulta de papas en la API de Coto figura **Papas Noisette McCain 600g**:
+     - `regular_price`: **$10.094,00**.
+     - `discountPrice`: **$6.561,10** (exactamente los **~$6.560** reportados por el usuario).
+     - `discountText`: "35%Dto".
+2. **Causa raíz técnica en el scraper (`scripts/scrapers/sync_verified_prices.py`):**
+   - En `coto_record()` se extrae el precio de lista de la sucursal 185 (`store: "185"`), pero para los descuentos se itera ciegamente sobre `data.get("discounts")`.
+   - La API de Constructor.io de Coto devuelve `discounts` a nivel global (sin discriminar por `store`).
+   - Coto expresa comercialmente las promociones de **"70% en la 2da unidad"** como un descuento del **35% por unidad llevando 2** ($10.500 x 2 = $21.000 - $7.350 = $13.650 / 2 = $6.825; y $10.094 x 0.65 = $6.561,10).
+   - El colector pisó `current_price` con el precio bonificado unitario llevando dos, **infringiendo la Decisión D4** ("No mostrar promociones por cantidad como oferta confirmada sin comprobar precio, vigencia y presentación en fuente").
+3. **Por qué no estaba en la página principal de Coto Neuquén:**
+   - En Coto Neuquén (góndola online o física), el precio para una sola unidad es el precio de lista ($10.500 o $10.094). El descuento no se aplica si el cliente compra un solo paquete.
+   - Las promociones masivas de 70% en 2da unidad de snacks suelen pertenecer a campañas regionales de AMBA/CABA; en el feed de Constructor.io, las tiendas de AMBA tenían `saleImage1: "oferta.png"`, mientras que en Neuquén figuraba `null`.
+4. **Por qué en internet en general sí aparecía:**
+   - La web de Coto Digital (`cotodigital.com.ar`) y Google indexan por defecto la portada de **Capital Federal / GBA (AMBA)** (sucursal central 091/056), donde los banners y promociones de 2da al 70% se muestran en la home nacional. Al seleccionar la zona de entrega Neuquén (CP 8300 / Sucursal 185), el catálogo regional no muestra esa promoción en su home o no la aplica como oferta directa.
 
-## Archivos modificados en esta sesión
+## Pruebas y estado del sistema
 
-- `src/data/supermarkets.ts` (unificado ID de Coto a `'coto_185'`, eliminando el duplicado)
-- `agent_memory/history/2026-11-03_2120_Antigravity_Gemini_Jumbo_Live.md` (relevo previo archivado)
-- `agent_memory/CURRENT_STATE.md` (documentado deployment vigente y unificación de Coto)
-- `agent_memory/HANDOFF.md` (este relevo)
+- Relevo previo archivado en: `agent_memory/history/2026-11-03_2145_Antigravity_Gemini_Coto_Map_Fix.md`.
+- No se alteró código de producción durante la investigación (modo auditoría).
+- Pruebas unitarias: Node 31/31 pass, Python 40/40 OK.
+- Estado git: árbol de trabajo limpio con commits de la memoria de auditoría.
 
-## Commits realizados
+## Próximo paso recomendado
 
-- `c3dc43e`: feat(jumbo): integrar Jumbo como 8va cadena oficial en catalogo, mapa y produccion Vercel
-- *(Pendiente commit de la de-duplicación de Coto al cierre)*
-
-## Pruebas ejecutadas y resultados
-
-- `node --test tests/*.test.cjs` → **31/31 pass** (4.2s).
-- `python3 -m unittest discover -s tests -p 'test_*.py'` → **40/40 OK** (0.098s).
-- `npm run build` → **OK** (22.7s, bundle `index-DXx-QxSU.js` 1.512 kB / 433 kB gzip).
-- `curl -s https://radar-precios-neuquen.vercel.app` → **HTTP/2 200 OK** sirviendo `index-DXx-QxSU.js`.
-- Comprobación en vivo: **10.862 productos / 11.250 cotizaciones en 8 cadenas activas**, y 1 único Coto en el mapa.
-
-## Estado real del repo/producción al entregar
-
-- **Producción:** 100% al día con 8 cadenas y mapa interactivo sin duplicados.
-- **Git local:** Adelantada a `origin/main` (requiere credenciales GitHub para push).
-- **Working tree:** Limpio tras el commit.
-
-## Próximo paso recomendado (para el agente entrante)
-
-1. Sincronizar el repositorio remoto mediante `git push` una vez que el usuario suministre un token personal de GitHub o clave SSH.
-2. Abordar el soporte de promociones por cantidad de Cooperativa Obrera (`promo_condition`, ver D4 en `DECISIONS.md`).
+- Actualizar `coto_record()` en `sync_verified_prices.py` para:
+  1. Ignorar descuentos en `current_price` si son condicionales ("2da al...", "3x2", "35%Dto" condicionado a volumen), respetando la regla D4 y dejando `current_price = regular_price`.
+  2. Solo aplicar `discountPrice` si `saleImage1` o la concordancia de listas confirma que la sucursal 185 participa de una oferta directa por unidad.
