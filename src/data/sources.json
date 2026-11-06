@@ -169,5 +169,45 @@
       "Presentación contradictoria para ean_7891079012208",
       "Presentación contradictoria para ean_7792798013982"
     ]
+  },
+  "carrefour": {
+    "status": "partial",
+    "last_attempt": "2026-11-06T01:21:26.476054+00:00",
+    "last_success": "2026-11-06T01:21:26.476054+00:00",
+    "message": "499 precios consultados en Carrefour Hipermercado Neuquén Centro.",
+    "errors": [
+      "Presentación contradictoria para ean_7790272000831",
+      "Presentación contradictoria para ean_7790070417916",
+      "Presentación contradictoria para ean_7790503000272",
+      "Presentación contradictoria para ean_7792180134516",
+      "Presentación contradictoria para ean_7799037060325",
+      "Presentación contradictoria para ean_7790199000051",
+      "Presentación contradictoria para ean_7799037060226",
+      "Presentación contradictoria para ean_7790580121303",
+      "Presentación contradictoria para ean_7790040144095",
+      "Presentación contradictoria para ean_7798090321589",
+      "Presentación contradictoria para ean_7790550022258",
+      "Presentación contradictoria para ean_7790170949072",
+      "Presentación contradictoria para ean_7790170949096",
+      "Presentación contradictoria para ean_7791337010444",
+      "Presentación contradictoria para ean_7794820902264",
+      "Presentación contradictoria para ean_744430256247",
+      "Presentación contradictoria para ean_7798085370073",
+      "Presentación contradictoria para ean_7790742345707",
+      "Presentación contradictoria para ean_7799155000197",
+      "Presentación contradictoria para ean_7799155000173",
+      "Presentación contradictoria para ean_7793253003814",
+      "Presentación contradictoria para ean_7793253003807",
+      "Presentación contradictoria para ean_7798339190051",
+      "Presentación contradictoria para ean_7798339190075",
+      "Presentación contradictoria para ean_7798339190068",
+      "Presentación contradictoria para ean_7790070035936",
+      "Presentación contradictoria para ean_7790070036148",
+      "Presentación contradictoria para ean_7790310988480",
+      "Presentación contradictoria para ean_7790314003233",
+      "Presentación contradictoria para ean_7790139003302",
+      "Presentación contradictoria para ean_7790130000720",
+      "Presentación contradictoria para ean_7791866001203"
+    ]
   }
 }

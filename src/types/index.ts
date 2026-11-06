@@ -8,7 +8,8 @@ export type SupermarketId =
   | 'diarco' 
   | 'vital'
   | 'vea'
-  | 'jumbo';
+  | 'jumbo'
+  | 'carrefour';
 
 export type StoreType = 'minorista' | 'mayorista' | 'cooperativa';
 

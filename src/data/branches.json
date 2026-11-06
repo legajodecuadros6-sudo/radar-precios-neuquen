@@ -102,5 +102,41 @@
     "lng": -68.0425,
     "has_ecommerce": true,
     "ecommerce_url": "https://yaguar.com.ar/neuquen/"
+  },
+  {
+    "id": "carrefour_centro",
+    "supermarket_id": "carrefour",
+    "name": "Carrefour Hipermercado Neuquén Centro",
+    "brand_name": "Carrefour",
+    "type": "minorista",
+    "address": "Av. Coronel Olascoaga 350",
+    "city": "Neuquén",
+    "postal_code": "8300",
+    "lat": -38.95876,
+    "lng": -68.05837,
+    "opening_hours": "Lun a Dom 8:00 a 22:00 hs",
+    "logo_color": "#004f9f",
+    "badge_bg": "bg-blue-50",
+    "badge_text": "Carrefour Centro",
+    "has_ecommerce": true,
+    "ecommerce_url": "https://www.carrefour.com.ar"
+  },
+  {
+    "id": "carrefour_antartida",
+    "supermarket_id": "carrefour",
+    "name": "Carrefour Hipermercado Neuquén Antártida",
+    "brand_name": "Carrefour",
+    "type": "minorista",
+    "address": "Antártida Argentina 3600 (esq. Moritán)",
+    "city": "Neuquén Capital",
+    "postal_code": "8300",
+    "lat": -38.94738,
+    "lng": -68.11002,
+    "opening_hours": "Lun a Sáb 8:00 a 21:00 hs, Dom 9:00 a 21:00 hs",
+    "logo_color": "#004f9f",
+    "badge_bg": "bg-blue-50",
+    "badge_text": "Carrefour Antártida",
+    "has_ecommerce": true,
+    "ecommerce_url": "https://www.carrefour.com.ar"
   }
 ]

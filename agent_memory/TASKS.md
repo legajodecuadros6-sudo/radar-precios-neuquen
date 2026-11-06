@@ -28,6 +28,13 @@
   - Activadas 1.777 cotizaciones verificadas de Yaguar Neuquén (`https://yaguar.com.ar/neuquen/producto/...`).
   - Validación de origen regional en `dataQuality.ts` y notas transparentes de compra mínima en UI.
   - Desplegado y verificado en producción Vercel (`index-SvRbYVC9.js`).
+- **FEAT-CARREFOUR-NEUQUEN** · COMPLETADO · Antigravity / Gemini · 2026-11-05T22:30:00-03:00.
+  - Integración completa de Carrefour como 9ª cadena activa en Radar de Precios.
+  - Incorporadas sucursales físicas Carrefour Centro (Olascoaga 350) y Carrefour Antártida (Antártida Arg. 3600) en el mapa interactivo y filtros con logos oficiales.
+  - Colector VTEX con simulación regional estricta (CP 8300) y filtrado de entrega local.
+  - 499 precios verificados en vivo; catálogo ampliado a 11.531 productos y 12.257 cotizaciones.
+  - Suite de pruebas: 50 Python OK, 35 Node PASS, build exitoso (`index-DI9aTYXZ.js`).
+  - Desplegado y verificado en producción Vercel (`https://radar-precios-neuquen.vercel.app`).
 
 ---
 

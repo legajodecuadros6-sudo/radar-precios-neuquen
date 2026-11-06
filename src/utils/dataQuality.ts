@@ -3,7 +3,7 @@ import { PriceObservation, Product, SupermarketId } from '../types';
 export const CHAIN_NAMES: Record<SupermarketId, string> = {
   coto: 'Coto', la_anonima: 'La Anónima', changomas: 'ChangoMás', vea: 'Vea',
   cooperativa_obrera: 'Cooperativa Obrera', yaguar: 'Yaguar', vital: 'Vital', diarco: 'Diarco', makro: 'Makro',
-  jumbo: 'Jumbo'
+  jumbo: 'Jumbo', carrefour: 'Carrefour'
 };
 // Retired from the public catalogue by product decision; historical IDs remain valid.
 export const isActiveChain = (id: string) => id !== 'vea' && id !== 'diarco';
@@ -17,6 +17,7 @@ export function priceIsUsable(observation: PriceObservation, now = Date.now()): 
   // Historical imports must not bypass regional/quantity corrections.
   if (observation.supermarket_id === 'yaguar' && (observation.price_validation !== 'local_unit_price' || !observation.source_url?.startsWith('https://yaguar.com.ar/neuquen/'))) return false;
   if (observation.supermarket_id === 'coto' && observation.current_price < observation.regular_price) return false;
+  if (observation.supermarket_id === 'carrefour' && !observation.source_url?.includes('carrefour.com.ar')) return false;
   if (observation.price_validation === 'pending') return false;
   const time = Date.parse(observation.query_date);
   const maxAgeMs = (observation.supermarket_id === 'makro' ? 7 * 24 : 72) * 3600 * 1000;

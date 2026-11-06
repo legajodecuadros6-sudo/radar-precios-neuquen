@@ -63,6 +63,56 @@ const ORIGINAL_BRANCHES: SupermarketBranchExtended[] = [
   },
 
   // ==========================================
+  // 1.1 CARREFOUR (Neuquén Centro y Antártida Argentina)
+  // ==========================================
+  {
+    id: 'carrefour_centro',
+    supermarket_id: 'carrefour',
+    name: 'Carrefour Hipermercado Neuquén Centro',
+    brand_name: 'Carrefour',
+    short_code: 'CARREFOUR',
+    type: 'minorista',
+    address: 'Av. Coronel Olascoaga 350',
+    city: 'Neuquén Capital',
+    postal_code: '8300',
+    lat: -38.95876,
+    lng: -68.05837,
+    osm_precision: 'Av. Olascoaga 350 Centro',
+    phone: '0800-444-8484',
+    opening_hours: 'Lun a Dom 8:00 a 22:00 hs',
+    logo_color: '#004f9f',
+    badge_bg: 'bg-blue-50 border-blue-200 text-blue-800',
+    badge_text: 'Carrefour Centro',
+    has_ecommerce: true,
+    ecommerce_url: 'https://www.carrefour.com.ar',
+    corridor_zone: 'centro_shopping',
+    logo_svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><rect width="92" height="92" x="4" y="4" rx="20" fill="#ffffff" stroke="#004f9f" stroke-width="3"/><path d="M48 22 C33 22 23 34 23 50 C23 66 33 78 48 78 C53 78 58 76 62 73 L56 65 C53 67 50 68 47 68 C39 68 34 60 34 50 C34 40 39 32 47 32 C50 32 53 33 56 35 L62 27 C58 24 53 22 48 22 Z" fill="#004f9f"/><path d="M50 34 L66 50 L50 66 L55 72 L76 50 L55 28 Z" fill="#e21a22"/><text x="50" y="90" font-size="9" font-weight="900" fill="#004f9f" text-anchor="middle" font-family="sans-serif">CARREFOUR</text></svg>`
+  },
+  {
+    id: 'carrefour_antartida',
+    supermarket_id: 'carrefour',
+    name: 'Carrefour Hipermercado Neuquén Antártida',
+    brand_name: 'Carrefour',
+    short_code: 'CARREFOUR',
+    type: 'minorista',
+    address: 'Antártida Argentina 3600 (esq. Moritán)',
+    city: 'Neuquén Capital',
+    postal_code: '8300',
+    lat: -38.94738,
+    lng: -68.11002,
+    osm_precision: 'Antártida Argentina 3600 y Moritán',
+    phone: '0800-444-8484',
+    opening_hours: 'Lun a Sáb 8:00 a 21:00 hs, Dom 9:00 a 21:00 hs',
+    logo_color: '#004f9f',
+    badge_bg: 'bg-blue-50 border-blue-200 text-blue-800',
+    badge_text: 'Carrefour Antártida',
+    has_ecommerce: true,
+    ecommerce_url: 'https://www.carrefour.com.ar',
+    corridor_zone: 'oeste_cercania',
+    logo_svg: `<svg viewBox="0 0 100 100" class="w-full h-full"><rect width="92" height="92" x="4" y="4" rx="20" fill="#ffffff" stroke="#004f9f" stroke-width="3"/><path d="M48 22 C33 22 23 34 23 50 C23 66 33 78 48 78 C53 78 58 76 62 73 L56 65 C53 67 50 68 47 68 C39 68 34 60 34 50 C34 40 39 32 47 32 C50 32 53 33 56 35 L62 27 C58 24 53 22 48 22 Z" fill="#004f9f"/><path d="M50 34 L66 50 L50 66 L55 72 L76 50 L55 28 Z" fill="#e21a22"/><text x="50" y="90" font-size="9" font-weight="900" fill="#004f9f" text-anchor="middle" font-family="sans-serif">CARREFOUR</text></svg>`
+  },
+
+  // ==========================================
   // 2. CORREDOR RUTA 22 (Alineación exacta sobre la ruta / colectoras)
   // (Perticone / Félix San Martín / Teodoro Planas)
   // ==========================================

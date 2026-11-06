@@ -30,6 +30,7 @@ export function CoveragePanel({ observations, allObservations, sources }: Covera
           <h3 className="font-bold text-xs text-slate-800">{name}</h3>
           <p className="text-xs mt-1 text-slate-600">{rows.length ? `${new Set(rows.map(o => o.product_id)).size} productos · ${new Set(rows.map(o => o.branch_id)).size} sucursal(es)` : 'Sin precios verificados'}</p>
           {id === 'yaguar' && <p className="text-[11px] mt-1 text-slate-600">Sucursal Neuquén (Félix San Martín 1550). Precios oficiales verificados de la tienda Neuquén.</p>}
+          {id === 'carrefour' && <p className="text-[11px] mt-1 text-slate-600">Sucursales Centro (Olascoaga 350) y Antártida (Antártida Arg. 3600). Precios verificados para Neuquén (CP 8300).</p>}
           {dates.length > 0 && <p className="text-[11px] mt-1 text-slate-500">Última consulta: {formatDateDisplay(dates[dates.length - 1])}</p>}
           {(source?.status === 'error' || source?.status === 'partial') && <p className="mt-1 text-[11px] text-amber-700">Última actualización incompleta; revisá la fecha de cada precio</p>}
         </div>;
