@@ -45,6 +45,8 @@ export const AppContent: React.FC = () => {
     message: 'Inicializando conexión...'
   });
 
+  const [loadError, setLoadError] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [chainFilter, setChainFilter] = useState('all');
   const [marketView, setMarketView] = useState<'all' | 'wholesale' | 'offers'>('all');
   const catalogRef = useRef<HTMLDivElement>(null);
@@ -57,6 +59,7 @@ export const AppContent: React.FC = () => {
 
   useEffect(() => {
     let isMounted = true;
+    setIsLoading(true); setLoadError(false);
     fetchLiveRadarData().then(result => {
       if (isMounted) {
         if (result.products && result.products.length > 0) {
@@ -75,11 +78,13 @@ export const AppContent: React.FC = () => {
         });
         setIsLoading(false);
       }
+    }).catch(() => {
+      if (isMounted) { setLoadError(true); setIsLoading(false); setConnectionStatus({isLiveCloud:false, message:'No se pudo descargar el catálogo. Reintentá la conexión.'}); }
     });
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [loadAttempt]);
 
 
   const scrollToDeals = () => {
@@ -134,6 +139,7 @@ export const AppContent: React.FC = () => {
           <p className="mt-3 max-w-2xl text-sm text-slate-300">Escaneá un envase o buscá por nombre. Comparamos la misma presentación cuando tenemos datos suficientes; los precios online pueden diferir de la góndola.</p>
           <p className="mt-3 text-xs text-slate-400">{connectionStatus.message}</p>
         </section>
+        {loadError && <div role="alert" className="mb-4 rounded-xl bg-amber-50 p-4 text-amber-950">No se pudo cargar el catálogo actualizado. <button className="font-bold underline" onClick={() => setLoadAttempt(n => n + 1)}>Reintentar carga</button></div>}
         <CoveragePanel observations={observations} allObservations={allObservations} sources={sources} />
         <label className="block my-4 text-sm font-bold text-slate-700">
           Filtrar por comercio
@@ -142,6 +148,12 @@ export const AppContent: React.FC = () => {
             {Object.entries(ACTIVE_CHAIN_NAMES).map(([id, name]) => <option key={id} value={id}>{name}</option>)}
           </select>
         </label>
+
+        {chainFilter === 'yaguar' && <section className="mb-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">
+          <h2 className="font-bold">Yaguar Neuquén · precio final pendiente</h2>
+          <p className="mt-2">Los importes del catálogo online no están confirmados para comprar en góndola. Podés consultar la tienda; todavía no los incluimos en ahorros ni en el total de la canasta.</p>
+          <a className="mt-2 inline-block font-bold underline" href="https://yaguar.com.ar/neuquen/" target="_blank" rel="noreferrer">Consultar Yaguar Neuquén</a>
+        </section>}
 
         {/* 4 Quick Action Cards (Ofertas, Mapa, Scanner, Changuito) - Superprecio Style */}
         <QuickActionCards onScrollToDeals={scrollToDeals} onRetailOffers={() => { setMarketView('offers'); setChainFilter('all'); setSearchQuery(''); setSelectedCategory('Todos'); }} />

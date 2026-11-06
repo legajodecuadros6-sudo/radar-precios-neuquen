@@ -72,6 +72,7 @@ export interface PriceObservation {
   unit_label: string; // ej: "$ / kg", "$ / litro"
   query_date: string;
   publication_date?: string;
+  price_validation?: 'pending' | 'local_unit_price';
   is_verified: boolean;
   is_demo: boolean;
   source_url: string;

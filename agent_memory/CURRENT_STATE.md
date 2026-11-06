@@ -1,79 +1,46 @@
-# ESTADO ACTUAL — Radar de Precios Neuquén
+# Estado actual — auditado y verificado al 05-11-2026
 
-**Última actualización:** 03-11-2026 (~21:45 ART / 00:45 UTC 04-11) · **Verificado por:** Antigravity (Gemini 2.5 Pro) — contraste empírico de código, tests, bundle y producción Vercel
-**Producción:** https://radar-precios-neuquen.vercel.app (Deploy vigente `radar-precios-neuquen-azvy443s6-radar-de-precios.vercel.app` sirviendo 8 cadenas con bundle liviano `index-DXx-QxSU.js`) · **Repositorio:** github.com/legajodecuadros6-sudo/radar-precios-neuquen
-**Regla:** este archivo solo contiene lo verificable contra código/datos/tests. Lo no verificado se marca explícitamente.
-**Convención de cierre:** ver `REGLAS_TRABAJO.md` antes de finalizar cualquier sesión.
+- **Fecha de auditoría:** 2026-11-05T21:25:00-03:00 (2026-11-06T00:25:00Z)
+- **Agente / Modelo:** Antigravity / Gemini
+- **Rama:** `main` (HEAD actual `013b8ec`)
 
-## Qué funciona (verificado)
+---
 
-- **Producción Vercel con las 8 cadenas oficiales activas y verificadas en vivo**:
-  - Total: **10.862 productos / 11.250 cotizaciones** verificadas servidas desde `https://radar-precios-neuquen.vercel.app/data/live-prices.json`.
-  - Coto (7.290), Yaguar (1.718), Coope (851), La Anónima (676), Jumbo (348), ChangoMás (233), Vital (98), Makro (36).
-  - Trazabilidad 100% verificada a fichas y URLs oficiales de cada comercio.
-- **Jumbo integrado como 8ª fuente oficial**:
-  - Colector `collect_jumbo()` y `jumbo_record()` vía VTEX search + sesión regional en `POST /api/sessions?sc=32` con `regionId: U1cjanVtYm9hcmdlbnRpbmFqNTIxNm5ldXF1ZW4=` (`selectedSeller: jumboargentinaj5216neuquen`).
-  - Batch simulation en `POST /api/checkout/pub/orderForms/simulation?sc=32` para extraer precios locales diferenciados (ej: Coca 2.25L $6.290 vs $6.100 AMBA) y stock local verificado (`available` vs `withoutStock`).
-  - **348 observaciones verificadas** con fecha de hoy, EANs vinculados a catálogo cruzado y ofertas minoristas calculadas (`promo_label: 'Oferta Jumbo'`).
-  - Sucursal física en el mapa y filtros: **Jumbo Hipermercado Portal Patagonia** (Juan Julián Lastra 2400, coordenadas `-38.96021, -68.09273`), con logo verde y badges.
-  - Suite de 3 pruebas dedicadas `JumboTests` (total 40/40 tests Python OK, 31/31 tests Node pass).
-- **Optimización de bundle H3 y carga lazy resuelta**:
-  - `src/data/live-prices.json` (14,7 MB) extraído del empaquetado Vite cliente mediante plugin de intercepción (`stub-live-prices-bundle`).
-  - Catálogo servido estáticamente en `/data/live-prices.json` con compresión gzip nativa y parseo `JSON.parse` asíncrono (~15 ms).
-  - Bundle JavaScript cliente reducido a **1.512 kB** (gzip: **433 kB**), build Vite acelerado y sucursales desacopladas a `branches.json`.
-- **Pipeline de datos trazable** (`scripts/scrapers/sync_verified_prices.py`): 8 fuentes oficiales conectadas.
-  - Saldo en `src/data/price-history.json`: **25.491 puntos históricos** acumulados sin pérdida de trazabilidad.
-  - Nunca inventa precios; escrituras atómicas; de-duplicación por `(id, fecha, precio)`.
-- **Coto integrado como 7ª fuente oficial**:
-  - Colector `collect_coto()` y `coto_record()` vía Constructor.io (`ac.cnstrc.com/search/...`) con key pública del portal oficial.
-  - Validación de sucursal única en Neuquén: **sucursal 185** ("NEUQUEN", HIPER, Ruta Prov. Nº 7 y Dr. Ramón; coords OSM −38.9411580, −68.0631931). Unificada en `src/data/supermarkets.ts` con ID `coto_185` (Coto Hipermercado Alto Comahue), eliminando el marcador duplicado legacy en el mapa.
-  - **98% de cobertura EAN** (`product_main_ean` con checksum validado) habilitando comparación directa entre cadenas.
-  - 2.120 ofertas minoristas importadas con descuento numérico; promociones sin importe numérico descartadas (D4).
-  - Precios publicados tal como los lista el comercio con link a ficha canónica (D12).
-  - Suite de 4 pruebas dedicadas `CotoTests` (total 37/37 tests unitarios Python OK).
-- **Restauración y estabilización de Makro**:
-  - Re-sincronización exitosa contra `https://makro.com.ar/canastabasicaneuquen/` (`status: ok`, `retrieved_at: 2026-11-03T18:59:17Z`, `query_date: 2026-10-31T05:01:00-03:00`).
-  - Ventana de vigencia adaptada a **7 días (168 horas)** en scraper y frontend (`priceIsUsable`), correspondiente al ciclo periódico semanal de la Canasta Básica bajo Ley Provincial 3444 (D11).
-  - Publicado y verificado en vivo en producción Vercel. Makro visible en la sección Mayoristas y en su vista de tienda.
-- **La Anónima integrada como 6ª fuente oficial**:
-  - Colector `collect_la_anonima()` en `scripts/scrapers/sync_verified_prices.py`.
-  - Validación de sucursal mediante API oficial `https://api.laanonima.com.ar/sucursal/8300` (Paseo de la Patagonia, Antártida Argentina 1111, `idSucursalSuper: 8`).
-  - Parser nativo en biblioteca estándar de Python `AnonimaCardParser(HTMLParser)` (0 dependencias externas, 100% compatible con CI).
-  - Normalización de unidades (`kg`, `litro`, `unidad`), detección de multipacks para evitar desnormalización de bultos y descarte de productos sin stock (`stock <= 0` / `-1`).
-  - Extracción de **174 ofertas minoristas activas** (`regular_price > current_price`) con cálculo de `discount_percentage` y `promo_label: 'Oferta online'`, directamente integradas con la sección de ofertas minoristas (`isRetailOffer`).
-  - Extracción de **25 EANs oficiales** verificados mediante fichas de detalle con Flixmedia (`data-flix-ean`), vinculando productos idénticos entre cadenas (ej: Aceite Cocinero 1.5L `7790060023684`).
-  - Suite de pruebas propia: clase `LaAnonimaTests` con 5 casos (total 33/33 tests unitarios Python OK).
-- **Yaguar como 5ª fuente**: 1.718 observaciones de la tienda online Neuquén con mínimos/múltiplos documentados (escala entera ARS, stock validado).
-- **Workflow GHA** `.github/workflows/sync-prices.yml`: cron diaria 11:00 UTC (08:00 ART) + tests previos + commit automático de datos.
-- **Lector de códigos de barras**: software verificado (lookup por EAN funciona tanto para `ean_*` como para productos con atributo `ean`).
-- **UI por comercio / ofertas minoristas / productos pedidos**: vista por cadena, filtro de ofertas minoristas y accesos directos activos.
-- **Exclusión Vea/Diarco**: respetada según decisiones D3/D5.
-- **Git == fuente de verdad de datos**: snapshot + histórico JSON versionados en el repo.
+## Verificado localmente
 
-## Qué está parcialmente implementado
+1. **Ocho cadenas implementadas y activas:**
+   - Cooperativa Obrera, ChangoMás, Makro, Vital, Yaguar, La Anónima, Coto y Jumbo.
+   - Vea y Diarco excluidos de cobertura pública por pedido del usuario.
+2. **Volumen de datos verificado:**
+   - Catálogo activo (`src/data/live-prices.json`): **11.306 productos** y **11.758 cotizaciones**.
+   - Histórico consolidado (`src/data/price-history.json`): **40.725 cotizaciones conservadas sin pérdida** tras unir el histórico local y el remoto de GitHub Actions en commit `013b8ec`.
+   - Resumen público (`public/history-summary.json`): 1.365.737 bytes.
+3. **Calibración regional de colectores:**
+   - **Coto:** Utiliza únicamente precio de lista regional explícito de la sucursal 185 Neuquén. Eliminada la inferencia de descuentos globales ambiguos de Constructor.io (cumple regla D4).
+   - **Yaguar:** Catálogo oficial de Neuquén. Precios marcados preventivamente con `price_validation: 'pending'`, excluidos de canasta y comparador minorista hasta confirmar IVA y condiciones para consumidor final. Lay's 330g actualizado a $9.103 (mínimo 2 u.).
+   - **Jumbo:** Validación estricta de `jumbo_quote_is_local()` (seller Jumbo, unidad 1, multiplicador 1, tax 0, sin priceTags).
+   - **La Anónima:** Validación de stock positivo (rechaza stock ausente, vacío o no numérico).
+4. **Resiliencia de Frontend y Catálogo:**
+   - `src/App.tsx` y `src/services/productService.ts` implementan estado de error y botón de reintento visible ante problemas de red.
+   - Vite intercepta el snapshot con stub en desarrollo/build; la aplicación consume `/data/live-prices.json` e histórico lazy en `/history-summary.json`.
+5. **Suite de pruebas:**
+   - Python: 44 tests unitarios ejecutados y aprobados (`python3 -m unittest discover -s tests -p 'test_*.py'`).
+   - Node: 35 tests ejecutados y aprobados (`node --test tests/*.test.cjs`).
+   - TypeScript + Vite: `npm run build` sin errores de compilación ni de tipado.
 
-- **Promociones complejas**: datos de Coope con condiciones estructuradas existen en su API; condiciones avanzadas no mapeadas aún a la UI.
-- **Supabase**: conectado pero inerte en escritura; decisión de usuario pendiente.
+---
 
-## Qué está roto o degradado (verificado)
+## Estado de Producción en Vercel
 
-- **GitHub sin token en el entorno local**: el push pide credenciales, por lo que los commits locales avanzan sobre `main` local hasta configurar token o SSH.
+- **URL de producción:** `https://radar-precios-neuquen.vercel.app` (Alias oficial).
+- **Despliegue verificado en vivo:**
+  - `GET /` → **HTTP 200**, sirviendo el nuevo bundle `index-C-rP_Szo.js`.
+  - `GET /data/live-prices.json` → **HTTP 200**, sirviendo el catálogo completo actualizado (15.539.840 bytes).
 
-## Componentes principales
+---
 
-```
-Fuentes activas: Coope API (local 124) · ChangoMás VTEX (3608) · Makro HTML (lista diaria) · Vital VTEX (retiro) · Yaguar Store API · La Anónima HTML/API (Paseo de la Patagonia)
-Pipeline: gather/validate/merge + atomic writes → src/data/{live-prices,price-history}.json → build Vite → Vercel
-Frontend: App.tsx → SearchAutocomplete / ProductCard / ProductDetailModal / BarcodeScannerModal /
-          SmartBasketDrawer + basketOptimizer / CoveragePanel / DealsRankingSection / BentoDealsGrid
-Supabase: lectura paginada (mergeCloudData) con reglas estrictas de trazabilidad; hoy inerte
-```
+## Situación de Git y GitHub Actions
 
-## Problemas conocidos (trazados en AUDITORIA_GLM_RADAR_PRECIOS.md)
-
-H1–H21 con prioridad P0–P3 y estado de certeza. Resumen P0: H1 desalineación deploy/código (mitigada por commits 28d2673+), H2 ofertas vacías (re-verificar), H6 cobertura EAN 24,2% (238/984 al 01-11). Detalle completo en el documento de auditoría.
-
-## Credenciales de publicación (verificado 03-11)
-
-- **Vercel**: sesión del CLI válida — token en `~/.local/share/com.vercel.cli/auth.json` (usuario `legajodecuadros6-sudo`, equipo `radar-de-precios`, proyecto vinculado via `.vercel/project.json`). Publicación directa con `npx vercel deploy --prod` ya disponible.
-- **GitHub**: sin token disponible (hosts.yml del gh CLI sin token; sin clave SSH para github.com). **Impide `git push`** → producción (Vercel auto-deploy desde GitHub) y repo no se sincronizan por esa vía hasta conseguir un token o instalarse credenciales.
+- La rama local `main` contiene 22 commits por delante de `origin/main`.
+- **Causa de desfasaje previo:** GitHub Actions ejecuta un cron diario a las 11:00 UTC que hace commit y push a `origin/main` en GitHub. Al tener Vercel conectado al repositorio de GitHub, cada push del bot generaba un autodespliegue con la versión remota desactualizada.
+- **Acción requerida:** Efectuar `git push origin main` con credenciales de usuario o pausar el auto-deploy en Vercel para evitar que el cron nocturno degrade el despliegue manual.

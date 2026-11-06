@@ -37,3 +37,10 @@ test('failed or malformed history can be retried, never silently becomes empty h
   await assert.rejects(api.recordedHistory('p'));
   assert.equal((await api.recordedHistory('p')).length,0);assert.equal(calls,3);
 });
+
+test('public history excludes unresolved regional offers while preserving raw archive',async()=>{
+ const {summarizeHistory}=await import('../scripts/history-summary.mjs');
+ const rows=[row({supermarket_id:'coto',regular_price:150}),row({supermarket_id:'yaguar'}),row({price_validation:'pending'})];
+ const saved=JSON.stringify(rows);
+ assert.deepEqual(summarizeHistory(rows,now),{});assert.equal(JSON.stringify(rows),saved);
+});

@@ -3,6 +3,10 @@ export function summarizeHistory(rows, now = Date.now()) {
   const days = new Map();
   const formatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Argentina/Salta', year: 'numeric', month: '2-digit', day: '2-digit' });
   for (const row of rows) {
+    // Keep raw history untouched, omit misleading references from public charts.
+    if (row.price_validation === 'pending' ||
+        (row.supermarket_id === 'yaguar' && row.price_validation !== 'local_unit_price') ||
+        (row.supermarket_id === 'coto' && row.current_price < row.regular_price)) continue;
     const time = Date.parse(row.query_date);
     if (['vea', 'diarco'].includes(row.supermarket_id) || !row.is_verified || row.is_demo || !row.branch_id || !row.product_id ||
         !Number.isFinite(time) || time > now || now - time > 91 * 86400000 ||

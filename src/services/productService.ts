@@ -95,6 +95,7 @@ export async function fetchLiveRadarData(): Promise<DataFetchResult> {
           const res = await fetch('/data/live-prices.json', { cache: 'no-cache' });
           if (res.ok) {
             const liveSnapshot = await res.json();
+            if (!Array.isArray(liveSnapshot?.products) || !Array.isArray(liveSnapshot?.observations)) throw new Error('Catálogo inválido');
             const parsed = buildRadarData(liveSnapshot);
             cachedRadarData = parsed;
             return parsed;
@@ -102,7 +103,9 @@ export async function fetchLiveRadarData(): Promise<DataFetchResult> {
         } catch (err) {
           console.warn('No se pudo cargar /data/live-prices.json estático, usando respaldo local', err);
         }
-        return localData;
+        if (cachedRadarData) return { ...cachedRadarData, message: 'No se pudo actualizar. Se conserva el catálogo de esta sesión y sus fechas originales.' };
+        if (localData.observations.some(o => o.is_verified)) return localData;
+        throw new Error('No se pudo descargar el catálogo. Reintentá la conexión.');
       })().finally(() => {
         pendingFetch = null;
       });

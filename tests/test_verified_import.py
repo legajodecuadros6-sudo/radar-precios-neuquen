@@ -183,8 +183,8 @@ class CotoTests(TestCase):
         product,obs=sync.coto_record(self.item(),'185',self.BRANCH,'2026-11-03T20:00:00+00:00')
         self.assertEqual(product['id'],'ean_7798113301024');self.assertEqual(product['ean'],'7798113301024')
         self.assertEqual(product['unit_measure'],'litro');self.assertEqual(product['net_content_number'],2.25)
-        self.assertEqual(obs['regular_price'],2420);self.assertEqual(obs['current_price'],2057)
-        self.assertEqual(obs['discount_percentage'],15);self.assertEqual(obs['unit_label'],'$ / L')
+        self.assertEqual(obs['regular_price'],2420);self.assertEqual(obs['current_price'],2420)
+        self.assertNotIn('discount_percentage',obs);self.assertEqual(obs['unit_label'],'$ / L')
         self.assertTrue(obs['source_url'].startswith('https://www.cotodigital.com.ar/sitios/cdigi/browse/_/R-'))
         self.assertIn('Confirmar stock',obs['notes'])
     def test_without_offer_uses_list_price(self):
@@ -350,3 +350,27 @@ class JumboTests(TestCase):
         self.assertEqual(sync.JUMBO_SELLER, 'jumboargentinaj5216neuquen')
 
 
+
+class RegionalSafetyTests(TestCase):
+    def test_yaguar_request_error_is_reported_without_attribute_error(self):
+        with mock.patch.object(sync,'yagu_json',side_effect=[{'name':'Yaguar Neuquen','timezone_string':'America/Argentina/Buenos_Aires'},ValueError('fuente caída')]):
+            with self.assertRaisesRegex(ValueError,'fuente caída'):
+                sync.collect_yaguar('date',terms=['lays'])
+
+    def test_yaguar_partial_failure_is_not_reported_as_complete(self):
+        item={'id':1}
+        record=({'id':'p'}, {'id':'o'})
+        with mock.patch.object(sync,'yagu_json',side_effect=[{'name':'Yaguar Neuquen','timezone_string':'America/Argentina/Buenos_Aires'},[item],ValueError('error segundo término')]),mock.patch.object(sync,'yagu_record',return_value=record):
+            _,observations,_,errors=sync.collect_yaguar('date',terms=['lays','manaos'])
+        self.assertEqual(len(observations),1)
+        self.assertTrue(any('error segundo término' in e for e in errors))
+
+    def test_unknown_stock_is_not_verification(self):
+        for stock in ['',None,'unknown','-1','0']:
+            self.assertIsNone(sync.anonima_record({'code':'123','name':'Leche 1L','price':'100','stock':stock},{},'date'))
+
+    def test_jumbo_requires_matching_local_unit_quote(self):
+        row={'seller':sync.JUMBO_SELLER,'availability':'available','quantity':1,'measurementUnit':'un','unitMultiplier':1,'price':10000,'sellingPrice':10000,'tax':0,'priceTags':[]}
+        self.assertTrue(sync.jumbo_quote_is_local(row))
+        for bad in [{'seller':'1'},{'quantity':2},{'measurementUnit':'kg'},{'unitMultiplier':6},{'tax':10},{'sellingPrice':9000},{'priceTags':[{'name':'promo'}]}]:
+            self.assertFalse(sync.jumbo_quote_is_local({**row,**bad}))

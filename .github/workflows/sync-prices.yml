@@ -12,7 +12,7 @@ concurrency:
 jobs:
   sync-prices:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -33,6 +33,9 @@ jobs:
         run: python3 scripts/scrapers/sync_verified_prices.py
       - name: Comprobar compilación
         run: npm run build
+      - name: Verificar que el catálogo completo se publica
+        run: |
+          node --input-type=module -e "import fs from 'node:fs'; const source=fs.readFileSync('src/data/live-prices.json','utf8'); const deployed=fs.readFileSync('dist/data/live-prices.json','utf8'); if (source !== deployed) throw Error('El catálogo publicado no coincide con la importación');"
       - name: Guardar datos e historial y estado de fuentes
         run: |
           git config user.name 'github-actions[bot]'

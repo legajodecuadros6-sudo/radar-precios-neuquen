@@ -14,6 +14,10 @@ export function mapSupermarketId(value: string): SupermarketId | undefined {
   return (Object.keys(CHAIN_NAMES) as SupermarketId[]).find(id => text.includes(id.replace(/_/g, '')) || (id === 'cooperativa_obrera' && text.includes('cooperativa')) || (id === 'la_anonima' && text.includes('anonima')));
 }
 export function priceIsUsable(observation: PriceObservation, now = Date.now()): boolean {
+  // Historical imports must not bypass regional/quantity corrections.
+  if (observation.supermarket_id === 'yaguar' && observation.price_validation !== 'local_unit_price') return false;
+  if (observation.supermarket_id === 'coto' && observation.current_price < observation.regular_price) return false;
+  if (observation.price_validation === 'pending') return false;
   const time = Date.parse(observation.query_date);
   const maxAgeMs = (observation.supermarket_id === 'makro' ? 7 * 24 : 72) * 3600 * 1000;
   return isActiveChain(observation.supermarket_id) && observation.is_verified && !observation.is_demo && Boolean(observation.branch_id) &&

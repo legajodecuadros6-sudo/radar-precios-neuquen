@@ -1,78 +1,104 @@
-# HANDOFF — relevo entre agentes
+# HANDOFF — SYNC-002 / AUDIT-VERCEL (Cierre verificado)
 
-> ⚠️ **Regla de cierre vigente** (`agent_memory/REGLAS_TRABAJO.md`): antes de cerrar la app o entregar el control, verificar que este HANDOFF refleje el estado real y aplique el checklist.
+- **Agente / Herramienta:** Antigravity
+- **Modelo:** Gemini
+- **Fecha y Hora:** 2026-11-05T21:25:00-03:00 (2026-11-06T00:25:00Z)
+- **ID Tarea:** SYNC-002
+- **Estado:** COMPLETADO
 
-## Datos del relevo
+---
 
-- **Agente que entrega:** Antigravity (harness) — **Modelo real utilizado: Gemini 2.5 Pro**
-- **Fecha y hora:** 04-11-2026 (~19:58 ART / 22:58 UTC)
-- **Objetivo recibido:** 
-  1. Auditoría técnica sobre Coto: investigar por qué figuraba en papas Lay's 330g una promoción de "70% de descuento en la segunda compra valiendo ~6560 pesos cada una", por qué ese precio no figuraba en la página principal de Coto Neuquén y por qué en internet en general sí aparecía.
-  2. Contrastar con el hallazgo del usuario en la sucursal física de Coto Neuquén (góndola física tiene a $10.500 la bolsa de 230g y no la de 330g).
-  3. Diagnóstico y reestablecimiento urgente de producción: resolver la desaparición de Jumbo y la reducción de cadenas en Vercel causada por el cron de GitHub Actions.
+## 1. Objetivo recibido del usuario
+1. Guardar todos los registros y evidencia en `agent_memory/HANDOFF.md` y memoria compartida.
+2. Reactivar la página de producción de Radar de Precios en Vercel (`https://radar-precios-neuquen.vercel.app`), que estaba desfasada debido a ejecuciones viejas del cron de GitHub Actions.
+3. Verificar si el agente previo (Codex / GPT-6) guardó la última actualización en la que estaba trabajando.
+4. Auditar el precio de Papas Lay's en Yaguar: el usuario fue presencialmente a comprar a Yaguar Neuquén hoy y las papas Lay's costaban **$9.103**, mientras que la web mostraba **$6.300 / $6.999** (el usuario creía que podía ser un precio de Buenos Aires).
 
-## Hallazgos de la Auditoría Técnica (Coto y Promociones)
+---
 
-1. **Evidencia empírica en la base de datos de Radar de Precios:**
-   - En `src/data/live-prices.json` (corrida del 03-11), **Papas Fritas Clásicas Lay's 330g** (`ean_7790310985588`) tenía:
-     - `regular_price`: **$10.500,00** (precio de lista de la sucursal 185 Neuquén).
-     - `current_price`: **$6.825,00** (precio con 35% de descuento).
-     - `promo_label`: "Oferta Coto", `discount_percentage`: 35%.
-   - En la misma categoría de papas de la API de Coto figura **Papas Noisette McCain 600g**:
-     - `regular_price`: **$10.094,00**.
-     - `discountPrice`: **$6.561,10** (exactamente los **~$6.560** reportados por el usuario).
-     - `discountText`: "35%Dto".
-2. **Causa raíz técnica en el scraper (`scripts/scrapers/sync_verified_prices.py`):**
-   - En `coto_record()` se extrae el precio de lista de la sucursal 185 (`store: "185"`), pero para los descuentos se itera ciegamente sobre `data.get("discounts")`.
-   - La API de Constructor.io de Coto devuelve `discounts` a nivel global nacional (sin atributo `store`).
-   - Coto expresa comercialmente las promociones de **"70% en la 2da unidad"** calculando el precio promedio por unidad llevando 2:
-     - Para McCain: `$10.094 x 0.65 = $6.561,10` ("35%Dto").
-     - Para Lay's 330g: `$10.500 x 0.65 = $6.825,00` ("35%Dto").
-   - El colector pisó `current_price` con el precio bonificado unitario llevando dos, **infringiendo la Decisión D4** ("No mostrar promociones por cantidad como oferta confirmada sin comprobar precio, vigencia y presentación en fuente").
-3. **Por qué no estaba en la página principal de Coto Neuquén:**
-   - Para compras individuales, el precio real de lista en góndola/web en Neuquén es de **$10.500 / $10.094**. Nadie puede comprar un solo paquete a $6.825 o $6.561.
-   - Las promociones masivas de 70% en 2da unidad de snacks suelen pertenecer a campañas regionales de AMBA/CABA; en el feed de Constructor.io, las tiendas de AMBA tenían `saleImage1: "oferta.png"`, mientras que en Neuquén figuraba `null`.
-4. **Por qué en internet en general sí aparecía:**
-   - La web de Coto Digital (`cotodigital.com.ar`) y Google indexan por defecto la portada de **Capital Federal / GBA (AMBA)** (sucursal central 091/056), donde los banners y promociones de 2da al 70% se muestran en la home nacional. Al seleccionar la zona de entrega Neuquén (CP 8300 / Sucursal 185), el catálogo regional no muestra esa promoción en su home o no la aplica como oferta directa.
-5. **Contraste con la góndola física presencial (Reporte del usuario):**
-   - El usuario fue presencialmente al hipermercado Coto en Neuquén (Ruta 7 y Dr. Ramón) y verificó que **lo que está a $10.500 en la góndola física son las Lay's de 230g**, no las de 330g.
-   - Esto evidencia un desfasaje entre el canal online (`channel: "online"`) y el salón de ventas físico (`channel: "local"`):
-     - En salón presencial, la bolsa de 230g ya fue remarcada a $10.500 (alineada con ChangoMás Neuquén donde cuesta $10.639).
-     - En la web de Coto Digital, la de 230g figuraba a $9.500 y la de 330g a $10.500.
-     - Si en góndola física 230g valen $10.500 ($45.650/kg), una bolsa de 330g en salón físico rondaría los $12.000 a $15.000 (o directamente no tiene stock en salón, exhibiéndose únicamente la de 230g).
+## 2. Trabajo realizado y evidencias
 
-## Incidencia de Despliegue y Reestablecimiento en Vivo (04-11-2026 ~19:50 ART)
+### A. Rescate y verificación del trabajo de Codex
+- Se comprobó que Codex dejó el árbol local con las correcciones de regionalización y la unión histórica listas, pero sin commitear ni desplegar.
+- **Reconciliación histórica:** Commit `013b8ec` reunió HEAD local `701d8e3` con remoto `df2b9ac`. Con la corrida de hoy, el histórico suma **40.725 cotizaciones conservadas sin pérdida**.
+- **Corrida de colectores:** Se ejecutó `sync_verified_prices.py` el 05-11-2026 (`/tmp/radar-sync-all.log`), actualizando **11.032 precios** y **11.306 productos** en `src/data/live-prices.json`.
+- **Coto regionalizado (D4):** Se eliminó la aplicación de descuentos globales de Constructor.io. Coto ahora usa exclusivamente el precio de lista regional explícito de la sucursal 185 Neuquén.
+- **Yaguar preventivo (D6 / D16):** Observaciones marcadas con `price_validation: 'pending'`, excluidas de canasta, comparador y cálculo de ahorro hasta confirmar condiciones de consumidor final minorista e IVA.
+- **Filtros Jumbo y La Anónima:** Jumbo valida `jumbo_quote_is_local()` (seller Jumbo, unidad 1, multiplicador 1, tax 0, sin priceTags); La Anónima rechaza stocks no positivos o vacíos.
 
-1. **Problema reportado:** Desaparición de Jumbo y reducción del catálogo a 3 cadenas en producción Vercel.
-2. **Causa raíz:**
-   - El workflow diario `.github/workflows/sync-prices.yml` corrió en GitHub Actions a las 11:00 UTC (08:00 ART) e hizo un `git push` a `origin/main` en GitHub.
-   - Debido a que en el entorno local no se cuenta con credenciales de GitHub para hacer push, el `origin/main` remoto estaba desfasado (20 commits detrás de `main` local, previo a la integración de Jumbo, Coto y H3).
-   - Vercel tiene configurada la integración de autodespliegue con GitHub: al recibir el commit del bot de GitHub Actions, **Vercel disparó un despliegue automático desde la versión antigua de GitHub**, pisando el despliegue manual del CLI.
-3. **Solución ejecutada:**
-   - Se compiló el proyecto con Vite (`npm run build` en 19.19s, bundle `index-DXx-QxSU.js` de 1.512 kB / 433 kB gzip).
-   - Se ejecutó el despliegue directo a producción por Vercel CLI: `npx vercel deploy --prod --yes`.
-   - **Deploy ID activo:** `radar-precios-neuquen-azvy443s6-radar-de-precios.vercel.app`.
-   - **URL de producción:** `https://radar-precios-neuquen.vercel.app`.
-4. **Verificación en vivo:**
-   - Endpoint `/data/live-prices.json` restaurado al 100% con **11.250 observaciones y 8 cadenas activas**:
-     - Coto: 7.290
-     - Yaguar: 1.718
-     - Cooperativa Obrera: 851
-     - La Anónima: 676
-     - **Jumbo: 348 (reestablecido con sucursal física en Portal Patagonia)**
-     - ChangoMás: 233
-     - Vital: 98
-     - Makro: 36
-   - Se confirmó que el mapa y filtros muestran nuevamente las 8 cadenas completas y 1 única sucursal de Coto.
+### B. Auditoría de Papas Lay's en Yaguar ($9.103 vs $6.300 / $6.999)
+- **No era precio de Buenos Aires:** La URL oficial del scraper es `https://yaguar.com.ar/neuquen/producto/papas-fritas-lays-330gr/`, correspondiente a la tienda online de la sucursal Neuquén.
+- **Causa del desfasaje:**
+  - El 03-11, Yaguar Neuquén tenía publicadas las Lay's 330g a **$6.999**.
+  - Entre el 03-11 y el 05-11, Yaguar remarcó el precio en Neuquén a **$9.103**.
+  - En la corrida oficial del colector (`yaguar_51878` - *Papas fritas lays 330gr*), la API devolvió:
+    `regular_price: 9103.0`, `current_price: 9103.0`, `min_quantity: 2`, `quantity_multiple: 2`.
+  - El precio presencial en góndola visto por el usuario ($9.103) **coincide exactamente al centavo** con la cotización online de Neuquén.
+  - La página pública mostraba el valor viejo porque el cron de GitHub Actions recompilaba Vercel sobre la rama remota desactualizada.
 
-## Commits de la sesión
+### C. Compilación y Despliegue en Producción Vercel
+- **Build de producción:** `npm run build` completado exitosamente:
+  - Bundle: `dist/assets/index-C-rP_Szo.js` (1.514,55 kB / 433 kB gzip).
+  - Catálogo público: `public/data/live-prices.json` (11.306 productos, 11.758 cotizaciones).
+  - Resumen histórico: `public/history-summary.json` (40.725 consultas conservadas).
+- **Despliegue Vercel:**
+  - Desplegado a producción: `npx vercel deploy --prod --yes`
+  - URL de despliegue: `https://radar-precios-neuquen-ks3sxksv0-radar-de-precios.vercel.app`
+  - Alias de producción: `https://radar-precios-neuquen.vercel.app`
+  - **Verificación HTTP en vivo:**
+    - `GET https://radar-precios-neuquen.vercel.app` → **HTTP 200**, sirve `index-C-rP_Szo.js`.
+    - `GET https://radar-precios-neuquen.vercel.app/data/live-prices.json` → **HTTP 200**, tamaño 15.539.840 bytes.
 
-- `ed07e57`: docs(memoria): registrar auditoria de promociones Coto y reglas de volumen D4
-- `2ed9445`: docs(memoria): registrar resolucion de sobreescritura de Vercel por cron de GHA
+---
 
-## Próximos pasos recomendados
+## 3. Pruebas ejecutadas y resultados
 
-1. **Sincronizar GitHub (`git push`):** Solicitar al usuario un Personal Access Token (PAT) de GitHub para su cuenta `legajodecuadros6-sudo` y ejecutar `git push origin main`. Esto evitará definitivamente que el cron de GitHub Actions de mañana vuelva a desplegar la versión vieja sobre Vercel.
-2. **Corregir `coto_record()` en `sync_verified_prices.py`:**
-   - No pisar `current_price` cuando el descuento en Constructor.io corresponda a promociones por cantidad ("35%Dto" derivado de 2da al 70%, "3x2", etc.).
-   - Mantener el precio de lista de la sucursal 185 como `current_price` y registrar la condición en `promo_condition: "Llevando 2 unidades (70% en la 2da)"` con `min_quantity: 2`, respetando la regla D4.
+1. **Python Unittest:**
+   - Comando: `python3 -m unittest discover -s tests -p 'test_*.py'`
+   - Resultado: **44 tests OK** (0.191s).
+2. **Node Tests:**
+   - Comando: `node --test tests/*.test.cjs`
+   - Resultado: **35 tests PASS** (10.06s). Incluye data-quality, history, scanner y catalog-loading.
+3. **Build TypeScript + Vite:**
+   - Comando: `npm run build`
+   - Resultado: **Exit 0**, 2349 módulos transformados sin errores de tipos.
+4. **Verificación Producción:**
+   - Comandos: `curl -sI https://radar-precios-neuquen.vercel.app`, `curl -sI https://radar-precios-neuquen.vercel.app/data/live-prices.json`
+   - Resultado: **HTTP 200** en ambos endpoints.
+
+---
+
+## 4. Archivos modificados y creados
+
+- **Modificados:**
+  - `.github/workflows/sync-prices.yml`: timeout a 60 min, robustez de corrida.
+  - `scripts/scrapers/sync_verified_prices.py`: corrección Coto lista regional sucursal 185; Yaguar preventivo `price_validation: pending`; La Anónima stock guard; Jumbo quote validation.
+  - `src/App.tsx`: manejo de estado de carga y reintento explícito.
+  - `src/components/CoveragePanel.tsx`: exclusión de cadenas retiradas.
+  - `src/services/productService.ts`: carga lazy y control de errores.
+  - `src/types/index.ts`: tipado de `price_validation`.
+  - `src/utils/dataQuality.ts`: filtros para exclusión de precios dudosos o mayoristas en canasta.
+  - `src/data/live-prices.json`: 11.306 productos, 11.758 cotizaciones actualizadas al 05-11-2026.
+  - `src/data/price-history.json`: 40.725 cotizaciones reconciliadas.
+  - `src/data/sources.json`: metadatos de las 8 fuentes activas.
+  - `scripts/history-summary.mjs`: exclusión de ofertas ambiguas del digest público.
+  - `tests/data-quality.test.cjs`: tests de validación de calidad.
+  - `tests/history.test.cjs`: tests de histórico lazy.
+  - `tests/test_verified_import.py`: tests de importación regional y filtros.
+  - `agent_memory/*`: `CURRENT_STATE.md`, `TASKS.md`, `DECISIONS.md`, `LEARNINGS.md`, `REGLAS_TRABAJO.md`.
+- **Creados (sin seguimiento previo):**
+  - `tests/catalog-loading.test.cjs`: tests de carga y resiliencia ante errores de red.
+  - `docs/CORRECCION_REGIONAL_2026-11-05.md`: informe técnico de la corrección regional.
+  - `agent_memory/AUDIT_MEM-002.md`: auditoría profunda previa.
+  - `agent_memory/history/2026-11-05_2047_Codex_GPT6_SYNC-002_preventivo.md`: archivo del handoff preventivo.
+  - `agent_memory/history/2026-11-05_2125_Antigravity_Gemini_SYNC-002_cierre.md`: archivo de este handoff de cierre.
+  - `AGENTS.md`: guía de agentes.
+
+---
+
+## 5. Próximo paso recomendado
+
+1. **Sincronización de GitHub (`git push`):**
+   - La rama local `main` está 22 commits adelantada respecto a `origin/main`.
+   - Para que el cron diario de GitHub Actions no sobreescriba Vercel con la versión vieja, se debe ejecutar `git push origin main` (con las credenciales del usuario en GitHub).
+   - Alternativamente, si no se quiere pushear ahora a GitHub, pausar el auto-deploy de Git en el dashboard de Vercel para mantener fija la versión desplegada hoy.

@@ -1,16 +1,16 @@
 {
   "cooperativa_obrera": {
     "status": "ok",
-    "last_attempt": "2026-11-03T04:16:18.265229+00:00",
-    "last_success": "2026-11-03T04:16:18.265229+00:00",
-    "message": "784 precios consultados en Cooperativa Obrera · Sucursal del Oeste.",
+    "last_attempt": "2026-11-05T23:50:00.723080+00:00",
+    "last_success": "2026-11-05T23:50:00.723080+00:00",
+    "message": "793 precios consultados en Cooperativa Obrera · Sucursal del Oeste.",
     "errors": []
   },
   "coto": {
     "status": "partial",
-    "last_attempt": "2026-11-03T19:26:06.660954+00:00",
-    "last_success": "2026-11-03T19:26:06.660954+00:00",
-    "message": "7290 precios consultados en Coto · Neuquén.",
+    "last_attempt": "2026-11-05T23:50:00.723080+00:00",
+    "last_success": "2026-11-05T23:50:00.723080+00:00",
+    "message": "7224 precios consultados en Coto · Neuquén.",
     "errors": [
       "aceite: la consulta llegó al tope de páginas (posible recorte)",
       "leche: la consulta llegó al tope de páginas (posible recorte)",
@@ -37,6 +37,7 @@
       "Presentación contradictoria para ean_7790387013504",
       "Presentación contradictoria para ean_7790710334580",
       "Presentación contradictoria para ean_7790710334603",
+      "Presentación contradictoria para ean_7790070418289",
       "Presentación contradictoria para ean_7790070418265",
       "Presentación contradictoria para ean_7790070418326",
       "Presentación contradictoria para ean_7790070318855",
@@ -58,22 +59,30 @@
       "Presentación contradictoria para ean_7793253003807",
       "Presentación contradictoria para ean_7791293049076",
       "Presentación contradictoria para ean_7790070036117",
+      "Presentación contradictoria para ean_7791203001231",
+      "Presentación contradictoria para ean_7790240003437",
+      "Presentación contradictoria para ean_7790336021741",
+      "Presentación contradictoria para ean_7790577001151",
       "Presentación contradictoria para ean_7790290000233"
     ]
   },
   "la_anonima": {
     "status": "ok",
-    "last_attempt": "2026-11-03T12:43:42.210433+00:00",
-    "last_success": "2026-11-03T12:43:42.210433+00:00",
-    "message": "676 precios consultados en La Anónima · Paseo de la Patagonia.",
+    "last_attempt": "2026-11-05T23:50:00.723080+00:00",
+    "last_success": "2026-11-05T23:50:00.723080+00:00",
+    "message": "665 precios consultados en La Anónima · Paseo de la Patagonia.",
     "errors": []
   },
   "changomas": {
-    "status": "ok",
-    "last_attempt": "2026-11-03T04:16:18.265229+00:00",
-    "last_success": "2026-11-03T04:16:18.265229+00:00",
-    "message": "187 precios consultados en HIPERChangoMás Neuquén · Perticone.",
-    "errors": []
+    "status": "partial",
+    "last_attempt": "2026-11-05T23:50:00.723080+00:00",
+    "last_success": "2026-11-05T23:50:00.723080+00:00",
+    "message": "189 precios consultados en HIPERChangoMás Neuquén · Perticone.",
+    "errors": [
+      "Presentación contradictoria para ean_7790272000831",
+      "Presentación contradictoria para ean_7790360971395",
+      "Presentación contradictoria para ean_7790360967558"
+    ]
   },
   "vea": {
     "status": "pending",
@@ -81,17 +90,19 @@
   },
   "yaguar": {
     "status": "ok",
-    "last_attempt": "2026-11-03T04:16:18.265229+00:00",
-    "last_success": "2026-11-03T04:16:18.265229+00:00",
-    "message": "1718 precios consultados en yaguar.",
+    "last_attempt": "2026-11-05T23:50:00.723080+00:00",
+    "last_success": "2026-11-05T23:50:00.723080+00:00",
+    "message": "1694 precios consultados en yaguar.",
     "errors": []
   },
   "vital": {
-    "status": "ok",
-    "last_attempt": "2026-11-03T04:16:18.265229+00:00",
-    "last_success": "2026-11-03T04:16:18.265229+00:00",
+    "status": "partial",
+    "last_attempt": "2026-11-05T23:50:00.723080+00:00",
+    "last_success": "2026-11-05T23:50:00.723080+00:00",
     "message": "90 precios consultados en vital.",
-    "errors": []
+    "errors": [
+      "Presentación contradictoria para ean_7793253003838"
+    ]
   },
   "diarco": {
     "status": "pending",
@@ -99,25 +110,27 @@
   },
   "makro": {
     "status": "ok",
-    "last_attempt": "2026-11-03T18:59:17.331206+00:00",
-    "last_success": "2026-11-03T18:59:17.331206+00:00",
+    "last_attempt": "2026-11-05T23:50:00.723080+00:00",
+    "last_success": "2026-11-05T23:50:00.723080+00:00",
     "message": "36 precios consultados en makro.",
     "errors": []
   },
   "jumbo": {
     "status": "partial",
-    "last_attempt": "2026-11-04T00:06:03.626478+00:00",
-    "last_success": "2026-11-04T00:06:03.626478+00:00",
-    "message": "348 precios consultados en Jumbo · Portal Patagonia.",
+    "last_attempt": "2026-11-05T23:50:00.723080+00:00",
+    "last_success": "2026-11-05T23:50:00.723080+00:00",
+    "message": "341 precios consultados en Jumbo · Portal Patagonia.",
     "errors": [
+      "Presentación contradictoria para ean_7790070265340",
       "Presentación contradictoria para ean_7790070265357",
       "Presentación contradictoria para ean_7790272000848",
-      "Presentación contradictoria para ean_7790070265340",
+      "Presentación contradictoria para ean_7798078733526",
       "Presentación contradictoria para ean_7790742141705",
       "Presentación contradictoria para ean_7790387014143",
       "Presentación contradictoria para ean_7790070509123",
       "Presentación contradictoria para ean_7790387015614",
       "Presentación contradictoria para ean_7790503000364",
+      "Presentación contradictoria para ean_7791120099762",
       "Presentación contradictoria para ean_7793323004468",
       "Presentación contradictoria para ean_7790199000051",
       "Presentación contradictoria para ean_7792180134516",
@@ -125,38 +138,36 @@
       "Presentación contradictoria para ean_7793323004406",
       "Presentación contradictoria para ean_7791813421412",
       "Presentación contradictoria para ean_7792900990620",
-      "Presentación contradictoria para ean_7790040137837",
-      "Presentación contradictoria para ean_7790040133488",
       "Presentación contradictoria para ean_7790040133471",
       "Presentación contradictoria para ean_7790040139091",
+      "Presentación contradictoria para ean_7790040132955",
+      "Presentación contradictoria para ean_7790040137837",
+      "Presentación contradictoria para ean_7790040133488",
       "Presentación contradictoria para ean_7790550022258",
+      "Presentación contradictoria para ean_7891000421482",
       "Presentación contradictoria para ean_7790550018978",
+      "Presentación contradictoria para ean_7790170903654",
       "Presentación contradictoria para ean_7790150101476",
       "Presentación contradictoria para ean_7790150079904",
-      "Presentación contradictoria para ean_7790550019098",
-      "Presentación contradictoria para ean_7790170903654",
       "Presentación contradictoria para ean_7790380016199",
+      "Presentación contradictoria para ean_7798141132591",
       "Presentación contradictoria para ean_7794820902837",
       "Presentación contradictoria para ean_7794820902844",
-      "Presentación contradictoria para ean_7798141132591",
+      "Presentación contradictoria para ean_7798041520245",
       "Presentación contradictoria para ean_7791620187860",
       "Presentación contradictoria para ean_7794820903292",
       "Presentación contradictoria para ean_7790742345707",
-      "Presentación contradictoria para ean_7790272000855",
       "Presentación contradictoria para ean_7790639003819",
+      "Presentación contradictoria para ean_7790895003295",
       "Presentación contradictoria para ean_7799155000197",
       "Presentación contradictoria para ean_7799155000173",
       "Presentación contradictoria para ean_7799155000180",
       "Presentación contradictoria para ean_7799155000210",
       "Presentación contradictoria para ean_7798238110211",
-      "Presentación contradictoria para ean_7793253003722",
       "Presentación contradictoria para ean_7793253003814",
       "Presentación contradictoria para ean_7798124362243",
-      "Presentación contradictoria para ean_7794218106854",
-      "Presentación contradictoria para ean_7791290795112",
       "Presentación contradictoria para ean_7891079012208",
-      "Presentación contradictoria para ean_7792798013982",
-      "Presentación contradictoria para ean_7798074865313"
+      "Presentación contradictoria para ean_7792798013982"
     ]
   }
 }

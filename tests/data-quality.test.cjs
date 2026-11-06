@@ -78,7 +78,7 @@ test('wholesale bundles require multiples, not just the minimum quantity',()=>{
 });
 test('bulk prices stay visible without becoming single-unit savings',()=>{
   const {analyzeProductPrices}=load('src/utils/priceAnalyzer.ts');
-  const result=analyzeProductPrices(product,[obs({min_quantity:12,quantity_multiple:12,current_price:50}),obs({id:'retail',branch_id:'other',current_price:100})]);
+  const result=analyzeProductPrices(product,[obs({supermarket_id:'vital',min_quantity:12,quantity_multiple:12,current_price:50}),obs({id:'retail',branch_id:'other',current_price:100})]);
   assert.equal(result.observations.length,2);assert.equal(result.min_price,100);assert.equal(result.max_savings_amount,0);
   const bulk=analyzeProductPrices(product,[obs({min_quantity:12,quantity_multiple:12})]);
   assert.equal(bulk.observations.length,1);assert.equal(bulk.min_price,0);
@@ -89,7 +89,7 @@ test('catalog index preserves analyses and never combines different products',()
   const {buildCatalogIndex,compareCatalogProducts}=load('src/utils/catalogIndex.ts');
   const {analyzeProductPrices}=load('src/utils/priceAnalyzer.ts');
   const products=[product,{...product,id:'bulk'},{...product,id:'missing'}];
-  const rows=[obs(),obs({product_id:'bulk',min_quantity:12,current_price:10}),obs({product_id:'missing',query_date:'2020-01-01'})];
+  const rows=[obs(),obs({supermarket_id:'vital',product_id:'bulk',min_quantity:12,current_price:10}),obs({product_id:'missing',query_date:'2020-01-01'})];
   const index=buildCatalogIndex(products,rows);
   for(const p of products) assert.equal(JSON.stringify(index.get(p.id)),JSON.stringify(analyzeProductPrices(p,rows)));
   const sorted=[...index.values()].reverse().sort((a,b)=>compareCatalogProducts(a,b,'lowest_price'));
@@ -119,7 +119,7 @@ test('store views isolate products and quotes; missing chains are empty instead 
 });
 test('retail offers require an identified promotion and never include base prices or wholesale terms',()=>{
   const {isRetailOffer}=load('src/utils/catalogViews.ts');
-  const offer=obs({regular_price:150,promo_label:'Oferta online'});
+  const offer=obs({supermarket_id:'la_anonima',regular_price:150,promo_label:'Oferta online'});
   assert.equal(isRetailOffer(offer),true);
   for(const change of [{promo_label:undefined},{regular_price:100},{supermarket_id:'makro'},{min_quantity:6},{promo_condition:'Tarjeta'},{query_date:'2020-01-01'}]) assert.equal(isRetailOffer({...offer,...change}),false);
 });
@@ -141,3 +141,12 @@ test('alcohol and snacks are discoverable and unrelated stock images are replace
   }
   assert.equal(Object.keys(quality.ACTIVE_CHAIN_NAMES).length, 8);
  });
+
+test('unconfirmed Yaguar and global Coto offers never enter basket or comparison',()=>{
+  for (const extra of [{supermarket_id:'yaguar'}, {supermarket_id:'coto',regular_price:10500,current_price:6825}, {price_validation:'pending'}]) {
+    const row=obs(extra);
+    assert.equal(quality.priceIsUsable(row),false);
+    assert.equal(basket([{product,quantity:6}],[row]).split_trip.store_groups.length,0);
+  }
+  assert.equal(quality.priceIsUsable(obs({supermarket_id:'coto',regular_price:10500,current_price:10500})),true);
+});

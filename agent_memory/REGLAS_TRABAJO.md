@@ -143,3 +143,66 @@ Antes de cerrar la aplicación o entregar el control al siguiente agente, ejecut
 - [ ] 7. **HANDOFF.md:** ¿Contiene la identificación completa del agente, modelo, trabajo hecho, tests, errores, pendientes y próximo paso?
 - [ ] 8. Commit de la memoria si quedó pendiente.
 
+
+## 9. Estados y coordinación al tomar un relevo
+
+Leer estas reglas y usar el último HANDOFF como punto de partida. Antes de editar,
+revisar TASKS, `git status --short --branch`, los diffs del índice y del directorio
+de trabajo y los archivos afectados. Revisar los worktrees y consultar el registro
+de responsables activos. Si hay otro agente trabajando en los mismos archivos o
+no se puede aclarar una superposición, coordinar antes de tocarlos y registrar el
+bloqueo por un canal disponible. Los diffs limpios no prueban ausencia de concurrencia.
+
+Para toda tarea iniciada, registrar en TASKS un ID estable, descripción, responsable
+(agente y modelo), fecha y hora con zona, archivos reservados y exactamente un estado:
+
+- `EN_PROGRESO`: trabajo iniciado. Registrar antes de editar los archivos de la tarea.
+- `INTERRUMPIDO`: se detuvo antes de terminar y puede retomarse. Ante el límite
+  de tokens o contexto, guardar inmediatamente un relevo parcial en este estado.
+- `COMPLETADO`: se cumplieron los criterios de aceptación y se verificaron con
+  evidencia registrada. Si faltó una prueba necesaria, documentar la limitación
+  y dejar el estado abierto que corresponda.
+- `BLOQUEADO`: un impedimento concreto impide avanzar. Registrar la causa y
+  la condición o acción exacta que permitiría continuar.
+
+Las casillas anteriores siguen siendo el registro del backlog y de su evidencia.
+Un pendiente sin iniciar todavía no tiene ejecución asignada. Al tocar una
+tarea existente, incorporar su ID y estado explícito conservando sus antecedentes.
+
+Si el agente desaparece y queda `EN_PROGRESO`, la tarea queda pendiente de
+verificación. La falta de respuesta no acredita éxito. Una vez descartada una
+edición simultánea, reconstruir el estado con Git, los archivos y las pruebas
+disponibles, registrar `INTERRUMPIDO` y documentar el relevo. Para reanudar, el
+entrante registra su titularidad y pasa a `EN_PROGRESO`.
+
+## 10. Registro de salida
+
+Aplicar los campos de la sección 6 y agregar ID y descripción, estado literal,
+archivos creados o modificados, rama y HEAD, cambios preparados, sin preparar
+y sin seguimiento, y próxima acción exacta. Distinguir las pruebas realizadas
+de las omitidas y explicar las limitaciones. Incluir pendientes vigentes
+necesarios para continuar aunque provengan del relevo anterior.
+
+Al cerrar, añadir una entrada al historial cronológico existente en `history/`:
+archivar íntegramente el HANDOFF previo si aún no está archivado y guardar una
+copia íntegra del nuevo HANDOFF bajo un nombre único. Si el relevo previo ya
+está archivado con el mismo contenido, conservar esa entrada. Escribir el último
+relevo en HANDOFF.md. Consultar el historial solamente para investigar antecedentes.
+
+## 11. Protección de precios históricos
+
+Ninguna actualización puede eliminar silenciosamente precios históricos, incluidos
+los de Makro. Antes de cambiar un actualizador, comprobar dónde y cómo se almacenan
+las observaciones, qué respaldo verificable existe y cómo se recupera. Al
+actualizar un precio, preservar la observación anterior con su fecha y registrar
+la nueva con su fecha y trazabilidad. Verificar que el historial sobreviva a
+la actualización, incluso si falla una fuente. Las migraciones destructivas y
+los cambios en datos de producción requieren autorización explícita.
+
+## 12. Preparación para automatización
+
+El registro, la coordinación y la verificación son manuales. Los identificadores,
+estados literales y campos de relevo permiten automatizar luego la detección de
+pendientes e interrupciones, la coordinación de archivos, la verificación de
+evidencia, la selección de agente, la reanudación y el registro del relevo.
+Todavía no hay hooks, scripts ni orquestador para esas funciones.

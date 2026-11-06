@@ -354,24 +354,24 @@ def yagu_record(item,stamp):
     brands=item.get('brands') or []
     brand=brands[0].get('name') if brands and isinstance(brands[0],dict) and brands[0].get('name') else 'Según descripción'
     product={'id':pid,'name':name.capitalize(),'brand':brand,'category':category(name),'image_url':(item.get('images') or [{}])[0].get('src',''),'unit_measure':unit,'net_content_number':quantity,'net_content_str':content}
-    notes='Cotización del catálogo online de Yaguar Neuquén tal como la publica su tienda. El sitio es mayorista: impuestos y condiciones del canal deben confirmarse en la tienda antes de comprar.'
+    notes='Referencia del catálogo online de Yaguar Neuquén. Pendiente confirmar impuestos, condiciones y precio final; no se usa en comparaciones ni representa precio de góndola.'
     if minimum>1:
         notes+=f' Mínimo de compra: {minimum} unidades'
         if multiple>1: notes+=f' en múltiplos de {multiple}'
         notes+='.'
-    obs={'id':pid+'@yaguar_online@online','product_id':pid,'supermarket_id':'yaguar','branch_id':'yaguar_online','branch_name':'Yaguar Neuquén · tienda online','branch_address':'Catálogo online de la sucursal Neuquén','regular_price':max(regular,price),'current_price':price,'price_per_unit':round(price/quantity,2),'unit_label':{'kg':'$ / kg','litro':'$ / L','unidad':'$ / u'}[unit],'query_date':stamp,'is_verified':True,'is_demo':False,'source_url':item['permalink'],'source_name':'Yaguar · tienda online Neuquén (mayorista)','channel':'online','min_quantity':minimum,'quantity_multiple':multiple if multiple>1 else 1,'notes':notes}
+    obs={'id':pid+'@yaguar_online@online','product_id':pid,'supermarket_id':'yaguar','branch_id':'yaguar_online','branch_name':'Yaguar Neuquén · tienda online','branch_address':'Catálogo online de la sucursal Neuquén','regular_price':max(regular,price),'current_price':price,'price_per_unit':round(price/quantity,2),'unit_label':{'kg':'$ / kg','litro':'$ / L','unidad':'$ / u'}[unit],'query_date':stamp,'is_verified':False,'price_validation':'pending','is_demo':False,'source_url':item['permalink'],'source_name':'Yaguar · tienda online Neuquén (mayorista)','channel':'online','min_quantity':minimum,'quantity_multiple':multiple if multiple>1 else 1,'notes':notes}
     return product,obs
 
 def collect_yaguar(stamp,terms=None,per_page=100,pages=3):
     site=yagu_json(YAGUAR+'/wp-json/')
     if 'neuquen' not in normalize(str(site.get('name',''))): raise ValueError('No se confirmó la tienda de Neuquén')
     if str(site.get('timezone_string','')).lower()!='america/argentina/buenos_aires': raise ValueError('Zona horaria inesperada')
-    products,observations,errors,at_limit={},{},{},[]
+    products,observations,errors,at_limit={},{},[],[]
     for term in terms or TERMS:
         for page in range(1,pages+1):
             try:
                 rows=yagu_json(YAGUAR+'/wp-json/wc/store/v1/products?'+urlencode({'search':term,'per_page':per_page,'page':page},quote_via=quote))
-                if not isinstance(rows,list): break
+                if not isinstance(rows,list): raise ValueError('Respuesta de catálogo inválida')
                 if page==pages and len(rows)>=per_page: at_limit.append(term)
                 for item in rows:
                     try:
@@ -387,7 +387,7 @@ def collect_yaguar(stamp,terms=None,per_page=100,pages=3):
     if not observations:
         detail='; '.join(errors[:3]) or 'respuesta vacía'
         raise ValueError('Yaguar: sin precios válidos ('+detail+'); se conserva la última lectura')
-    return list(products.values()),list(observations.values()),None,[f'{t}: la consulta llegó al tope de páginas (posible recorte)' for t in at_limit]
+    return list(products.values()),list(observations.values()),None,errors+[f'{t}: la consulta llegó al tope de páginas (posible recorte)' for t in at_limit]
 
 
 ANONIMA_URL = 'https://www.laanonima.com.ar'
@@ -469,7 +469,7 @@ def anonima_record(item, branch, stamp, ean=None):
     name = html.unescape(str(item.get('name') or '')).strip()
     if not code or not name or not mas_in_scope(name): return None
     stock_val = str(item.get('stock') or '').strip()
-    if stock_val == '-1' or (stock_val.isdigit() and int(stock_val) <= 0): return None
+    if not stock_val.isdigit() or int(stock_val) <= 0: return None
     price = positive(item.get('price'))
     raw_reg = item.get('regular_price')
     regular = positive(raw_reg) if raw_reg and str(raw_reg).isdigit() else price
@@ -633,13 +633,8 @@ def coto_record(item, store, branch, stamp):
     if not price_rows or not isinstance(price_rows[0].get('listPrice'),(int,float)) or isinstance(price_rows[0].get('listPrice'),(bool,)): return None
     regular = float(positive(price_rows[0]['listPrice']))
     current = regular
-    for disc in (data.get('discounts') or []):
-        text = str(disc.get('discountPrice') or '')
-        m = re.search(r'\d+(?:[.,]\d+)?', text)
-        if not m: continue
-        try: candidate = positive(m.group(0).replace(',','.'))
-        except ValueError: continue
-        if candidate < current: current = candidate
+    # Discounts are global and do not prove quantity, validity or local eligibility.
+    # Keep only the explicitly regional list price until conditions are verified.
     ean_val = str(data.get('product_main_ean') or '')
     ean_ok = bool(ean_val) and valid_ean(ean_val)
     pid = ('ean_'+ean_val) if ean_ok else ('coto_'+sku)
@@ -659,7 +654,7 @@ def coto_record(item, store, branch, stamp):
     if ean_ok: product['ean'] = ean_val
     web_path = str(data.get('url') or '')
     source_url = COTO_PRODUCT_BASE + web_path if web_path.startswith('_') else COTO_SUCURSALES
-    notes = 'Precio del catálogo online de Coto Neuquén tal como lo lista la web del comercio. Confirmar stock y promociones en la tienda.'
+    notes = 'Precio de lista online de la sucursal 185 Neuquén. No incluye descuentos globales ni promociones por cantidad sin validar. Puede diferir de la góndola. Confirmar stock en la tienda.'
     if regular > current:
         notes += ' Publica '+str(round(((regular-current)/regular)*100))+'% menos que su precio de lista (${:g}).'.format(regular)
     obs = {'id':pid+'@'+branch['id']+'@online','product_id':pid,'supermarket_id':'coto','branch_id':branch['id'],'branch_name':branch['name'],'branch_address':branch['address'],'regular_price':regular,'current_price':current,'price_per_unit':round(current/quantity,2),'unit_label':{'kg':'$ / kg','litro':'$ / L','unidad':'$ / u'}[unit],'query_date':stamp,'is_verified':True,'is_demo':False,'source_url':source_url,'source_name':'Coto · tienda online '+branch['name'][6:],'channel':'online','min_quantity':1,'notes':notes}
@@ -816,6 +811,12 @@ def jumbo_record(product, sku, local_price, local_list_price, branch, stamp):
         obs['promo_label'] = 'Oferta Jumbo'
     return prod_data, obs
 
+def jumbo_quote_is_local(row):
+    return (row.get('seller') == JUMBO_SELLER and row.get('availability') == 'available'
+            and row.get('quantity') == 1 and row.get('measurementUnit') == 'un'
+            and row.get('unitMultiplier') == 1 and row.get('tax', 0) == 0
+            and not row.get('priceTags') and row.get('sellingPrice') == row.get('price'))
+
 def collect_jumbo(stamp, terms=None, items_per_term=25):
     branch = JUMBO_BRANCH
     cookie_str = init_jumbo_session()
@@ -847,7 +848,7 @@ def collect_jumbo(stamp, terms=None, items_per_term=25):
                 
                 for it in sim_data.get('items', []):
                     sku_id = str(it.get('id'))
-                    if it.get('availability') != 'available':
+                    if not jumbo_quote_is_local(it):
                         continue
                     price_raw = it.get('price')
                     if not price_raw or price_raw <= 0:

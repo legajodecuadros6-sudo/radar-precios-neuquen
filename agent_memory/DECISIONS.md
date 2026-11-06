@@ -1,28 +1,27 @@
-# DECISIONES — Radar de Precios
+# Decisiones — vigencia revisada 05-11-2026
 
-Formato: decisión · motivo · alternativas · fecha. Las decisiones del usuario mandan sobre las técnicas.
+| ID | Estado vigente / corrección |
+|---|---|
+|D1|JSON versionados son la base de importación; el frontend además puede fusionar lecturas de Supabase. “Único escritor GHA” es objetivo, no garantía: script ejecutable localmente, CSV y divergencia real.|
+|D2|No retirar cadenas sin instrucción explícita del usuario.|
+|D3|Vea/Diarco excluidos por solicitud explícita; commit `f424e45`.|
+|D4|No publicar promociones por cantidad sin confirmar precio, presentación, cantidad, vigencia y alcance local. Coto corregido: ahora usa exclusivamente precio de lista regional de sucursal 185.|
+|D5|Coto integrado y calibrado a sucursal 185 Neuquén sin descuentos globales.|
+|D6|Yaguar marcado con `price_validation: 'pending'`. Precios excluidos de comparador, canasta y ahorros minoristas hasta confirmar IVA y condiciones de consumidor final.|
+|D7|Reconciliación histórica preferente sobre sobreescrituras. Deploy CLI ejecutado para restablecer producción ante desfasaje de GitHub Actions.|
+|D8|Nunca inventar EAN ni unir por similitud. Trazabilidad estricta obligatoria.|
+|D9|La Anónima usa HTMLParser estándar y preflight de sucursal.|
+|D10|La Anónima usa `ean_` cuando existe EAN válido, `anonima_` si no.|
+|D11|Makro 168h implementado en colector y banner.|
+|D12|No inventar precios ni corregirlos por heurística arbitraria. Subordinado a D4.|
+|D13|Unificar EAN con checksum y guard de presentación.|
+|D14|Catálogo por fetch/stub e histórico lazy resumido fuera del bundle.|
+|D15|Jumbo integrado con validación estricta de `jumbo_quote_is_local()` (seller Jumbo, unidad 1, multiplicador 1, tax 0, sin priceTags).|
+|D16|Auditoría Yaguar Neuquén: la URL oficial consultada corresponde a Neuquén (`/neuquen/producto/...`). El precio físico visto por el usuario ($9.103) coincide exactamente con la cotización actualizada de la tienda online de Neuquén tras el aumento registrado entre el 03-11 y el 05-11.|
+|D17|Reconciliación histórica: se unen los históricos local y remoto en commit `013b8ec`, alcanzando 40.725 cotizaciones conservadas sin pérdidas.|
+|D18|Coto regionalizado: se descarta el uso de descuentos globales no atribuidos a la sucursal 185.|
+|D19|Despliegue de producción Vercel: ejecutado y validado en `https://radar-precios-neuquen.vercel.app` para restaurar `/data/live-prices.json`.|
 
-| # | Decisión | Motivo | Alternativas consideradas | Fecha |
-|---|---|---|---|---|
-| D1 | Fuente de verdad del sistema = JSON versionados en Git (`live-prices.json`, `price-history.json`); único escritor = `sync_verified_prices.py` en GHA. | Trazabilidad, auditoría, sin drift entre capas. | Supabase como DB (requiere esquema v2 + service role server-side). | 01-11-2026 |
-| D2 | No eliminar una cadena conectada/pendiente sin decisión explícita del usuario. | Nada se quita "silenciosamente"; cada fuente tiene valor dokumentado. | Retirar fuentes bloqueadas por defecto. | 01-11-2026 |
-| D3 | **Excluir Diarco y Vea de la cobertura pública** (a pedido del usuario; Diarco: sin sucursal en Neuquén Capital — solo Cutral Có; Vea: su simulación rechaza toda entrega para CP 8300). Ejecutado por otro agente en commit `f424e45`. | No prometer datos que no llegan al usuario de Neuquén Capital. | Mantenerlas como "pendiente" o "referencia nacional". | 03-11-2026 |
-| D4 | No mostrar promociones por cantidad ("llevando N") como oferta confirmada sin comprobar precio, vigencia y presentación en fuente. | Evitar precio engañoso; las APIs meten condiciones ambiguas (p. ej. `precio_promo` de Coope). | Publicar tal cual la API (descartado). | 01-11-2026 |
-| D5 | Coto queda postergado al final; no se integra por ahora. | Costo altomedio (SPA + BFF `ms-digital-sitio-bff-web`, requiere Playwright o RE de chunks) frente al valor. | Automatización browser desde ya (descartado por costo). | 01-11-2026 |
-| D6 | Yaguar se quarentena hasta verificar impuestos/condiciones para consumidor final (prototipo read-only de otro agente). | Los precios de la Store API podrían ser mayoristas/por región sin fuego claro de vigencia. | Importar directo (descartado por trazabilidad). | 01→03-11-2026 |
-| D7 | Publicación de producción vía CLI Vercel (token local) mientras no exista token GitHub para `git push`. | Publicar ya; AVISO: genera divergencia potencial repo↔producción hasta sincronizar. | Esperar token GitHub; recrear remote con SSH (sin clave disponible). | 03-11-2026 |
-| D8 | EAN de Coope/Makro: no se obtiene de esas fuentes (no la exponen). Cobertura EAN se amplía por (a) fichas de La Anónima, (b) `product_main_ean` de Coto, (c) Open Food Facts con revisión humana; nunca por similitud de nombre. | Integridad de identidad de producto (evitar H7). | Asignación por nombre (descartado). | 03-11-2026 (ampliada) |
-| D12 | Publicar los precios de Coto **tal como el propio comercio los lista**, sin filtros de plausibilidad. Anomalías del feed (Smartwater $1, Cunnington 2,25 L $309,74) quedan trazables a su ficha y anotadas en `notes`. | Trazabilidad > censura; inventar una "corrección" sería fabricar datos. | Filtrar por umbral de precio (descartado: heurística arbitraria dependiente del nombre). | 03-11-2026 |
-| D13 | Identidad de producto por **EAN válido** (`ean_*`, checksum) cuando la fuente lo expone: Coto lo trae en el 98% de sus SKUs ('product_main_ean'); se comparte la identidad con ChangoMás/La Anónima y enable comparaciones cross-chain. | Patrón ya existente; el guard de presentación contradictoria protege la coherencia. | IDs por cadena aislados (pierde comparabilidad). | 03-11-2026 |
-| D9 | Parser de La Anónima implementado con `html.parser.HTMLParser` nativo de la biblioteca estándar de Python (sin dependencias como `bs4`). | Garantizar compatibilidad 100% con el entorno de GitHub Actions (que no tiene paquetes pip adicionales instalados en el workflow). | BeautifulSoup (requiere pip install en CI), expresiones regulares directas (frágiles ante atributos con espacios o signos `>`). | 03-11-2026 |
-| D10 | Identidad de producto de La Anónima: `ean_<ean>` cuando la ficha expone GTIN válido comprobado, `anonima_<code>` cuando no expone EAN. | Evitar duplicados de código de barras en `snapshot.products` (exigido por test `official barcode products replace legacy examples`) y unificar observaciones entre cadenas para un mismo EAN. | Mantener siempre `anonima_<code>` (rompía unicidad de EAN en catálogo). | 03-11-2026 |
-| D11 | Vigencia semanal de 7 días para listas normativas de Ley 3444 (Makro) en scraper y frontend (`priceIsUsable`). | Makro publica bajo Ley 3444 de forma periódica/semanal, no diaria; 72h causaba desaparición forzada de precios válidos. Se preserva fecha real (31-10) y sello de re-verificación. | Mantener 72h (hacía desaparecer a Makro a los 3 días de cada lista) o falsear la fecha de consulta (inaceptable por trazabilidad). | 03-11-2026 |
-| D14 | **Extracción de catálogo fuera del bundle JS (H3)**: servir `live-prices.json` desde `public/data/` con lazy `fetch` e interceptar importaciones en Vite con stub liviano. Sucursales desacopladas a `branches.json`. | Bundle JS cliente reducido de 13,1 MB a 1.508 kB (432 kB gzip, -88,5%), build 3x más rápido, carga móvil instantánea y 100% de compatibilidad con tests Node. | Mantener bundle monolítico de 13 MB (inviable en móvil 3G); dynamic import de Vite (aún creaba chunk JS gigante de 13 MB). | 03-11-2026 |
-| D15 | **Integración de Jumbo como 8ª cadena**: Colector VTEX en dos etapas (catálogo y EANs vía `/api/catalog_system/pub/products/search` + precios y stock local real mediante sesión regional `POST /api/sessions?sc=32` con `jumboargentinaj5216neuquen` y batch simulation `/api/checkout/pub/orderForms/simulation?sc=32`). Sucursal Portal Patagonia Shopping (Lastra 2400) en mapa y filtros. | Garantizar precios locales verdaderos de Neuquén Capital (ej: Coca 2.25L $6.290 vs $6.100 AMBA) y stock local real, con 100% trazabilidad oficial y EANs. | Scrapear solo catálogo nacional (descartado: publicaría precios AMBA); descartar Jumbo por error ORD027 (superado con sesión regional). | 03-11-2026 |
+## Instrucción vigente del usuario
 
-
-## Pendientes de decisión del usuario
-
-- Supabase: apagar (sin costo) o reconstruir (v2 + sync server-side).
-- Ruta definitiva de publicación: CLI Vercel vs. conseguir token GitHub.
-- Nivel de detalle de la canasta/navegación (prioridad 1 del usuario).
+SYNC-002: Autorización de sincronización y reactivación de producción ejecutada. Memoria y registros actualizados conforme a REGLAS_TRABAJO.
