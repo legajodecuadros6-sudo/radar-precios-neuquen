@@ -21,11 +21,14 @@
   - **Pruebas:** 44 Python OK, 35 Node PASS, build exitoso.
   - **Despliegue Producción:** Desplegado en Vercel (`https://radar-precios-neuquen.vercel.app`) y verificado HTTP 200 en bundle `index-C-rP_Szo.js` y `/data/live-prices.json`.
 
+- **GIT-SYNC-001** · COMPLETADO · Antigravity / Gemini · 2026-11-05T21:35:00-03:00.
+  - Sincronización completa con GitHub ejecutada con éxito (`git push origin main`, commit `3dfd86c`).
+  - GitHub y Vercel en paridad total con el repositorio local.
+
 ---
 
 ## Pendientes
 
-- [ ] **P0 GIT-SYNC:** Sincronizar rama local `main` con GitHub (`git push origin main`) para evitar que el cron diario de GitHub Actions sobreescriba el despliegue manual en Vercel con commits viejos.
 - [ ] **P1 DATA-YAGUAR:** Investigar y validar si los precios online de Yaguar incorporan IVA para consumidor final y reglas de fraccionamiento minorista.
 - [ ] **P1 DATA-ANONIMA:** Acreditar persistencia y alcance regional de cookies y preflight en La Anónima.
 - [ ] **P1 DATA-JUMBO:** Profundizar validación de logística por ítem y cobertura geográfica.
