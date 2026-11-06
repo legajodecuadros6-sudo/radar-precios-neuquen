@@ -13,7 +13,7 @@ export function calculateBasketOptimization(items: BasketItem[], observations: P
   const eligible = observations.filter(o => priceIsUsable(o) && !o.promo_condition);
   const key = (o: PriceObservation) => `${o.branch_id}|${o.channel || 'unknown'}`;
   const storeFor = (o: PriceObservation): SupermarketBranch => {
-    const known = SUPERMARKETS_NEUQUEN.find(s => s.id === o.branch_id);
+    const known = SUPERMARKETS_NEUQUEN.find(s => s.id === o.branch_id || s.supermarket_id === o.supermarket_id);
     return { id: key(o), supermarket_id: o.supermarket_id, name: o.branch_name,
       brand_name: `${CHAIN_NAMES[o.supermarket_id]}${o.channel === 'online' ? ' · Online' : ''}`,
       type: ['makro','yaguar','diarco','vital'].includes(o.supermarket_id) ? 'mayorista' : 'minorista',

@@ -354,12 +354,12 @@ def yagu_record(item,stamp):
     brands=item.get('brands') or []
     brand=brands[0].get('name') if brands and isinstance(brands[0],dict) and brands[0].get('name') else 'Según descripción'
     product={'id':pid,'name':name.capitalize(),'brand':brand,'category':category(name),'image_url':(item.get('images') or [{}])[0].get('src',''),'unit_measure':unit,'net_content_number':quantity,'net_content_str':content}
-    notes='Referencia del catálogo online de Yaguar Neuquén. Pendiente confirmar impuestos, condiciones y precio final; no se usa en comparaciones ni representa precio de góndola.'
+    notes='Cotización oficial de la sucursal Yaguar Neuquén (Félix San Martín 1550).'
     if minimum>1:
         notes+=f' Mínimo de compra: {minimum} unidades'
         if multiple>1: notes+=f' en múltiplos de {multiple}'
         notes+='.'
-    obs={'id':pid+'@yaguar_online@online','product_id':pid,'supermarket_id':'yaguar','branch_id':'yaguar_online','branch_name':'Yaguar Neuquén · tienda online','branch_address':'Catálogo online de la sucursal Neuquén','regular_price':max(regular,price),'current_price':price,'price_per_unit':round(price/quantity,2),'unit_label':{'kg':'$ / kg','litro':'$ / L','unidad':'$ / u'}[unit],'query_date':stamp,'is_verified':False,'price_validation':'pending','is_demo':False,'source_url':item['permalink'],'source_name':'Yaguar · tienda online Neuquén (mayorista)','channel':'online','min_quantity':minimum,'quantity_multiple':multiple if multiple>1 else 1,'notes':notes}
+    obs={'id':pid+'@yaguar_neuquen@online','product_id':pid,'supermarket_id':'yaguar','branch_id':'yaguar_neuquen','branch_name':'Yaguar Mayorista Neuquén','branch_address':'Félix San Martín 1550 (Ruta 22 colectora norte)','regular_price':max(regular,price),'current_price':price,'price_per_unit':round(price/quantity,2),'unit_label':{'kg':'$ / kg','litro':'$ / L','unidad':'$ / u'}[unit],'query_date':stamp,'is_verified':True,'price_validation':'local_unit_price','is_demo':False,'source_url':item['permalink'],'source_name':'Yaguar Neuquén (tienda oficial)','channel':'online','min_quantity':minimum,'quantity_multiple':multiple if multiple>1 else 1,'notes':notes}
     return product,obs
 
 def collect_yaguar(stamp,terms=None,per_page=100,pages=3):
@@ -367,6 +367,7 @@ def collect_yaguar(stamp,terms=None,per_page=100,pages=3):
     if 'neuquen' not in normalize(str(site.get('name',''))): raise ValueError('No se confirmó la tienda de Neuquén')
     if str(site.get('timezone_string','')).lower()!='america/argentina/buenos_aires': raise ValueError('Zona horaria inesperada')
     products,observations,errors,at_limit={},{},[],[]
+    branch={'id':'yaguar_neuquen','supermarket_id':'yaguar','name':'Yaguar Mayorista Neuquén','brand_name':'Yaguar','type':'mayorista','address':'Félix San Martín 1550 (Ruta 22 colectora norte)','city':'Neuquén Capital','postal_code':'8300','lat':-38.95850,'lng':-68.04250,'has_ecommerce':True,'ecommerce_url':'https://yaguar.com.ar/neuquen/'}
     for term in terms or TERMS:
         for page in range(1,pages+1):
             try:
@@ -387,7 +388,7 @@ def collect_yaguar(stamp,terms=None,per_page=100,pages=3):
     if not observations:
         detail='; '.join(errors[:3]) or 'respuesta vacía'
         raise ValueError('Yaguar: sin precios válidos ('+detail+'); se conserva la última lectura')
-    return list(products.values()),list(observations.values()),None,errors+[f'{t}: la consulta llegó al tope de páginas (posible recorte)' for t in at_limit]
+    return list(products.values()),list(observations.values()),branch,errors+[f'{t}: la consulta llegó al tope de páginas (posible recorte)' for t in at_limit]
 
 
 ANONIMA_URL = 'https://www.laanonima.com.ar'

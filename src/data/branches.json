@@ -88,5 +88,19 @@
     "badge_text": "Jumbo Hiper",
     "has_ecommerce": true,
     "ecommerce_url": "https://www.jumbo.com.ar"
+  },
+  {
+    "id": "yaguar_neuquen",
+    "supermarket_id": "yaguar",
+    "name": "Yaguar Mayorista Neuquén",
+    "brand_name": "Yaguar",
+    "type": "mayorista",
+    "address": "Félix San Martín 1550 (Ruta 22 colectora norte)",
+    "city": "Neuquén Capital",
+    "postal_code": "8300",
+    "lat": -38.9585,
+    "lng": -68.0425,
+    "has_ecommerce": true,
+    "ecommerce_url": "https://yaguar.com.ar/neuquen/"
   }
 ]

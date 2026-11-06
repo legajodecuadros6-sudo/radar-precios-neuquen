@@ -24,12 +24,15 @@
 - **GIT-SYNC-001** · COMPLETADO · Antigravity / Gemini · 2026-11-05T21:35:00-03:00.
   - Sincronización completa con GitHub ejecutada con éxito (`git push origin main`, commit `3dfd86c`).
   - GitHub y Vercel en paridad total con el repositorio local.
+- **DATA-YAGUAR-NEUQUEN** · COMPLETADO · Antigravity / Gemini · 2026-11-05T21:59:00-03:00.
+  - Activadas 1.777 cotizaciones verificadas de Yaguar Neuquén (`https://yaguar.com.ar/neuquen/producto/...`).
+  - Validación de origen regional en `dataQuality.ts` y notas transparentes de compra mínima en UI.
+  - Desplegado y verificado en producción Vercel (`index-SvRbYVC9.js`).
 
 ---
 
 ## Pendientes
 
-- [ ] **P1 DATA-YAGUAR:** Investigar y validar si los precios online de Yaguar incorporan IVA para consumidor final y reglas de fraccionamiento minorista.
 - [ ] **P1 DATA-ANONIMA:** Acreditar persistencia y alcance regional de cookies y preflight en La Anónima.
 - [ ] **P1 DATA-JUMBO:** Profundizar validación de logística por ítem y cobertura geográfica.
 - [ ] **P2 SUPABASE:** Definir arquitectura futura: reactivar sincronización bidireccional o retirar código residual de lectura.

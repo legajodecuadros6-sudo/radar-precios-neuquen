@@ -149,4 +149,5 @@ test('unconfirmed Yaguar and global Coto offers never enter basket or comparison
     assert.equal(basket([{product,quantity:6}],[row]).split_trip.store_groups.length,0);
   }
   assert.equal(quality.priceIsUsable(obs({supermarket_id:'coto',regular_price:10500,current_price:10500})),true);
+  assert.equal(quality.priceIsUsable(obs({supermarket_id:'yaguar',branch_id:'yaguar_neuquen',source_url:'https://yaguar.com.ar/neuquen/producto/papas-fritas-lays-330gr/',price_validation:'local_unit_price'})),true);
 });

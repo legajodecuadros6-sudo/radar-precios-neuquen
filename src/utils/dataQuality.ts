@@ -15,7 +15,7 @@ export function mapSupermarketId(value: string): SupermarketId | undefined {
 }
 export function priceIsUsable(observation: PriceObservation, now = Date.now()): boolean {
   // Historical imports must not bypass regional/quantity corrections.
-  if (observation.supermarket_id === 'yaguar' && observation.price_validation !== 'local_unit_price') return false;
+  if (observation.supermarket_id === 'yaguar' && (observation.price_validation !== 'local_unit_price' || !observation.source_url?.startsWith('https://yaguar.com.ar/neuquen/'))) return false;
   if (observation.supermarket_id === 'coto' && observation.current_price < observation.regular_price) return false;
   if (observation.price_validation === 'pending') return false;
   const time = Date.parse(observation.query_date);

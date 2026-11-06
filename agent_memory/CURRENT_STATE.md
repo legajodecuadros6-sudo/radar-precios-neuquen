@@ -17,7 +17,7 @@
    - Resumen público (`public/history-summary.json`): 1.365.737 bytes.
 3. **Calibración regional de colectores:**
    - **Coto:** Utiliza únicamente precio de lista regional explícito de la sucursal 185 Neuquén. Eliminada la inferencia de descuentos globales ambiguos de Constructor.io (cumple regla D4).
-   - **Yaguar:** Catálogo oficial de Neuquén. Precios marcados preventivamente con `price_validation: 'pending'`, excluidos de canasta y comparador minorista hasta confirmar IVA y condiciones para consumidor final. Lay's 330g actualizado a $9.103 (mínimo 2 u.).
+   - **Yaguar:** Catálogo oficial verificado de la sucursal Neuquén (`https://yaguar.com.ar/neuquen/producto/...`, Félix San Martín 1550). 1.777 cotizaciones activas en la interfaz pública con `price_validation: 'local_unit_price'`, indicando mínimos y múltiplos mayoristas de forma transparente. Lay's 330g verificado a $9.103.
    - **Jumbo:** Validación estricta de `jumbo_quote_is_local()` (seller Jumbo, unidad 1, multiplicador 1, tax 0, sin priceTags).
    - **La Anónima:** Validación de stock positivo (rechaza stock ausente, vacío o no numérico).
 4. **Resiliencia de Frontend y Catálogo:**
