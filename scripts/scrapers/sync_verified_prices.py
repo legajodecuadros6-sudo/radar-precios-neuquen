@@ -1102,6 +1102,32 @@ def merge_observations(previous,incoming):
         if old is None or datetime.fromisoformat(obs['query_date'])>=datetime.fromisoformat(old['query_date']): result[obs['id']] = obs
     return list(result.values())
 
+def report_sync_outcome(new_prices, sources, stamp):
+    """Report only sources attempted now; partial coverage is not a total failure."""
+    attempted = {chain: value for chain, value in sources.items()
+                 if value.get('last_attempt') == stamp}
+    degraded = {chain: value for chain, value in attempted.items()
+                if value.get('status') in ('error', 'partial')}
+    status = 'error' if not new_prices else ('partial' if degraded else 'ok')
+    lines = ['## Sincronización de precios', '',
+             f'Estado: **{status}**. Precios nuevos verificados: **{new_prices}**.', '']
+    for chain, value in attempted.items():
+        message = ' '.join(str(value.get('message', '')).splitlines())
+        lines.append(f"- {chain}: {value.get('status')} — {message}")
+        if chain in degraded and os.environ.get('GITHUB_ACTIONS') == 'true':
+            # Escape workflow command data, including line breaks and percent signs.
+            detail = (chain + ': ' + message).replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+            print('::warning::' + detail)
+    lines += ['', 'Las fuentes sin lectura nueva conservan sus precios y fechas originales.']
+    summary = os.environ.get('GITHUB_STEP_SUMMARY')
+    if summary:
+        with open(summary, 'a', encoding='utf8') as output:
+            output.write('\n'.join(lines) + '\n')
+    print(json.dumps({'sync_status': status, 'new_prices': new_prices,
+                      'degraded_sources': list(degraded)}, ensure_ascii=False))
+    return 1 if status == 'error' else 0
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--csv',type=Path)
@@ -1157,6 +1183,6 @@ def main():
     atomic_json(HISTORY,history)
     atomic_json(SNAPSHOT,snapshot)
     print(json.dumps({'products':len(snapshot['products']),'new_prices':len(incoming),'history':len(history),'sources':snapshot['sources']},ensure_ascii=False))
-    if not incoming or any(v.get('status')=='error' and v.get('last_attempt')==stamp for v in snapshot['sources'].values()): raise SystemExit(1)
+    if report_sync_outcome(len(incoming), snapshot['sources'], stamp): raise SystemExit(1)
 
 if __name__=='__main__': main()

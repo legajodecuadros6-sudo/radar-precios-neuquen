@@ -44,3 +44,12 @@
 - [ ] **P1 DATA-JUMBO:** Profundizar validación de logística por ítem y cobertura geográfica.
 - [ ] **P2 SUPABASE:** Definir arquitectura futura: reactivar sincronización bidireccional o retirar código residual de lectura.
 - [ ] **P2 UI-FRESH:** Homogeneizar texto de vencimiento en UI (72h vs 168h de Makro).
+
+## SYNC-003 · EN_PROGRESO
+- Responsable: Codex / GPT-6 · 2026-11-09T07:18:24.907223-03:00
+- Corregir estado global de sincronización parcial y diagnóstico en Actions.
+- Reservados: scripts/scrapers/sync_verified_prices.py, .github/workflows/sync-prices.yml, tests/test_sync_outcome.py y agent_memory.
+- Árbol limpio; único worktree main; registro sin otras ejecuciones activas. Base actualizada por fast-forward a 4242048.
+
+## SYNC-003 — estado de salida: BLOQUEADO
+Corrección local y 54 tests Python/35 Node aprobados. Publicación pendiente de aprobación explícita (§7.5). Limitaciones de fuentes externas documentadas. Ver HANDOFF.

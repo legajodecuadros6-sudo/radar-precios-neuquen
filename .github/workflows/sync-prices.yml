@@ -45,8 +45,8 @@ jobs:
             git commit -m 'chore(prices): actualizar consultas verificadas e historial'
             git push
           fi
-      - name: Avisar si no hubo precios nuevos
+      - name: Avisar si falló la sincronización
         if: steps.sync.outcome == 'failure'
         run: |
-          echo 'La consulta falló. Se preservaron los datos anteriores con sus fechas originales.'
+          echo '::error::La sincronización no pudo completarse. Revisar el resumen y el paso de consulta; las fuentes sin lectura nueva conservan sus fechas originales.'
           exit 1

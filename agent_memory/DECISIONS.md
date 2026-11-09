@@ -25,3 +25,6 @@
 ## Instrucción vigente del usuario
 
 SYNC-002: Autorización de sincronización y reactivación de producción ejecutada. Memoria y registros actualizados conforme a REGLAS_TRABAJO.
+
+## D20 — SYNC-003
+Si hay precios nuevos comprobados, una fuente caída produce estado parcial con advertencia, no fallo total. Sin precios nuevos se mantiene exit 1. No se modifican controles de frescura ni precios anteriores; cada fuente conserva su estado de error visible.

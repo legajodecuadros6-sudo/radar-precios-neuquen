@@ -35,3 +35,6 @@ está preservado en history; no reutilizar afirmaciones históricas como estado 
   la integración de auto-deploy de Git en Vercel compila la rama desactualizada y
   sobreescribe despliegues manuales recientes. Para evitarlo, se debe sincronizar
   GitHub con `git push` o pausar el auto-deploy en el panel de Vercel.
+
+## 09-11-2026 — SYNC-003
+El correo Actions failure no implica que no se actualizaron datos: el run 42502238342 subió 9076 precios y el commit 4242048 antes de fallar en el aviso final. Los 403 fueron observados en el runner; no prueban indisponibilidad permanente. El prebuild regenera branches.json y sources.json (derivados); evitar incluir cambios accidentales de compilación en el fix.

@@ -39,3 +39,6 @@
 - **Despliegue verificado en vivo:**
    - `GET /` → **HTTP 200**, bundle `index-DI9aTYXZ.js`.
    - `GET /data/live-prices.json` → **HTTP 200**, sirviendo 11.531 productos, 12.257 cotizaciones, 499 de Carrefour, y las 2 sucursales de Carrefour.
+
+## Revisión 09-11-2026 — SYNC-003
+Base 4242048: 11771 productos, 12599 cotizaciones, 68482 históricos. El run 42502238342 guardó 9076 precios pero acabó failure por 3 fuentes degradadas (La Anónima/Yaguar HTTP 403, Makro lista fuera de vigencia). Corrección local distingue parcial de fallo total, con avisos visibles. Publicación y validación Actions pendientes de aprobación.
