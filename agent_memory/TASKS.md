@@ -53,3 +53,11 @@
 
 ## SYNC-003 — estado de salida: BLOQUEADO
 Corrección local y 54 tests Python/35 Node aprobados. Publicación pendiente de aprobación explícita (§7.5). Limitaciones de fuentes externas documentadas. Ver HANDOFF.
+
+## SYNC-003 · EN_PROGRESO (publicación autorizada)
+- Codex / GPT-6 · 2026-11-09T07:24:20.891675-03:00
+- Usuario autorizó: «ok hazlo». Subir 47a0f2a, ejecutar Actions y verificar resultado. Reservados: agent_memory. Árbol limpio, sin ejecución ajena registrada.
+
+## SYNC-003 · COMPLETADO
+- Codex / GPT-6. Publicación autorizada, 47a0f2a subido; run 42600654726 SUCCESS; datos b0f94b3 desplegados y verificados. Historial íntegro. No queda aprobación pendiente.
+- Pendientes externos: recuperar acceso La Anónima/Yaguar y lista vigente Makro; no confundir con fallo total de sincronización.

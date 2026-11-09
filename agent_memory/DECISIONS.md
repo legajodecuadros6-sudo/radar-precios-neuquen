@@ -28,3 +28,6 @@ SYNC-002: Autorización de sincronización y reactivación de producción ejecut
 
 ## D20 — SYNC-003
 Si hay precios nuevos comprobados, una fuente caída produce estado parcial con advertencia, no fallo total. Sin precios nuevos se mantiene exit 1. No se modifican controles de frescura ni precios anteriores; cada fuente conserva su estado de error visible.
+
+## SYNC-003 — autorización y ejecución
+Usuario autorizó explícitamente publicación y corrida con «ok hazlo». Aplicada D20: actualización parcial exitosa, con errores por fuente visibles y preservación histórica.

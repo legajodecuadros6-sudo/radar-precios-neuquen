@@ -42,3 +42,6 @@
 
 ## Revisión 09-11-2026 — SYNC-003
 Base 4242048: 11771 productos, 12599 cotizaciones, 68482 históricos. El run 42502238342 guardó 9076 precios pero acabó failure por 3 fuentes degradadas (La Anónima/Yaguar HTTP 403, Makro lista fuera de vigencia). Corrección local distingue parcial de fallo total, con avisos visibles. Publicación y validación Actions pendientes de aprobación.
+
+## Estado verificado 2026-11-09T07:33:08.288434-03:00 — SYNC-003 publicado
+Run 42600654726 SUCCESS, commit de datos b0f94b3. Catálogo: 11785 productos/12629 cotizaciones; histórico: 77547 (+9065), cero pérdidas de los 68482 anteriores. Vercel success y catálogo HTTP 200 idéntico al snapshot. Fuentes La Anónima/Yaguar 403 y Makro fuera de vigencia continúan degradadas.

@@ -38,3 +38,6 @@ está preservado en history; no reutilizar afirmaciones históricas como estado 
 
 ## 09-11-2026 — SYNC-003
 El correo Actions failure no implica que no se actualizaron datos: el run 42502238342 subió 9076 precios y el commit 4242048 antes de fallar en el aviso final. Los 403 fueron observados en el runner; no prueban indisponibilidad permanente. El prebuild regenera branches.json y sources.json (derivados); evitar incluir cambios accidentales de compilación en el fix.
+
+## SYNC-003 — validación real 09-11-2026
+Run 42600654726 obtuvo 9065 observaciones nuevas pese a HTTP 403 en La Anónima/Yaguar y lista Makro no vigente. GitHub terminó success y Vercel desplegó b0f94b3; catálogo remoto idéntico al local. Comprobación histórica: 68482 claves anteriores incluidas en 77547 actuales.
