@@ -41,3 +41,10 @@ El correo Actions failure no implica que no se actualizaron datos: el run 425022
 
 ## SYNC-003 — validación real 09-11-2026
 Run 42600654726 obtuvo 9065 observaciones nuevas pese a HTTP 403 en La Anónima/Yaguar y lista Makro no vigente. GitHub terminó success y Vercel desplegó b0f94b3; catálogo remoto idéntico al local. Comprobación histórica: 68482 claves anteriores incluidas en 77547 actuales.
+
+## 23-11-2026 — SYNC-004: Límite estricto de 100 MB en GitHub y solución gzip
+- GitHub rechaza sistemáticamente mediante pre-receive hook (`GH001`) cualquier commit que contenga archivos mayores a 100 MB (104.857.600 bytes).
+- Un historial de cotizaciones en JSON unificado con `indent=2` acumula ~8 MB cada 10.000 cotizaciones, alcanzando los 100 MB en ~115.000 cotizaciones.
+- La compresión gzip reduce el tamaño del archivo un 96,2% (de 102 MB a 3,9 MB para 125.333 cotizaciones), permitiendo almacenar años de datos sin superar los límites de Git y sin necesidad de servicios externos.
+- Al ejecutar colectores localmente desde una IP residencial de Argentina, La Anónima (646 precios), Yaguar (1.663 precios) y Cooperativa Obrera (795 precios) responden con éxito HTTP 200 sin sufrir los 403 que a veces presentan los runners de nube en el exterior.
+

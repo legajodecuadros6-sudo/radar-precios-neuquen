@@ -39,3 +39,7 @@ __pycache__/
 public/history-summary.json
 public/data/
 
+# Raw historical archive: track compressed only (avoid GitHub 100MB block)
+src/data/price-history.json
+!src/data/price-history.json.gz
+

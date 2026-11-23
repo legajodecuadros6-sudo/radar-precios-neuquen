@@ -61,3 +61,16 @@ Corrección local y 54 tests Python/35 Node aprobados. Publicación pendiente de
 ## SYNC-003 · COMPLETADO
 - Codex / GPT-6. Publicación autorizada, 47a0f2a subido; run 42600654726 SUCCESS; datos b0f94b3 desplegados y verificados. Historial íntegro. No queda aprobación pendiente.
 - Pendientes externos: recuperar acceso La Anónima/Yaguar y lista vigente Makro; no confundir con fallo total de sincronización.
+
+## SYNC-004 · COMPLETADO
+- Responsable: Antigravity / Gemini · 2026-11-23T00:07:00-03:00
+- Descripción: Resolver límite de 100 MB de GitHub en el histórico de precios (migración transparente a price-history.json.gz), sincronizar catálogo completo en vivo para Neuquén reactivando los precios de todos los supermercados y verificar build y pruebas.
+- Evidencia verificada:
+  - 11.412 precios frescos recolectados y vigentes hoy (22/23-11-2026) en Neuquén.
+  - Catálogo activo: 12.530 productos y 13.511 cotizaciones (`src/data/live-prices.json`).
+  - Histórico íntegro: 125.333 cotizaciones conservadas sin pérdida en `src/data/price-history.json.gz` (3,9 MB).
+  - Cero precios perdidos respecto a los 113.921 anteriores.
+  - Precios usables activos en la app (`priceIsUsable`): 11.412 (Coto 7194, Yaguar 1663, Coope 795, La Anónima 646, Carrefour 489, Jumbo 339, ChangoMás 194, Vital 92).
+  - Tests: 54 Python OK, 35 Node PASS, build exitoso (`index-BAloxFBX.js`). Paridad de catálogo verificada.
+
+

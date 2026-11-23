@@ -45,3 +45,16 @@ Base 4242048: 11771 productos, 12599 cotizaciones, 68482 históricos. El run 425
 
 ## Estado verificado 2026-11-09T07:33:08.288434-03:00 — SYNC-003 publicado
 Run 42600654726 SUCCESS, commit de datos b0f94b3. Catálogo: 11785 productos/12629 cotizaciones; histórico: 77547 (+9065), cero pérdidas de los 68482 anteriores. Vercel success y catálogo HTTP 200 idéntico al snapshot. Fuentes La Anónima/Yaguar 403 y Makro fuera de vigencia continúan degradadas.
+
+## Estado verificado 2026-11-23T00:07:00-03:00 — SYNC-004 completado
+- **Causa raíz diagnosticada:** `src/data/price-history.json` superó 101,8 MB el 12-11, provocando fallo de `git push` (GH001 > 100MB) en Actions durante 10 días y dejando la app sin precios utilizables (>72h).
+- **Solución implementada:** Migración transparente a `src/data/price-history.json.gz` (3,9 MB). Soporte nativo en Python (`sync_verified_prices.py`) y Node (`build-history.mjs`). `.gitignore` y workflow `.github/workflows/sync-prices.yml` actualizados.
+- **Sincronización completa ejecutada:**
+  - 11.412 precios frescos recolectados y vigentes hoy en Neuquén.
+  - Catálogo activo (`src/data/live-prices.json`): **12.530 productos** y **13.511 cotizaciones** (last_success 2026-11-23T02:51:03Z).
+  - Precios usables en la app (`priceIsUsable`): **11.412 cotizaciones activas**: Coto (7.194), Yaguar (1.663), Cooperativa Obrera (795), La Anónima (646), Carrefour (489), Jumbo (339), ChangoMás (194), Vital (92).
+  - Histórico acumulado: **125.333 cotizaciones conservadas sin pérdida**.
+  - Resumen público (`public/history-summary.json`): 5.364.920 bytes.
+- **Suite de pruebas:** 54 tests Python OK, 35 tests Node PASS, `npm run build` exitoso (`index-BAloxFBX.js`). Paridad de catálogo verificada.
+- **Pendiente de publicación:** Commit y push de la solución y los nuevos catálogos a GitHub para disparo de deploy en Vercel.
+

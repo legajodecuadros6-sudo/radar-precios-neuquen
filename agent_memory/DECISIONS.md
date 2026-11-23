@@ -29,5 +29,6 @@ SYNC-002: Autorización de sincronización y reactivación de producción ejecut
 ## D20 — SYNC-003
 Si hay precios nuevos comprobados, una fuente caída produce estado parcial con advertencia, no fallo total. Sin precios nuevos se mantiene exit 1. No se modifican controles de frescura ni precios anteriores; cada fuente conserva su estado de error visible.
 
-## SYNC-003 — autorización y ejecución
-Usuario autorizó explícitamente publicación y corrida con «ok hazlo». Aplicada D20: actualización parcial exitosa, con errores por fuente visibles y preservación histórica.
+## D21 — SYNC-004: Preservación histórica mediante compresión transparente (price-history.json.gz)
+El archivo acumulado de cotizaciones alcanzó 101,8 MB el 12-11-2026, provocando el bloqueo del hook pre-receive de GitHub (`GH001: Large files detected > 100MB`) en todos los pushes diarios de Actions. Para proteger la regla de oro de inmutabilidad histórica (§11) sin perder cotizaciones y permitiendo el versionado en Git, se migró a `price-history.json.gz` de forma transparente. `sync_verified_prices.py` y `build-history.mjs` leen y escriben gzip automáticamente, reduciendo el archivo de 102 MB a 3,9 MB con 125.333 cotizaciones íntegras (+11.412 de la sincronización del 22-11). Se retira el `.json` descomprimido de Git tracking y se agrega a `.gitignore`.
+

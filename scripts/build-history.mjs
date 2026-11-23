@@ -1,7 +1,10 @@
 import { readFile, writeFile, copyFile, mkdir, chmod } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 import { summarizeHistory } from './history-summary.mjs';
 
-const historySource = new URL('../src/data/price-history.json', import.meta.url);
+const historyGz = new URL('../src/data/price-history.json.gz', import.meta.url);
+const historyJson = new URL('../src/data/price-history.json', import.meta.url);
 const historyTarget = new URL('../public/history-summary.json', import.meta.url);
 const liveSource = new URL('../src/data/live-prices.json', import.meta.url);
 const livePublicDir = new URL('../public/data/', import.meta.url);
@@ -10,7 +13,14 @@ const branchesTarget = new URL('../src/data/branches.json', import.meta.url);
 const sourcesTarget = new URL('../src/data/sources.json', import.meta.url);
 
 // 1. Process history summary
-const historyRows = JSON.parse(await readFile(historySource, 'utf8'));
+let historyRaw;
+if (existsSync(historyGz)) {
+  const buf = await readFile(historyGz);
+  historyRaw = gunzipSync(buf).toString('utf8');
+} else {
+  historyRaw = await readFile(historyJson, 'utf8');
+}
+const historyRows = JSON.parse(historyRaw);
 await mkdir(new URL('../public/', import.meta.url), { recursive: true });
 const historyOutput = JSON.stringify(summarizeHistory(historyRows));
 await writeFile(historyTarget, historyOutput);

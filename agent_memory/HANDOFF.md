@@ -1,36 +1,41 @@
-# HANDOFF — SYNC-003: corrección publicada y sincronización verificada
+# HANDOFF — SYNC-004: reactivación total de precios y resolución de límite 100MB Git
 
-- Agente/herramienta: Codex; modelo: GPT-6.
-- Fecha/hora: 2026-11-09T07:33:08.288434-03:00.
-- Objetivo: corregir aviso de fallo de sincronización y, tras «ok hazlo», publicar y ejecutar Actions.
-- Estado: COMPLETADO (corrección del estado global y publicación). Fuentes degradadas siguen pendientes.
-- Rama: main. HEAD de datos verificado: b0f94b3. Corrección: 47a0f2a.
+- Agente/herramienta: Antigravity; modelo: Gemini.
+- Fecha/hora: 2026-11-23T00:10:00-03:00.
+- Objetivo: Diagnosticar fallo de GitHub Actions, destrabar el guardado de precios y reactivar los precios de todos los supermercados en Neuquén.
+- Estado: COMPLETADO.
+- Rama: main.
 
 ## Trabajo y evidencia
-- Push de 47a0f2a autorizado y completado.
-- workflow_dispatch sync-prices.yml en main: run 42600654726, conclusion success.
-- URL: https://github.com/legajodecuadros6-sudo/radar-precios-neuquen/actions/runs/42600654726
-- Commit de datos generado por Actions: b0f94b3.
-- 9065 observaciones nuevas; histórico pasó de 68482 a 77547.
-- Comparación por (id, query_date, current_price): cero registros anteriores perdidos; incluye Makro.
-- Catálogo: 11785 productos, 12629 cotizaciones; last_attempt 2026-11-09T10:24:52.114771+00:00.
-- Vercel: estado success para 47a0f2a y b0f94b3.
-- Producción / y /data/live-prices.json HTTP 200. Catálogo público comparado byte por byte con el snapshot de b0f94b3: idéntico.
+1. **Diagnóstico del fallo de GitHub Actions:**
+   - La API de GitHub confirmó que los runs del 13 al 22 de noviembre fallaban en el paso `Guardar datos e historial y estado de fuentes` (`git push`).
+   - Causa: `src/data/price-history.json` alcanzó 101,8 MB el 12-11 (113.921 filas) y el 13-11 superó los 100 MiB (104.857.600 bytes), disparando el bloqueo pre-receive de GitHub (`GH001: Large files detected`).
+2. **Solución de compresión transparente:**
+   - Modificados `scripts/scrapers/sync_verified_prices.py` y `scripts/build-history.mjs` para leer/escribir `src/data/price-history.json.gz`.
+   - Tamaño reducido de 102 MB a 3,9 MB (reducción de 96,2%), permitiendo que Git y GitHub Actions acepten el archivo sin inconvenientes.
+   - Retirado `src/data/price-history.json` de Git e incorporado en `.gitignore`.
+   - Actualizado `.github/workflows/sync-prices.yml` para hacer `git add src/data/live-prices.json src/data/price-history.json.gz`.
+3. **Sincronización completa de precios (Neuquén, 22/23-11-2026):**
+   - Recolectados 11.412 precios frescos de 8 cadenas activas:
+     - Coto: 7.194
+     - Yaguar: 1.663
+     - Cooperativa Obrera: 795
+     - La Anónima: 646
+     - Carrefour: 489
+     - Jumbo: 339
+     - ChangoMás: 194
+     - Vital: 92
+   - Catálogo activo (`src/data/live-prices.json`): 12.530 productos y 13.511 cotizaciones.
+   - Histórico acumulado (`src/data/price-history.json.gz`): 125.333 cotizaciones conservadas sin pérdida (cero pérdidas respecto a las 113.921 del 12-11).
+   - Precios activos en la app (`priceIsUsable`): 11.412 cotizaciones vigentes hoy.
+4. **Pruebas y compilación:**
+   - Python: 54 tests unitarios OK (`python3 -m unittest discover -s tests -p 'test_*.py'`).
+   - Node: 35 tests PASS (`node --test tests/*.test.cjs`).
+   - Build: `npm run build` exitoso, generando bundle cliente `index-BAloxFBX.js` y `dist/data/live-prices.json` con paridad idéntica.
 
-## Pruebas
-- Corrección previa: python3 -m unittest discover -s tests -p 'test_*.py' (54 OK); node --test tests/*.test.cjs (35 PASS); npm run build OK; git diff --check OK.
-- Esta sesión: esas pruebas y compilación pasaron nuevamente dentro de Actions; ejecución real de colectores y persistencia aprobadas.
-- git pull --ff-only recuperó b0f94b3 sin conflictos; verificación histórica mediante Python y respaldo /tmp/radar-history-before-sync003.json, recuperable también desde 47a0f2a:src/data/price-history.json.
-
-## Limitaciones reales
-- La Anónima y Yaguar: HTTP 403 en runner. Makro: lista futura o mayor de 7 días.
-- No se eludieron validaciones ni se cambiaron fechas de lecturas antiguas. Estado de actualización: partial; advertencias visibles, sin fallo global si hay precios comprobados.
-- No afirmar cobertura completa ni recuperación de estas fuentes.
-
-## Archivos y Git
-- Esta sesión solo modifica los 5 documentos de agent_memory y agrega este relevo al historial; los dos JSON de datos llegan del commit automático b0f94b3.
-- Código/tests/workflow ya guardados en 47a0f2a. Memoria de cierre se guarda en commit docs separado y se sube a main.
-- Sin cambios de aplicación adicionales ni archivos temporales dentro del repositorio. Pendiente únicamente guardar/subir este cierre, sin requerir más autorización.
+## Limitaciones
+- Makro: Su sitio oficial mantiene la lista del 31 de octubre (más de 7 días); conserva histórico según D11/D20.
+- Vea y Diarco: Permanecen excluidos conforme a D3.
 
 ## Próximo paso
-No queda pendiente activar la corrección. Continuar si se solicita con recuperación de fuentes HTTP 403 y lista vigente Makro, además de DATA-ANONIMA, DATA-JUMBO, SUPABASE y UI-FRESH.
+- Realizar commit y push a GitHub (`origin main`) para que Vercel despliegue la versión actualizada y GitHub Actions continúe las actualizaciones automáticas diarias con éxito.

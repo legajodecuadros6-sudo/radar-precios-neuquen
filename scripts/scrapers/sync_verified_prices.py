@@ -3,6 +3,7 @@
 import argparse
 import base64
 import csv
+import gzip
 import html
 import json
 import math
@@ -20,7 +21,7 @@ from datetime import datetime, timezone, timedelta
 
 ROOT = Path(__file__).resolve().parents[2]
 SNAPSHOT = ROOT / 'src/data/live-prices.json'
-HISTORY = ROOT / 'src/data/price-history.json'
+HISTORY = ROOT / 'src/data/price-history.json.gz'
 CHAINS = ['coto','la_anonima','changomas','vea','cooperativa_obrera','yaguar','vital','diarco','makro','jumbo','carrefour']
 API = 'https://api.lacoopeencasa.coop/api/'
 TERMS = ['aceite','leche','yerba','arroz','fideos','harina','azucar','galletitas','cafe','yogur','queso','manteca','gaseosa','agua','lavandina','detergente','jabon','papel','pan','pollo','lays','manaos pomelo','cerveza','vino','fernet']
@@ -33,13 +34,28 @@ def request_json(url, payload=None):
         return json.load(response)
 
 def read_json(path, default):
-    return json.loads(path.read_text()) if path.exists() else default
+    if not path.exists():
+        alt = path.with_suffix(path.suffix + '.gz') if not str(path).endswith('.gz') else Path(str(path)[:-3])
+        if alt.exists():
+            path = alt
+        else:
+            return default
+    if str(path).endswith('.gz'):
+        with gzip.open(path, 'rt', encoding='utf8') as f:
+            return json.load(f)
+    return json.loads(path.read_text(encoding='utf8'))
 
 def atomic_json(path, value):
     path.parent.mkdir(parents=True, exist_ok=True)
-    with tempfile.NamedTemporaryFile('w', dir=path.parent, delete=False, encoding='utf8') as out:
-        json.dump(value, out, ensure_ascii=False, indent=2, allow_nan=False)
-        out.write('\n')
+    is_gz = str(path).endswith('.gz')
+    mode = 'wb' if is_gz else 'w'
+    with tempfile.NamedTemporaryFile(mode, dir=path.parent, delete=False, **({} if is_gz else {'encoding':'utf8'})) as out:
+        if is_gz:
+            with gzip.open(out, 'wt', encoding='utf8') as gz:
+                json.dump(value, gz, ensure_ascii=False, allow_nan=False)
+        else:
+            json.dump(value, out, ensure_ascii=False, indent=2, allow_nan=False)
+            out.write('\n')
         temp = out.name
     os.replace(temp, path)
 
