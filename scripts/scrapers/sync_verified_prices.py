@@ -221,13 +221,23 @@ def parse_makro(page, stamp):
     text=normalize(plain_html(page))
     if 'iva incluido para la sucursal de neuquen' not in text:
         raise ValueError('Makro: no se confirmó sucursal Neuquén e IVA incluido')
-    date_element=re.search(r'<p[^>]*class=["\'][^"\']*mlp-lista-precios__fecha[^"\']*["\'][^>]*>(.*?)</p>',page,re.S)
-    date_match=re.search(r'(\d{1,2}) de (\w+) de (\d{4}),\s*(\d{2}):(\d{2})',normalize(plain_html(date_element.group(1)))) if date_element else None
-    if not date_match: raise ValueError('Makro: fecha de publicación ausente')
-    day,month,year,hour,minute=date_match.groups()
-    published=datetime(int(year),MONTHS[month],int(day),int(hour),int(minute),tzinfo=timezone(timedelta(hours=-3)))
     now=datetime.fromisoformat(stamp)
-    if published>now or now-published>timedelta(days=7): raise ValueError('Makro: lista futura o de más de 7 días')
+    published=None
+    val_match=re.search(r'valida\s+en\s+todas\s+nuestras\s+sucursales\s+del\s+(\d{1,2})/(\d{1,2})/(\d{4})\s+al\s+(\d{1,2})/(\d{1,2})/(\d{4})',text)
+    if val_match:
+        d1,m1,y1,d2,m2,y2=val_match.groups()
+        v_start=datetime(int(y1),int(m1),int(d1),0,0,tzinfo=timezone(timedelta(hours=-3)))
+        v_end=datetime(int(y2),int(m2),int(d2),23,59,59,tzinfo=timezone(timedelta(hours=-3)))
+        if v_start<=now<=v_end:
+            published=v_start
+    if not published:
+        date_element=re.search(r'<p[^>]*class=["\'][^"\']*mlp-lista-precios__fecha[^"\']*["\'][^>]*>(.*?)</p>',page,re.S)
+        date_match=re.search(r'(\d{1,2}) de (\w+) de (\d{4}),\s*(\d{2}):(\d{2})',normalize(plain_html(date_element.group(1)))) if date_element else None
+        if not date_match: raise ValueError('Makro: fecha de publicación ausente')
+        day,month,year,hour,minute=date_match.groups()
+        header_date=datetime(int(year),MONTHS[month],int(day),int(hour),int(minute),tzinfo=timezone(timedelta(hours=-3)))
+        if header_date>now or now-header_date>timedelta(days=7): raise ValueError('Makro: lista futura o de más de 7 días')
+        published=header_date
     table=re.search(r'<table[^>]*class=["\'][^"\']*mlp-lista-precios__table["\'][^>]*>(.*?)</table>',page,re.S)
     if not table: raise ValueError('Makro: tabla ausente')
     headers=[normalize(plain_html(v)) for v in re.findall(r'<th\b[^>]*>(.*?)</th>',table.group(1),re.S)]
