@@ -40,13 +40,21 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git add src/data/live-prices.json src/data/price-history.json.gz
+          git add src/data/live-prices.json src/data/price-history.json.gz src/data/sources.json
           if ! git diff --staged --quiet; then
             git commit -m 'chore(prices): actualizar consultas verificadas e historial'
             git push
           fi
+      - name: Notificar estado por Telegram
+        if: always()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          GITHUB_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: python3 scripts/notify_telegram.py
       - name: Avisar si falló la sincronización
         if: steps.sync.outcome == 'failure'
         run: |
           echo '::error::La sincronización no pudo completarse. Revisar el resumen y el paso de consulta; las fuentes sin lectura nueva conservan sus fechas originales.'
           exit 1
+
