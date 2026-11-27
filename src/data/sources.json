@@ -1,15 +1,15 @@
 {
   "cooperativa_obrera": {
     "status": "ok",
-    "last_attempt": "2026-11-26T23:07:54.737690+00:00",
-    "last_success": "2026-11-26T23:07:54.737690+00:00",
-    "message": "799 precios consultados en Cooperativa Obrera · Sucursal del Oeste.",
+    "last_attempt": "2026-11-27T00:13:09.614667+00:00",
+    "last_success": "2026-11-27T00:13:09.614667+00:00",
+    "message": "800 precios consultados en Cooperativa Obrera · Sucursal del Oeste.",
     "errors": []
   },
   "coto": {
     "status": "partial",
-    "last_attempt": "2026-11-26T23:07:54.737690+00:00",
-    "last_success": "2026-11-26T23:07:54.737690+00:00",
+    "last_attempt": "2026-11-27T00:13:09.614667+00:00",
+    "last_success": "2026-11-27T00:13:09.614667+00:00",
     "message": "7203 precios consultados en Coto · Neuquén.",
     "errors": [
       "aceite: la consulta llegó al tope de páginas (posible recorte)",
@@ -98,26 +98,25 @@
     ]
   },
   "la_anonima": {
-    "status": "ok",
-    "last_attempt": "2026-11-26T23:07:54.737690+00:00",
+    "status": "error",
+    "last_attempt": "2026-11-27T00:13:09.614667+00:00",
     "last_success": "2026-11-26T23:07:54.737690+00:00",
-    "message": "616 precios consultados en La Anónima · Paseo de la Patagonia.",
-    "errors": []
+    "message": "HTTP Error 403: Forbidden"
   },
   "changomas": {
     "status": "partial",
-    "last_attempt": "2026-11-26T23:07:54.737690+00:00",
-    "last_success": "2026-11-26T23:07:54.737690+00:00",
+    "last_attempt": "2026-11-27T00:13:09.614667+00:00",
+    "last_success": "2026-11-27T00:13:09.614667+00:00",
     "message": "190 precios consultados en HIPERChangoMás Neuquén · Perticone.",
     "errors": [
       "Presentación contradictoria para ean_7790272000831",
-      "Presentación contradictoria para ean_7798078450041",
-      "Presentación contradictoria para ean_7798078450140",
       "Presentación contradictoria para ean_7798052363169",
+      "Presentación contradictoria para ean_7798078450140",
       "Presentación contradictoria para ean_7792900990620",
       "Presentación contradictoria para ean_7891000288801",
+      "Presentación contradictoria para ean_7790639003819",
       "Presentación contradictoria para ean_7790616000626",
-      "Presentación contradictoria para ean_7799155000173",
+      "Presentación contradictoria para ean_7795930000543",
       "Presentación contradictoria para ean_7790360971395",
       "Presentación contradictoria para ean_7790360967558"
     ]
@@ -127,16 +126,15 @@
     "message": "Sin precios locales verificados. Pendiente conectar fuente o importar lista documentada."
   },
   "yaguar": {
-    "status": "ok",
-    "last_attempt": "2026-11-26T23:07:54.737690+00:00",
+    "status": "error",
+    "last_attempt": "2026-11-27T00:13:09.614667+00:00",
     "last_success": "2026-11-26T23:07:54.737690+00:00",
-    "message": "1681 precios consultados en Yaguar Mayorista Neuquén.",
-    "errors": []
+    "message": "HTTP Error 403: Forbidden"
   },
   "vital": {
     "status": "partial",
-    "last_attempt": "2026-11-26T23:07:54.737690+00:00",
-    "last_success": "2026-11-26T23:07:54.737690+00:00",
+    "last_attempt": "2026-11-27T00:13:09.614667+00:00",
+    "last_success": "2026-11-27T00:13:09.614667+00:00",
     "message": "93 precios consultados en vital.",
     "errors": [
       "Presentación contradictoria para ean_7790272000831"
@@ -148,15 +146,15 @@
   },
   "makro": {
     "status": "ok",
-    "last_attempt": "2026-11-26T23:07:54.737690+00:00",
-    "last_success": "2026-11-26T23:07:54.737690+00:00",
+    "last_attempt": "2026-11-27T00:13:09.614667+00:00",
+    "last_success": "2026-11-27T00:13:09.614667+00:00",
     "message": "36 precios consultados en makro.",
     "errors": []
   },
   "jumbo": {
     "status": "partial",
-    "last_attempt": "2026-11-26T23:07:54.737690+00:00",
-    "last_success": "2026-11-26T23:07:54.737690+00:00",
+    "last_attempt": "2026-11-27T00:13:09.614667+00:00",
+    "last_success": "2026-11-27T00:13:09.614667+00:00",
     "message": "350 precios consultados en Jumbo · Portal Patagonia.",
     "errors": [
       "Presentación contradictoria para ean_7790070265357",
@@ -219,8 +217,8 @@
   },
   "carrefour": {
     "status": "partial",
-    "last_attempt": "2026-11-26T23:07:54.737690+00:00",
-    "last_success": "2026-11-26T23:07:54.737690+00:00",
+    "last_attempt": "2026-11-27T00:13:09.614667+00:00",
+    "last_success": "2026-11-27T00:13:09.614667+00:00",
     "message": "475 precios consultados en Carrefour Hipermercado Neuquén Centro.",
     "errors": [
       "Presentación contradictoria para ean_7790272000831",
