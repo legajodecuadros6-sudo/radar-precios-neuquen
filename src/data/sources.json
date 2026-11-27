@@ -1,15 +1,15 @@
 {
   "cooperativa_obrera": {
     "status": "ok",
-    "last_attempt": "2026-11-27T00:13:09.614667+00:00",
-    "last_success": "2026-11-27T00:13:09.614667+00:00",
+    "last_attempt": "2026-11-27T01:36:28.525472+00:00",
+    "last_success": "2026-11-27T01:36:28.525472+00:00",
     "message": "800 precios consultados en Cooperativa Obrera · Sucursal del Oeste.",
     "errors": []
   },
   "coto": {
     "status": "partial",
-    "last_attempt": "2026-11-27T00:13:09.614667+00:00",
-    "last_success": "2026-11-27T00:13:09.614667+00:00",
+    "last_attempt": "2026-11-27T01:36:28.525472+00:00",
+    "last_success": "2026-11-27T01:36:28.525472+00:00",
     "message": "7203 precios consultados en Coto · Neuquén.",
     "errors": [
       "aceite: la consulta llegó al tope de páginas (posible recorte)",
@@ -98,16 +98,17 @@
     ]
   },
   "la_anonima": {
-    "status": "error",
-    "last_attempt": "2026-11-27T00:13:09.614667+00:00",
-    "last_success": "2026-11-26T23:07:54.737690+00:00",
-    "message": "HTTP Error 403: Forbidden"
+    "status": "ok",
+    "last_attempt": "2026-11-27T01:36:28.525472+00:00",
+    "last_success": "2026-11-27T01:36:28.525472+00:00",
+    "message": "616 precios consultados en La Anónima · Paseo de la Patagonia.",
+    "errors": []
   },
   "changomas": {
     "status": "partial",
-    "last_attempt": "2026-11-27T00:13:09.614667+00:00",
-    "last_success": "2026-11-27T00:13:09.614667+00:00",
-    "message": "190 precios consultados en HIPERChangoMás Neuquén · Perticone.",
+    "last_attempt": "2026-11-27T01:36:28.525472+00:00",
+    "last_success": "2026-11-27T01:36:28.525472+00:00",
+    "message": "189 precios consultados en HIPERChangoMás Neuquén · Perticone.",
     "errors": [
       "Presentación contradictoria para ean_7790272000831",
       "Presentación contradictoria para ean_7798052363169",
@@ -127,14 +128,14 @@
   },
   "yaguar": {
     "status": "error",
-    "last_attempt": "2026-11-27T00:13:09.614667+00:00",
+    "last_attempt": "2026-11-27T01:36:28.525472+00:00",
     "last_success": "2026-11-26T23:07:54.737690+00:00",
     "message": "HTTP Error 403: Forbidden"
   },
   "vital": {
     "status": "partial",
-    "last_attempt": "2026-11-27T00:13:09.614667+00:00",
-    "last_success": "2026-11-27T00:13:09.614667+00:00",
+    "last_attempt": "2026-11-27T01:36:28.525472+00:00",
+    "last_success": "2026-11-27T01:36:28.525472+00:00",
     "message": "93 precios consultados en vital.",
     "errors": [
       "Presentación contradictoria para ean_7790272000831"
@@ -146,21 +147,21 @@
   },
   "makro": {
     "status": "ok",
-    "last_attempt": "2026-11-27T00:13:09.614667+00:00",
-    "last_success": "2026-11-27T00:13:09.614667+00:00",
+    "last_attempt": "2026-11-27T01:36:28.525472+00:00",
+    "last_success": "2026-11-27T01:36:28.525472+00:00",
     "message": "36 precios consultados en makro.",
     "errors": []
   },
   "jumbo": {
     "status": "partial",
-    "last_attempt": "2026-11-27T00:13:09.614667+00:00",
-    "last_success": "2026-11-27T00:13:09.614667+00:00",
-    "message": "350 precios consultados en Jumbo · Portal Patagonia.",
+    "last_attempt": "2026-11-27T01:36:28.525472+00:00",
+    "last_success": "2026-11-27T01:36:28.525472+00:00",
+    "message": "347 precios consultados en Jumbo · Portal Patagonia.",
     "errors": [
       "Presentación contradictoria para ean_7790070265357",
       "Presentación contradictoria para ean_7790272000848",
-      "Presentación contradictoria para ean_7790070265333",
       "Presentación contradictoria para ean_7790070265340",
+      "Presentación contradictoria para ean_7790070265333",
       "Presentación contradictoria para ean_7790742141705",
       "Presentación contradictoria para ean_7790387014143",
       "Presentación contradictoria para ean_7790070509123",
@@ -183,10 +184,11 @@
       "Presentación contradictoria para ean_7790150080825",
       "Presentación contradictoria para ean_7790150080801",
       "Presentación contradictoria para ean_7790380016199",
-      "Presentación contradictoria para ean_7798141132591",
       "Presentación contradictoria para ean_7794820902257",
       "Presentación contradictoria para ean_7794820902837",
-      "Presentación contradictoria para ean_7798096210252",
+      "Presentación contradictoria para ean_7798141132591",
+      "Presentación contradictoria para ean_7790742471307",
+      "Presentación contradictoria para ean_7622300801786",
       "Presentación contradictoria para ean_7791620187860",
       "Presentación contradictoria para ean_7794820903292",
       "Presentación contradictoria para ean_7790742345707",
@@ -211,15 +213,14 @@
       "Presentación contradictoria para ean_7891079012208",
       "Presentación contradictoria para ean_7792798013982",
       "Presentación contradictoria para ean_7792798013494",
-      "Presentación contradictoria para ean_7792798014026",
-      "Presentación contradictoria para ean_7798074865313"
+      "Presentación contradictoria para ean_7792798014026"
     ]
   },
   "carrefour": {
     "status": "partial",
-    "last_attempt": "2026-11-27T00:13:09.614667+00:00",
-    "last_success": "2026-11-27T00:13:09.614667+00:00",
-    "message": "475 precios consultados en Carrefour Hipermercado Neuquén Centro.",
+    "last_attempt": "2026-11-27T01:36:28.525472+00:00",
+    "last_success": "2026-11-27T01:36:28.525472+00:00",
+    "message": "473 precios consultados en Carrefour Hipermercado Neuquén Centro.",
     "errors": [
       "Presentación contradictoria para ean_7790272000831",
       "Presentación contradictoria para ean_7790070417916",
@@ -242,8 +243,7 @@
       "Presentación contradictoria para ean_7798085370073",
       "Presentación contradictoria para ean_7798060852747",
       "Presentación contradictoria para ean_7790742345707",
-      "Presentación contradictoria para ean_7799155000197",
-      "Presentación contradictoria para ean_7799155000173",
+      "Presentación contradictoria para ean_7791813421917",
       "Presentación contradictoria para ean_7793253003814",
       "Presentación contradictoria para ean_7793253003807",
       "Presentación contradictoria para ean_7798339190051",
